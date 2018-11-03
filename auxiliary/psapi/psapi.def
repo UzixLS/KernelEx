@@ -16,3 +16,4 @@ EXPORTS
 	InitializeProcessForWsWatch
 	EnumPageFilesA
 	EnumPageFilesW
+	EmptyWorkingSet

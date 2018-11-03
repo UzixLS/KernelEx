@@ -371,7 +371,15 @@ DWORD encode_address(DWORD addr, const ApiLibrary* apilib)
 
 	//STD apilib
 	if (index == 0)
-		return addr;
+	{
+		if (addr < 0xc0000000)
+			return addr;
+		
+		//extremely rare scenario: driver hijacked apis so the address is now
+		//above 0xc0000000 and we use these for encoded apilib addresses
+		//so we have to create a stub in shared arena with proper address
+		return (DWORD) new redir_stub(addr);
+	}
 
 	//non-shared apilib
 	if ((DWORD) apilib->mod_handle < 0x80000000)

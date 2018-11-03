@@ -40,48 +40,58 @@ void destroy_shared_heap()
 
 void* malloc(size_t size)
 {
-	return HeapAlloc(shared_heap, 0, size);
+	void* ptr = HeapAlloc(shared_heap, 0, size);
+	if (!ptr)
+		DBGPRINTF(("ERROR: malloc failed (%d B)\n", size));
+	return ptr;
 }
 
 void* calloc(size_t count, size_t size)
 {
-	return HeapAlloc(shared_heap, HEAP_ZERO_MEMORY, count * size);
+	void* ptr = HeapAlloc(shared_heap, HEAP_ZERO_MEMORY, count * size);
+	if (!ptr)
+		DBGPRINTF(("ERROR: malloc failed (%d B)\n", size));
+	return ptr;
 }
 
 void free(void* ptr)
 {
-	DBGASSERT(ptr == NULL || (DWORD)ptr >= 0x80000000);
 	if (ptr)
 		HeapFree(shared_heap, 0, ptr);
+	else
+		DBGPRINTF(("ERROR: trying to free NULL\n"));
 }
 
 void* realloc(void* ptr, size_t size)
 {
-	DBGASSERT(ptr == NULL || (DWORD)ptr >= 0x80000000);
+	void* nptr;
 	if (ptr)
-		return HeapReAlloc(shared_heap, 0, ptr, size);
+		nptr = HeapReAlloc(shared_heap, 0, ptr, size);
 	else 
-		return HeapAlloc(shared_heap, 0, size);
+		nptr = HeapAlloc(shared_heap, 0, size);
+	if (!nptr)
+		DBGPRINTF(("ERROR: malloc failed (%d B)\n", size));
+	return nptr;
 }
 
 void* recalloc(void* ptr, size_t size)
 {
-	DBGASSERT(ptr == NULL || (DWORD)ptr >= 0x80000000);
+	void* nptr;
 	if (ptr)
-		return HeapReAlloc(shared_heap, HEAP_ZERO_MEMORY, ptr, size);
+		nptr = HeapReAlloc(shared_heap, HEAP_ZERO_MEMORY, ptr, size);
 	else
-		return HeapAlloc(shared_heap, HEAP_ZERO_MEMORY, size);
+		nptr = HeapAlloc(shared_heap, HEAP_ZERO_MEMORY, size);
+	if (!nptr)
+		DBGPRINTF(("ERROR: malloc failed (%d B)\n", size));
+	return nptr;
 }
 
 void* operator new(size_t size)
 {
-	void* mem = malloc(size);
-	DBGASSERT(mem);
-	return mem;
+	return malloc(size);
 }
 
 void operator delete(void* ptr)
 {
-	DBGASSERT((DWORD)ptr >= 0x80000000);
 	free(ptr);
 }

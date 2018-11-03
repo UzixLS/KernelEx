@@ -109,6 +109,64 @@ static const OSVERSIONINFOEXA_PRIV VersionData[NB_WINDOWS_VERSIONS] =
     }
 };
 
+static BOOL original_GetVersionEx(void* buf, BOOL unicode)
+{
+	BOOL ret;
+	OSVERSIONINFOA* ver = (OSVERSIONINFOA*) buf;
+	DWORD structsize = ver->dwOSVersionInfoSize;
+	
+	if (!unicode)
+	{
+		if (structsize != sizeof(OSVERSIONINFOA) && structsize != sizeof(OSVERSIONINFOEXA))
+		{
+			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if (structsize != sizeof(OSVERSIONINFOW) && structsize != sizeof(OSVERSIONINFOEXW))
+		{
+			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return FALSE;
+		}
+	}
+	
+	ver->dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+	ret = GetVersionExA(ver);
+	if (ret)
+	{
+		char csdVer[128];
+		OSVERSIONINFOEXA* verexA = (OSVERSIONINFOEXA*) ver;
+		OSVERSIONINFOEXW* verexW = (OSVERSIONINFOEXW*) ver;
+		
+		switch (structsize)
+		{
+		case sizeof(OSVERSIONINFOEXA):
+			verexA->wServicePackMajor = 0;
+			verexA->wServicePackMinor = 0;
+			verexA->wSuiteMask = 0;
+			verexA->wProductType = 0;
+			verexA->wReserved = 0;
+		case sizeof(OSVERSIONINFOA):
+			break;
+		case sizeof(OSVERSIONINFOEXW):
+			verexW->wServicePackMajor = 0;
+			verexW->wServicePackMinor = 0;
+			verexW->wSuiteMask = 0;
+			verexW->wProductType = 0;
+			verexW->wReserved = 0;
+		case sizeof(OSVERSIONINFOW):
+			strcpy(csdVer, ver->szCSDVersion);
+			MultiByteToWideChar(CP_ACP, 0, csdVer, -1, verexW->szCSDVersion, 
+					sizeof(csdVer));
+			break;
+		}
+	}
+	ver->dwOSVersionInfoSize = structsize;
+	return ret;
+}
+
 static DWORD common_GetVersion(WINDOWS_VERSION version)
 {
 	const OSVERSIONINFOEXA_PRIV* osv = &VersionData[version];
@@ -402,6 +460,18 @@ DWORD WINAPI GetVersion_VISTA(void)
 DWORD WINAPI GetVersion_WIN2K8(void)
 {
 	return common_GetVersion(WIN2K8);
+}
+
+/* MAKE_EXPORT GetVersionExA_ORIG=GetVersionExA */
+BOOL WINAPI GetVersionExA_ORIG(LPOSVERSIONINFOA lpVersionInfo)
+{
+	return original_GetVersionEx(lpVersionInfo, FALSE);
+}
+
+/* MAKE_EXPORT GetVersionExW_ORIG=GetVersionExW */
+BOOL WINAPI GetVersionExW_ORIG(LPOSVERSIONINFOW lpVersionInfo)
+{
+	return original_GetVersionEx(lpVersionInfo, TRUE);
 }
 
 /* MAKE_EXPORT GetVersionExA_WIN95=GetVersionExA */

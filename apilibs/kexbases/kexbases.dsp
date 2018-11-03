@@ -113,15 +113,19 @@ SOURCE=.\Kernel32\CopyFileEx.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Kernel32\CreateFileA_fix.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\Kernel32\CreateThread_fix.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\Kernel32\DeleteCriticalSection.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\FileApis_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\GetConsoleWindow.c
 # End Source File
 # Begin Source File
 
@@ -138,6 +142,10 @@ SOURCE=.\Kernel32\HeapLocks.c
 # Begin Source File
 
 SOURCE=.\Kernel32\InitializeCriticalSectionAndSpinCount.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\IsProcessorFeaturePresent.c
 # End Source File
 # Begin Source File
 
@@ -310,6 +318,10 @@ SOURCE=.\Advapi32\_advapi32_apilist.h
 # Begin Source File
 
 SOURCE=.\Advapi32\_advapi32_stubs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Advapi32\OpenSCManager_stub.c
 # End Source File
 # Begin Source File
 

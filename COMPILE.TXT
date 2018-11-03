@@ -1,0 +1,6 @@
+To compile you need Microsoft Visual C++ 6.0 SP6
+First you need to compile KEXCRT project as other projects rely on it.
+To build KEXCONTROL you have to build debug CORE first.
+KEXBASES and KEXBASEN projects rely on CORE be built first.
+
+-Xeno86

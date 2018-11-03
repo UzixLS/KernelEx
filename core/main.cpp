@@ -97,6 +97,33 @@ DWORD WINAPI MprStart(LPVOID)
 	return 0;
 }
 
+void load_MPRServices()
+{    
+    char subkey[200];
+    char dllname[MAX_PATH];
+    HKEY hk_serv;
+    HKEY hk_this;
+    DWORD size;
+    DWORD index = 0;
+    
+    if (RegOpenKey(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control\\MPRServices",
+            &hk_serv) != ERROR_SUCCESS)
+        return;
+    while (RegEnumKey(hk_serv, index, subkey, sizeof(subkey)) == ERROR_SUCCESS)
+    {
+        RegOpenKey(hk_serv, subkey, &hk_this);
+        size = sizeof(dllname);
+        if (RegQueryValueEx(hk_this, "DllName", NULL, NULL, (BYTE*)dllname, &size) 
+                == ERROR_SUCCESS && strcmpi(dllname, own_path.get()) != 0)
+        {         
+            LoadLibrary(dllname);
+        }
+        RegCloseKey(hk_this);
+        index++;
+    }
+    RegCloseKey(hk_serv);
+}
+
 /** Check if loaded into shared memory area.
  * @param addr Address to which loaded.
  * @return TRUE if loaded to shared memory, FALSE otherwise.
@@ -125,10 +152,10 @@ static int load_count(DWORD addr)
 	return pmteModTable[MRfromCallerAddr(addr)->mteIndex]->cUsage;
 }
 
-static void get_own_path(HMODULE base)
+static void get_own_path()
 {
 	char path[MAX_PATH];
-	GetModuleFileName(base, path, sizeof(path));
+	GetModuleFileName(hInstance, path, sizeof(path));
 	own_path = path;
 }
 
@@ -170,6 +197,8 @@ BOOL APIENTRY PreDllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
 		if (load_count((DWORD) instance) == 1)
 		{
+			hInstance = instance;
+
 			if (detect_old_version())
 				return FALSE;
 
@@ -181,7 +210,7 @@ BOOL APIENTRY PreDllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 			//globally (by default it would be called on every process attach)
 			ret = _DllMainCRTStartup(instance, reason, reserved);
 
-			get_own_path(instance);
+			get_own_path();
 		}
 	}
 	else if (reason == DLL_PROCESS_DETACH)
@@ -202,7 +231,23 @@ BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, BOOL load_static)
 {
 	if (reason == DLL_PROCESS_ATTACH && GetModuleHandle("MPREXE.EXE"))
 	{
-		return kexInit();
+		//load all other MPR services before further execution
+		load_MPRServices();
+
+		//initialize
+		if (!kexInit())
+			return FALSE;
+
+		//in case KernelEx was loaded globally we don't want to unload it ever
+		IMTE** pmteModTable = *ppmteModTable;
+		pmteModTable[MRFromHLib(hInstance)->mteIndex]->cUsage++;
+		
+		//we don't want to unload the api libraries as well
+		ApiLibrary* apilib;
+		for (int i = 1 ; apilib = ApiLibraryManager::get_apilib(i) ; i++)
+			pmteModTable[MRFromHLib(apilib->mod_handle)->mteIndex]->cUsage++;
+
+		return TRUE;
 	}
 
 	//for additional safety - auto uninit on core unload

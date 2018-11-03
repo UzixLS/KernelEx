@@ -120,11 +120,16 @@ bool KexShlExt::ResolveShortcut(const char* shortcutPath, char* filePath)
     char path[MAX_PATH]; 
     WCHAR tmp[MAX_PATH];
 
+	CoInitialize(NULL);
+
     result = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
                             IID_IShellLink, (void**) &shellLink); 
 
 	if (FAILED(result))
+	{
+		CoUninitialize();
 		return false;
+	}
 
 	result = shellLink->QueryInterface(IID_IPersistFile, (void**) &persistFile);
 	if (SUCCEEDED(result))
@@ -148,6 +153,8 @@ bool KexShlExt::ResolveShortcut(const char* shortcutPath, char* filePath)
 	}
 
 	shellLink->Release();
+
+	CoUninitialize();
 
     return SUCCEEDED(result);
 }

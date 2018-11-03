@@ -161,10 +161,7 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 		apilib = (ApiLibrary*) malloc(size);
 
 		if (!apilib)
-		{
-			DBGPRINTF(("Failed to allocate memory\n"));
 			goto __error;
-		}
 
 		strcpy(apilib->apilib_name, apilib_name);
 
@@ -215,10 +212,7 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 				(new_apilib_cnt + ALLOC_CAPACITY) * sizeof(ApiLibrary*));
 
 		if (!new_block)
-		{
-			DBGPRINTF(("Failed to allocate memory\n"));
 			goto __error;
-		}
 
 		new_apilib_ptrs = (ApiLibrary**) new_block;
 	}
@@ -227,7 +221,11 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 	for (apilib_api_table* p = apilib->api_tables ; p->target_library ; p++)
 	{
 //		DBGPRINTF(("  * %s\n", p->target_library));
-		add_overridden_module(p->target_library);
+		if (!add_overridden_module(p->target_library))
+		{
+			DBGPRINTF(("Failed to add overridden module %s\n", p->target_library));
+			goto __error;
+		}
 	}
 
 	//set or update index value which is used by encode_address() 
@@ -372,16 +370,6 @@ apilib_api_table* ApiLibraryManager::make_shared_api_tables(const apilib_api_tab
 		}
 	}
 
-//	//sort the tables
-//	if (!sorted)
-//	{
-//		while (pout-- != out)
-//		{
-//			stable_sort(pout->named_apis, pout->named_apis + pout->named_apis_count);
-//			stable_sort(pout->ordinal_apis, pout->ordinal_apis + pout->ordinal_apis_count);
-//		}
-//	}
-
 	//finish line
 	return out;
 }
@@ -426,10 +414,7 @@ bool ApiLibraryManager::add_overridden_module(const char* mod)
 				(new_overridden_mod_cnt + ALLOC_CAPACITY) * sizeof(char*));
 		
 		if (!new_block)
-		{
-			DBGPRINTF(("Failed to allocate memory\n"));
 			return false;
-		}
 
 		new_overridden_mod_nms = (const char**) new_block;
 
@@ -438,16 +423,16 @@ bool ApiLibraryManager::add_overridden_module(const char* mod)
 			//+ 1 because api_tables are NULL terminated
 
 		if (!new_block)
-		{
-			DBGPRINTF(("Failed to allocate memory\n"));
 			return false;
-		}
 
 		std_api_table = (apilib_api_table*) new_block;
 	}
 
 	if (!parse_system_dll(mod, &std_api_table[new_overridden_mod_cnt]))
+	{
+		DBGPRINTF(("Failed to parse system DLL: %s\n", mod));
 		return false;
+	}
 
 	//add to table of overridden modules
 	new_overridden_mod_nms[new_overridden_mod_cnt] 
@@ -564,10 +549,8 @@ bool ApiLibraryManager::parse_system_dll(const char* dll_name, apilib_api_table*
 
 	char* new_mod = (char*) malloc(strlen(dll_name) + 1);
 	if (!new_mod)
-	{
-		DBGPRINTF(("Failed to allocate memory\n"));
 		return false;
-	}
+
 	strcpy(new_mod, dll_name);
 	strupr(new_mod);
 	api_tab->target_library = new_mod;
@@ -632,7 +615,8 @@ void ApiLibraryManager::commit_changes()
 	//LOCK ALL CRITICAL SECTIONS!
 	apilib_ptrs = new_apilib_ptrs;
 	apilib_cnt = new_apilib_cnt;
-	free(overridden_module_names);
+	if (overridden_module_names)
+		free(overridden_module_names);
 	overridden_module_names = new_overridden_mod_nms;
 	overridden_module_count = new_overridden_mod_cnt;
 
@@ -697,7 +681,8 @@ void ApiLibraryManager::commit_changes()
 		free(old_apilib_ptrs[i]);
 	}
 
-	free(old_apilib_ptrs);
+	if (old_apilib_ptrs)
+		free(old_apilib_ptrs);
 
 	initialized = false;
 }

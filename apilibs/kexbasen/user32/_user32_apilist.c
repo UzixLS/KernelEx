@@ -87,7 +87,6 @@ static const apilib_named_api user32_named_apis[] =
 	DECL_API("GetKeyboardLayoutNameW", GetKeyboardLayoutNameW_fwd),
 	DECL_API("GetMenuItemInfoW", GetMenuItemInfoW_fwd),
 	DECL_API("GetMenuStringW", GetMenuStringW_fwd),
-	DECL_API("GetMessageW", GetMessageW_fwd),
 	DECL_API("GetMonitorInfoW", GetMonitorInfoW_fwd),
 	DECL_API("GetPropW", GetPropW_fwd),
 	DECL_API("GetTabbedTextExtentW", GetTabbedTextExtentW_fwd),

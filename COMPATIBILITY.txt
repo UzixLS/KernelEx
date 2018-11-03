@@ -1,0 +1,30 @@
+KernelEx v4.0 RC 2 by Xeno86
+2009-03-21
+
+Now working on Windows 98/Me:
+-----------------------------
+* The Chronicles of Riddick EFBB Demo
+* QEmu 0.9
+
+Fixed regressions:
+------------------
+* .Net framework was broken in RC 1 now should work correctly
+* input issue in Firefox 3 affecting special characters
+* eMule couldn't complete downloads in RC 1, now fixed
+* transparency issue in Firefox 3
+* incompatibility with Norton Utilities
+
+#################################################
+
+KernelEx v4.0 RC 1 by Xeno86
+2009-03-10
+
+Now working on Windows 98/Me:
+-----------------------------
+* Firefox 3.6 alpha
+* JDK 6 / JRE 6 works fine with the exception of Java applets which don't work (reason: missing proper named-pipe support in the system)
+* PDF-XChange Viewer now works
+
+Fixed regressions:
+------------------
+* Sysinternals TCPView display fix

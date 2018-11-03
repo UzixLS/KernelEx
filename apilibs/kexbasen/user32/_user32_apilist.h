@@ -83,7 +83,6 @@ FWDPROC GetKeyboardLayoutNameW_fwd;
 FWDPROC GetKeyNameTextW_fwd;
 FWDPROC GetMenuItemInfoW_fwd;
 FWDPROC GetMenuStringW_fwd;
-FWDPROC GetMessageW_fwd;
 FWDPROC GetMonitorInfoW_fwd;
 FWDPROC GetPropW_fwd;
 FWDPROC GetTabbedTextExtentW_fwd;

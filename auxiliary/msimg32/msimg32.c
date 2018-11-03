@@ -30,13 +30,6 @@
 	bInfo.bmiHeader.biHeight = cy; \
 	bInfo.bmiHeader.biPlanes = 1; \
 	bInfo.bmiHeader.biBitCount = 32;
-	
-typedef struct tagRGBALPHA {	
-	byte rgbRed;	
-	byte rgbGreen;	
-	byte rgbBlue;
-	byte rgbReserved;
-} RGBALPHA,*PRGBALPHA;
 
 #ifndef GRADIENT_FILL_RECT_H
 #define GRADIENT_FILL_RECT_H 0x00
@@ -70,16 +63,17 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
 	BITMAPINFO bmi;
 	HBITMAP srcBM, dstBM, dcBM;
 	HDC srcDC, dstDC;
-	PRGBALPHA srcPixel, dstPixel;	
+	RGBQUAD *srcPixel, *dstPixel;	
 	INITBITMAPINFO(bmi,nWidthDest,nHeightDest);
 
-	if ( !hdcDest || !hdcSrc || blendFunction.BlendOp != AC_SRC_OVER )
+	if ( !hdcDest || !hdcSrc || blendFunction.BlendOp != AC_SRC_OVER 
+		|| nWidthDest < 0 || nHeightDest < 0 || nWidthSrc < 0 || nHeightSrc < 0)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 	if ( !blendFunction.SourceConstantAlpha ) return TRUE; //nothing to do
-	if ( !blendFunction.AlphaFormat && blendFunction.SourceConstantAlpha == 0xFF ) //no alpha work
+	if ( !(blendFunction.AlphaFormat & AC_SRC_ALPHA) && blendFunction.SourceConstantAlpha == 0xFF ) //no alpha work
 		return StretchBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, SRCCOPY );
 		
 	srcBM = CreateDIBSection(hdcSrc, &bmi, DIB_RGB_COLORS, (void*)&srcPixel, NULL, 0);
@@ -102,7 +96,7 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
 	dcBM = SelectObject(dstDC, dstBM);
 	BitBlt(dstDC, 0, 0, nWidthDest, nHeightDest, hdcDest, nXOriginDest, nYOriginDest, SRCCOPY);		
 	//workwork
-	if ( !blendFunction.AlphaFormat ) //no alpha channel
+	if ( !(blendFunction.AlphaFormat & AC_SRC_ALPHA) ) //no alpha channel
 	{
 		srcalpha = blendFunction.SourceConstantAlpha;
 		dstalpha = 255 - srcalpha;
@@ -122,8 +116,7 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
 		srcalpha = blendFunction.SourceConstantAlpha;
 		for (i = 0; i < (nWidthDest*nHeightDest); i++)
 		{
-			
-			dstalpha = 255 - srcPixel->rgbReserved;
+			dstalpha = 255 - (srcPixel->rgbReserved * srcalpha / 255);
 			tmp = ((srcPixel->rgbRed * srcalpha) + (dstPixel->rgbRed * dstalpha)) / 255;
 			if (tmp > 255) tmp = 255;
 			dstPixel->rgbRed = tmp;

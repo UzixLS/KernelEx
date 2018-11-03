@@ -186,6 +186,30 @@ void Setup::disable_platform_check()
 	set_pattern(found_loc, after, length);
 }
 
+void Setup::disable_resource_check()
+{
+	static const short pattern[] = {
+		0x3d,0x00,0x80,0x00,0x00,0x72,
+	};
+	static const short after[] = {
+		0x3d,0x00,0x80,0x00,0x00,0xeb,
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size, pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "disable_resource_check");
+		else ShowError(IDS_MULPAT, "disable_resource_check");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "disable_resource_check",
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	set_pattern(found_loc, after, length);
+}
+
 void Setup::mod_imte_alloc()
 {
 	//VA BFF8745C, RVA 1745C, file 15A5C, sec E45C
@@ -350,9 +374,6 @@ void Setup::install()
 {
 	upgrade = false;
 
-	if (version == KEX_STUB_VER)
-		return;
-
 	if (version >= 0)
 	{
 		if (version > KEX_STUB_VER)
@@ -366,10 +387,15 @@ void Setup::install()
 	
 	pefile.OpenFile(upgrade ? backup_file.c_str() : kernel32path, 0x10000);
 	if (!pefile.HasTarget())
+	{
+		if (version == KEX_STUB_VER)
+			return;
 		ShowError(IDS_FAILOPEN, upgrade ? backup_file.c_str() : kernel32path);
+	}
 
 	find_ExportFromX();
 	disable_platform_check();
+	disable_resource_check();
 	mod_imte_alloc();
 
 	KernelEx_codeseg* cseg;

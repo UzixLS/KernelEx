@@ -52,6 +52,7 @@ private:
 	int find_pattern(DWORD offset, int size, const short* pattern, int pat_len, DWORD* found_loc);
 	void set_pattern(DWORD loc, const short* new_pattern, int pat_len);
 	void disable_platform_check();
+	void disable_resource_check();
 	void mod_imte_alloc();
 	void find_ExportFromX();
 	DWORD find_ExportFromOrdinal();

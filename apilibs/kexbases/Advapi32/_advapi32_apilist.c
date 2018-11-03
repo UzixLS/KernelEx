@@ -89,6 +89,8 @@ static const apilib_named_api advapi32_named_apis[] =
 	DECL_API("MakeSelfRelativeSD", MakeSelfRelativeSD_new),
 	DECL_API("NotifyBootConfigStatus", NotifyBootConfigStatus_new),
 	DECL_API("OpenProcessToken", OpenProcessToken_new),
+	DECL_API("OpenSCManagerA", OpenSCManagerA_stub),
+	DECL_API("OpenSCManagerW", OpenSCManagerW_stub),
 	DECL_API("OpenThreadToken", OpenThreadToken_new),
 	DECL_API("PrivilegeCheck", PrivilegeCheck_new),
 	DECL_API("QueryServiceStatusEx", QueryServiceStatusEx_stub),

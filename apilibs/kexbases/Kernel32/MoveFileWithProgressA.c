@@ -20,9 +20,11 @@
  */
 
 #include <windows.h>
+#include <common.h>
+#include "_kernel32_apilist.h"
 
 /* MAKE_EXPORT MoveFileWithProgressA_new=MoveFileWithProgressA */
 BOOL WINAPI MoveFileWithProgressA_new(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, LPPROGRESS_ROUTINE lpProgressRoutine, LPVOID lpData, DWORD dwFlags)
 {
-	return MoveFileExA(lpExistingFileName, lpNewFileName, dwFlags);
+	return MoveFileExA_new(lpExistingFileName, lpNewFileName, dwFlags);
 }

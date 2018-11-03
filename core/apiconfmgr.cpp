@@ -459,10 +459,7 @@ bool ApiConfigurationManager::commit_changes()
 	ApiConfiguration** new_prev;
 	new_prev = (ApiConfiguration**) malloc(used * sizeof(ApiConfiguration*));
 	if (!new_prev)
-	{
-		DBGPRINTF(("Failed to allocate memory\n"));
 		return false;
-	}
 
 	int cnt = 0;
 
@@ -499,12 +496,14 @@ bool ApiConfigurationManager::commit_changes()
 	}
 
 	//replace prev with new_prev
-	free(prev_apiconf_ptrs);
+	if (prev_apiconf_ptrs)
+		free(prev_apiconf_ptrs);
 	prev_apiconf_ptrs = new_prev;
 	prev_apiconf_cnt = cnt;
 
 	//replace curr with new
-	free(curr_apiconf_ptrs);
+	if (curr_apiconf_ptrs)
+		free(curr_apiconf_ptrs);
 	curr_apiconf_ptrs = new_apiconf_ptrs;
 	curr_apiconf_cnt = new_apiconf_cnt;
 	new_apiconf_ptrs = NULL;

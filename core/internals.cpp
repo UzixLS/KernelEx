@@ -28,6 +28,7 @@
 #include "pemanip.h"
 
 static bool is_winme;
+HINSTANCE hInstance;
 
 IMTE*** ppmteModTable = NULL;
 HMODULE h_kernel32;
@@ -119,7 +120,7 @@ void ShowError(UINT id, ...)
 	va_list vargs;
 	
 	va_start(vargs, id);
-	if (!LoadString(GetModuleHandle(NULL), id, format, sizeof(format)))
+	if (!LoadString(hInstance, id, format, sizeof(format)))
 		sprintf(out, "ERROR: Missing string resource %d", id);
 	else
 		_vsnprintf(out, sizeof(out), format, vargs);
@@ -476,6 +477,7 @@ static bool find_kernelex_install_dir()
 
 int internals_init()
 {
+	DBGPRINTF(("KernelEx loaded @ %08x\n", hInstance));
 	DBGPRINTF(("internals_init()\n"));
 	h_kernel32 = GetModuleHandle("kernel32");
 	ppmteModTable = find_mod_table();

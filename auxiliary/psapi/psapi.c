@@ -346,3 +346,9 @@ BOOL WINAPI EnumPageFilesW( PVOID callback, LPVOID context )
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;	
 }
+
+BOOL WINAPI EmptyWorkingSet( HANDLE hProcess )
+{
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;	
+}

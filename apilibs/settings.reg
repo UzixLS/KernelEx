@@ -37,4 +37,6 @@ REGEDIT4
 "*\\PBAGS.DLL"=dword:00000001
 "*\\PBSV.DLL"=dword:00000001
 "*\\PBSVS.DLL"=dword:00000001
+;-DirectX installer
+"*\\DXSETUP.EXE"=dword:00000001
 

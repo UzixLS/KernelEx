@@ -49,7 +49,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		OSVERSIONINFO osv;
 		osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 		GetVersionEx(&osv);
-		if (osv.dwMajorVersion < 5 || osv.dwMinorVersion < 1)
+		if (osv.dwMajorVersion < 5 || (osv.dwMajorVersion == 5 && osv.dwMinorVersion == 0))
 			return FALSE;
 		DisableThreadLibraryCalls(hinstDLL);
     }

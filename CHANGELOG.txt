@@ -1,0 +1,31 @@
+KernelEx v4.0 RC 2 by Xeno86
+2009-03-21
+
+fixed uxtheme version check
+added compilation instructions
+fixed msimg32.AlphaBlend bug incorrectly calculating transparency
+added kernel32.GetVersionW to default configuration
+added advapi32.OpenSCManager stubs
+implemented kernel32.GetConsoleWindow
+modified CreateFile, ReadFile and WriteFile so that they now accept overlapped flag
+fixed non-working MoveFileWithProgressA
+fix: DirectX setup has disabled extensions
+added psapi.EmptyWorkingSet stub
+change: KernelEx will first load any other MPRServices before initializing
+added workaround for situation where some kernel driver hijacked system functions
+added missing disable resource check fix
+removed GetMessageW from kexbasen (already in kexbases)
+fixed issue where installer wouldn't complete on fresh system
+fixed BSOD or crashes on shutdown on certain configurations by preventing early unload
+fixed compatibility sheet not working properly for shortcuts
+implemented kernel32.IsProcessorFeaturePresent
+fix: check if last element in merge list does repeat
+fixed compilation issue with PSDK 2003
+fixed Core not displaying error messages correctly
+
+---------------------------------------
+
+KernelEx v4.0 RC 1 by Xeno86
+2009-03-10
+
+First public release of KernelEx rewritten from scratch and based on new architecture

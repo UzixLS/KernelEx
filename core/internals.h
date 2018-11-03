@@ -34,6 +34,8 @@
 #endif
 #endif
 
+extern HINSTANCE hInstance;
+
 extern IMTE*** ppmteModTable;
 extern HMODULE h_kernel32;
 extern CRITICAL_SECTION* krnl32lock;

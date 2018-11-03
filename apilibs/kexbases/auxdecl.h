@@ -109,7 +109,6 @@ typedef void *LPMOUSEMOVEPOINT;
 EXTERN_C int WINAPI GetRandomRgn(HDC hdc, HRGN hrgn, INT iNum);
 EXTERN_C HRESULT WINAPI SHGetFolderPathA(HWND hwnd, int csidl, HANDLE hToken, DWORD dwFlags, LPSTR pszPath);
 EXTERN_C HWND WINAPI GetAncestor(HWND hwnd, UINT gaFlags);
-EXTERN_C UINT WINAPI RealGetWindowClass(HWND  hwnd, LPTSTR pszType, UINT  cchType);
 
 #endif /* defined (_MSC_VER) && (WINVER < 0x0500) */
 
@@ -131,6 +130,13 @@ typedef struct {
 #endif /* __MINGW32_VERSION */
 
 /* declarations for everyone */
+#ifdef GetAltTabInfo
+#undef GetAltTabInfo
+#endif
 EXTERN_C BOOL WINAPI GetAltTabInfo(HWND,int,PVOID,LPSTR,UINT);
+#ifdef RealGetWindowClass
+#undef RealGetWindowClass
+#endif
+EXTERN_C UINT WINAPI RealGetWindowClass(HWND  hwnd, LPTSTR pszType, UINT  cchType);
 
 #endif /* __AUXDECL_H */

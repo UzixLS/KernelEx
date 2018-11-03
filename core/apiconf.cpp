@@ -32,8 +32,6 @@ using namespace std;
 ApiConfiguration::ApiConfiguration(const char* name)
 {
 	initialized = prepare(name);
-	if (!initialized)
-		DBGPRINTF(("Failed to allocate memory\n"));
 }
 
 ApiConfiguration::ApiConfiguration(const char* new_name, const ApiConfiguration& src)
@@ -81,7 +79,6 @@ ApiConfiguration::ApiConfiguration(const char* new_name, const ApiConfiguration&
 	return;
 
 __error:
-	DBGPRINTF(("Failed to allocate memory\n"));
 	initialized = false;
 }
 
@@ -220,6 +217,8 @@ bool ApiConfiguration::merge(const ApiLibrary* apilib)
 				{
 					sfirst++;
 					space++;
+					while (sfirst != slast && !strcmp(sfirst->name, (sfirst - 1)->name))
+						sfirst++;
 				}
 
 				//allocate new mem
@@ -272,6 +271,8 @@ bool ApiConfiguration::merge(const ApiLibrary* apilib)
 					dfirst->address = encode_address(sfirst->addr, apilib);
 					dfirst++;
 					sfirst++;
+					while (sfirst != slast && !strcmp(sfirst->name, (sfirst - 1)->name))
+						sfirst++;
 				}
 
 				break;

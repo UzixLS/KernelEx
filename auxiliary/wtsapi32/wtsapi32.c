@@ -28,6 +28,7 @@
 
 #ifdef _MSC_VER
 
+#pragma warning(disable:4002)
 #define TRACE()
 #define FIXME()
 

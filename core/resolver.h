@@ -47,6 +47,18 @@ struct IMTE_KEX : public IMTE
 	                             * 0 - not checked, 0xffff - not an overridden module */
 };
 
+/* Creates a stub that calls address specified in the constructor. */
+class redir_stub
+{
+public:
+	redir_stub(unsigned long target) : c_eax(0xb8), v_eax(target), c_jmp(0xe0ff) {}
+
+private:
+	unsigned char c_eax;
+	unsigned long v_eax;
+	unsigned short c_jmp;
+};
+
 #pragma pack(pop)
 
 DWORD encode_address(DWORD addr, const ApiLibrary* apilib);

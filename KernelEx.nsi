@@ -1,4 +1,4 @@
-  !define VERSION '4.0 RC 1'
+  !define VERSION '4.0 RC 2'
 
 ;--------------------------------
 ;Includes
@@ -10,6 +10,8 @@
 ;--------------------------------
 ;General
 
+  SetCompressor /SOLID lzma
+  
   ;Name and file
   Name "KernelEx"
   Caption "KernelEx ${VERSION} Setup"

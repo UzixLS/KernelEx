@@ -23,7 +23,6 @@
 
 UNIMPL_FUNC(CreateHardLinkA, 3);
 UNIMPL_FUNC(CreateHardLinkW, 3);
-UNIMPL_FUNC(GetConsoleWindow, 0);
 UNIMPL_FUNC(IsValidLanguageGroup, 2);
 UNIMPL_FUNC(QueueUserWorkItem, 3);
 UNIMPL_FUNC(ReplaceFileA, 6);

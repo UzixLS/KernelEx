@@ -123,10 +123,11 @@ BEGIN
     CONTROL         "Disable KernelEx extensions for this program",
                     IDC_DISABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,43,
                     165,10
-    GROUPBOX        "",IDC_HORIZ1,7,108,172,9
     LTEXT           "kexver here",IDC_KEXVER,7,111,71,9,WS_DISABLED
     LTEXT           "If you have problems with this program, try selecting\na different compatibility mode.",
                     IDC_TCOMPAT,7,7,175,22
+    CONTROL         "",IDC_HORIZ1,"Static",SS_BLACKFRAME | SS_SUNKEN,7,109,
+                    176,1
 END
 
 
