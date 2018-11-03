@@ -8,6 +8,8 @@ If you build manually, you need to compile KEXCRT and PREP projects first as oth
 To build KEXCONTROL you have to build debug CORE first.
 KEXBASES and KEXBASEN projects rely on CORE be built first.
 
+To build VKRNLEX project you need Microsoft Windows 98 Driver Development Kit (DDK) or Microsoft Windows 2000 Driver Development Kit (DDK).
+
 To build installer you need NSIS install system.
 
 -Xeno86

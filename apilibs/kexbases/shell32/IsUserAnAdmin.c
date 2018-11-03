@@ -22,6 +22,7 @@
 #include <windows.h>
 
 /* MAKE_EXPORT IsUserAnAdmin_new=IsUserAnAdmin */
+/* MAKE_EXPORT IsUserAnAdmin_new=ordinal680 */
 BOOL WINAPI IsUserAnAdmin_new(void)
 {
 	return TRUE;

@@ -2,9 +2,10 @@
 // Microsoft Developer Studio generated include file.
 // Used by Core.rc
 //
-#define IDS_NOTREADY                    1
+#define IDS_NODRIVER                    1
 #define IDS_STUBMISMATCH                2
 #define IDS_OLDVER                      3
+#define IDS_DRIVERINITFAIL              4
 
 // Next default values for new objects
 // 

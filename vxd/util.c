@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2010, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,34 +19,32 @@
  *
  */
 
-#ifndef __SETUP_H
-#define __SETUP_H
+#include <basedef.h>
+#include <vmm.h>
 
-#include "sstring.hpp"
-
-void ShowError(UINT id, ...);
-
-class Setup
+void __cdecl abort(void)
 {
-public:
-	Setup(char* _backup_file);
-	int get_signature_ver();
-	void install();
-	void set_reboot_flag();
-	void register_verify();
-	void reboot();
+	__asm int 3
+}
 
-private:
-	sstring backup_file;
-	HMODULE h_kernel32;
-	int version;
-	bool is_winme;
-	bool upgrade;
+int __cdecl _purecall (void)
+{
+	abort();
+	return 0;
+}
 
-	bool detect_old_version();
-	void detect_downgrade();
-	void kill_process(const char* name);
-	sstring get_temp_file_name();
-};
+void __cdecl _assert(const char* expr, const char* file, unsigned line)
+{
+	_Debug_Printf_Service("Assertion failed: '%s' in %s line %d", expr, file, line);
+	abort();
+}
 
-#endif
+void __declspec(naked) _stdcall RtlUnwind(
+	PVOID TargetFrame,
+	PVOID TargetIp,
+	PVOID ExceptionRecord,
+	PVOID ReturnValue
+)
+{
+	VMMJmp(ObsoleteRtlUnwind);
+}

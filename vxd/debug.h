@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009-2010, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,12 +19,14 @@
  *
  */
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __DEBUG_H
+#define __DEBUG_H
 
-#define VERSION_STR      "4.5.2"
-#define VERSION_CODE     0x04050078
-#define RCVERSION        4, 5, 12, 0
-#define _RCVERSION_      "4, 5, 12, 0"
+#ifdef _DEBUG
+void debug_printf(const char* fmt, ...);
+#define DBGPRINTF(x) debug_printf x
+#else
+#define DBGPRINTF(x) do {} while (0)
+#endif
 
 #endif

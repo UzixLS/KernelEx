@@ -68,7 +68,7 @@ PROC apihook::prepare(BOOL is_static)
 
 	if (hApiHookDll)
 	{
-		init_once = (init_once_t) GetProcAddress(hApiHookDll, "kexApiHook_initonce");
+		init_once = (init_once_t) iGetProcAddress(hApiHookDll, "kexApiHook_initonce");
 		__try
 		{
 			if (!init_once || !init_once())
@@ -93,7 +93,7 @@ PROC apihook::prepare(BOOL is_static)
 	}
 
 	if (hApiHookDll)
-		ah_reg = GetProcAddress(hApiHookDll, "kexApiHook_register");
+		ah_reg = iGetProcAddress(hApiHookDll, "kexApiHook_register");
 
 	if (!hApiHookDll || !init_once || !ah_reg)
 	{

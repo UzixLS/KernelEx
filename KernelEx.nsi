@@ -1,4 +1,5 @@
-  !define _VERSION '4.5.1'
+  !define _VERSION '4.5.2'
+  !define _VERSION_CODE 0x04050078
   
   !ifndef _DEBUG
     !define FLAVOUR 'Release'
@@ -207,48 +208,31 @@ SectionEnd
 Section "Install"
 
   SetDetailsView show
-
-  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
-  IfErrors +5
-    DetailPrint "Detected unfinished previous installation."
-    DetailPrint "You have to restart the system in order to complete it before you can proceed."
-    MessageBox MB_ICONSTOP|MB_OK "You have to restart the system first."
-    Abort
-
+  
   SetOutPath "$INSTDIR"
+  
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot" ""
 
-  GetTempFileName $R0 "$INSTDIR"
-  File /oname=$R0 "setup\${FLAVOUR}\setupkex.exe"
-  
-  StrCpy $R1 "none"
+  ;Revert KERNEL32.DLL file patch in case of upgrade
+  IfFileExists "$WINDIR\SYSBCKUP\KERNEL32.DLL" 0 +7
+    GetTempFileName $0 "$SYSDIR"
+    Delete $0
+    Rename /REBOOTOK "$WINDIR\SYSBCKUP\KERNEL32.DLL" $0
+    Rename /REBOOTOK $0 "$SYSDIR\kernel32.dll"
+    Delete "$INSTDIR\kernel32.bak"
+    Goto Revert_Done
+
   IfFileExists "$INSTDIR\kernel32.bak" 0 +6
-    StrCpy $R1 "copy"
-    ClearErrors
-    CopyFiles /SILENT "$INSTDIR\kernel32.bak" "$WINDIR\SYSBCKUP\KERNEL32.DLL"
-    IfErrors 0 +2
-      StrCpy $R1 "exist" ;File already exists
+    GetTempFileName $0 "$SYSDIR"
+    Delete $0
+    Rename /REBOOTOK "$INSTDIR\kernel32.bak" $0
+    Rename /REBOOTOK $0 "$SYSDIR\kernel32.dll"
+    Goto Revert_Done
   
-!ifdef _DEBUG
-  nsExec::ExecToLog '"$R0"'
-  Pop $0
-!else
-  ExecWait '"$R0"' $0
-  StrCmp $0 "" 0 +2
-    StrCpy $0 "error"
-!endif
-  DetailPrint "    setup returned: $0"
-  StrCmp $0 "0" +6
-    Delete $R0 ;delete temporary setupkex.exe
-    StrCmp $R1 "copy" 0 +2 ;undo copy
-      Delete "$WINDIR\SYSBCKUP\KERNEL32.DLL"
-    RMDir "$INSTDIR"
-    Abort
+  Revert_Done:
   
-  Rename /REBOOTOK $R0  "$INSTDIR\setupkex.exe"
-  StrCmp $R1 "copy" +2 0
-  StrCmp $R1 "exist" 0 +2
-    Delete /REBOOTOK "$INSTDIR\kernel32.bak" ;delete deprecated update file
-  
+  Delete /REBOOTOK "$INSTDIR\setupkex.exe"
+
   ;Files to install
   
   ;UpdateDLL_Func params:
@@ -294,6 +278,11 @@ Section "Install"
   File apilibs\settings.reg
   File license.txt
   File "Release Notes.txt"
+  
+  GetTempFileName $0 "$INSTDIR"
+  File /oname=$0 "vxd\${FLAVOUR}\VKrnlEx.vxd"
+  Delete "$INSTDIR\VKrnlEx.vxd"
+  Rename /REBOOTOK $0 "$INSTDIR\VKrnlEx.vxd"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\msimg32.dll
@@ -352,6 +341,7 @@ Section "Install"
   WriteRegStr HKLM "Software\KernelEx" "InstallDir" $INSTDIR
   
   ;Store run key
+  WriteRegStr HKLM "System\CurrentControlSet\Services\VxD\VKRNLEX" "StaticVxD" "$INSTDIR\VKrnlEx.vxd"
   WriteRegStr HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx" "DLLName" "$INSTDIR\KernelEx.dll"
   WriteRegStr HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx" "EntryPoint" "_MprStart@4"
   WriteRegDWORD HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx" "StackSize" 0x1000
@@ -391,13 +381,6 @@ Section "Uninstall"
 
   SetDetailsView show
 
-  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
-  IfErrors +5
-    DetailPrint "Detected unfinished previous installation."
-    DetailPrint "You have to restart the system in order to complete it before you can proceed."
-    MessageBox MB_ICONSTOP|MB_OK "You have to restart the system first."
-    Abort
-  
   ;Files to uninstall
   IfFileExists "$WINDIR\SYSBCKUP\KERNEL32.DLL" 0 +5
     GetTempFileName $0 "$SYSDIR"
@@ -415,6 +398,8 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\kexCOM.dll"
   Delete "$INSTDIR\license.txt"
   Delete "$INSTDIR\Release Notes.txt"
+  
+  Delete /REBOOTOK "$INSTDIR\VKrnlEx.vxd"
   
   Delete /REBOOTOK "$INSTDIR\msimg32.dll"
   DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "MSIMG32"
@@ -450,6 +435,7 @@ Section "Uninstall"
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "$(DESC_SETTINGS_PRESERVE)" IDYES +2 IDNO 0
     DeleteRegKey HKLM "Software\KernelEx"
   
+  DeleteRegKey HKLM "System\CurrentControlSet\Services\VxD\VKRNLEX"
   DeleteRegKey HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx"
   DeleteRegKey /ifempty HKLM "System\CurrentControlSet\Control\MPRServices"
   
@@ -459,6 +445,35 @@ Section "Uninstall"
   SetRebootFlag true
 
 SectionEnd
+
+;--------------------------------
+; Detect obsolete pre-4.0 KUP or KEX
+Function DetectOldKex
+
+  System::Call "kernel32::KUPVersion(m .r0)"
+  StrCmp $0 "" 0 +4
+    System::Call "kernel32::KEXVersion(m .r0)"
+    StrCmp $0 "" 0 +2
+      Return
+  StrCpy $1 $0 1 0
+  IntCmp $1 4 +3 0 +3
+    MessageBox MB_ICONSTOP|MB_OK "Setup has detected previous version of KernelEx ($0) installed on this computer. Please uninstall it before continuing."
+    Abort
+
+FunctionEnd
+
+;--------------------------------
+; We can't predict future... downgrading from higher version is forbidden
+Function DetectDowngrade
+
+  System::Call "kernelex::kexGetKEXVersion() i.r0 ? u"
+  StrCmp $0 "" 0 +2
+    Return
+  IntCmp $0 ${_VERSION_CODE} +3 +3 0
+    MessageBox MB_ICONSTOP|MB_OK "Can't downgrade. Please uninstall currently installed version of KernelEx before continuing."
+    Abort
+
+FunctionEnd
 
 ;--------------------------------
 ;.onInit
@@ -475,4 +490,23 @@ Function .onInit
   
   lbl_Ok:
 
- FunctionEnd
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
+  IfErrors +3
+    MessageBox MB_ICONSTOP|MB_OK "Detected unfinished previous installation.$\n\
+      You have to restart the system in order to complete it before you can proceed further."
+    Abort
+
+  Call DetectOldKex
+  Call DetectDowngrade
+
+FunctionEnd
+
+Function un.onInit
+
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
+  IfErrors +3
+    MessageBox MB_ICONSTOP|MB_OK "Detected unfinished previous installation.$\n\
+      You have to restart the system in order to complete it before you can proceed further."
+    Abort
+  
+FunctionEnd

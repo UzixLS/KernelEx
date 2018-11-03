@@ -43,3 +43,21 @@ BOOL WINAPI LockFileEx_new(
 	return LockFile(hFile, lpOverlapped->Offset, lpOverlapped->OffsetHigh, 
 			nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
 }
+
+/* MAKE_EXPORT UnlockFileEx_new=UnlockFileEx */
+BOOL WINAPI UnlockFileEx_new(
+	HANDLE hFile,
+	DWORD dwReserved,
+	DWORD nNumberOfBytesToUnlockLow,
+	DWORD nNumberOfBytesToUnlockHigh,
+	LPOVERLAPPED lpOverlapped
+)
+{
+	if (dwReserved)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	return UnlockFile(hFile, lpOverlapped->Offset, lpOverlapped->OffsetHigh,
+			nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh);
+}

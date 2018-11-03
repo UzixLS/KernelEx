@@ -70,6 +70,7 @@ BOOL WINAPI AssignProcessToJobObject_new(HANDLE job, HANDLE process);
 BOOL WINAPI IsProcessInJob_new(HANDLE process, HANDLE job, PBOOL result);
 void WINAPI KEXVersion(char* out);
 BOOL WINAPI LockFileEx_new(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped);
+BOOL WINAPI UnlockFileEx_new(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
 LPVOID WINAPI MapViewOfFileEx_new(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap, LPVOID lpBaseAddress);
 LPVOID WINAPI MapViewOfFile_new(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
 BOOL WINAPI MoveFileExA_new(LPCSTR lpExistingFileNameA, LPCSTR lpNewFileNameA, DWORD dwFlags);

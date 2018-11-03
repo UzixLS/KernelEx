@@ -552,7 +552,7 @@ void ApiConfiguration::dump()
 					api_tables[i].named_apis[j].address);
 		printf("Unnamed apis (count = %d)\n", api_tables[i].unnamed_apis_count);
 		for (int j = 0 ; j < api_tables[i].unnamed_apis_count ; j++)
-			printf("\t%-5d                            %08x\n", j, api_tables[i].unnamed_apis[j]);
+			printf("\t%-5d                            %08x\n", j + 1, api_tables[i].unnamed_apis[j]);
 		printf("\n");
 	}
 	printf("\n");

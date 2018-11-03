@@ -44,7 +44,7 @@ extern sstring kernelex_dir;
 extern sstring own_path;
 
 void ShowError(UINT id, ...);
-bool rerun_setup();
+bool VKernelEx_ioctl(DWORD command, PVOID buffer, DWORD buffer_size);
 bool isWinMe();
 
 typedef MODREF* (__stdcall *MRFromHLib_t)(HMODULE);

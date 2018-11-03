@@ -19,14 +19,24 @@
  *
  */
 
-#ifndef __DEBUG_H
-#define __DEBUG_H
+extern "C" {
+#include <basedef.h>
+#include <vmm.h>
+};
+#include <string.h>
+#include <malloc.h>
+#include "debug.h"
 
-#ifdef _DEBUG
-#include <stdio.h>
-#define DBGPRINTF(x) printf x
-#else
-#define DBGPRINTF(x) do {} while (0)
-#endif
+void debug_printf(const char* fmt, ...)
+{
+	char* newfmt = (char*) alloca(strlen(fmt) + 10);
+	strcpy(newfmt, "VKRNLEX: ");
+	strcat(newfmt, fmt);
+	strcat(newfmt, "\n");
 
-#endif
+    __asm lea  eax,(fmt + 4)
+    __asm push eax
+    __asm push newfmt
+    VMMCall(_Debug_Printf_Service)
+    __asm add esp, 2*4
+}

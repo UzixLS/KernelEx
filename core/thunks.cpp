@@ -23,7 +23,7 @@
 #include "thunks.h"
 #include "internals.h"
 #include "resolver.h"
-#include "../setup/loadstub.h"
+#include "../vxd/interface.h"
 
 __declspec(naked) 
 PROC ExportFromOrdinalStatic_thunk(IMAGE_NT_HEADERS* PEh, WORD ordinal)

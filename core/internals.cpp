@@ -27,6 +27,8 @@
 #include "pemanip.h"
 #include "ModInit.h"
 
+extern "C" int snprintf(char*, size_t, const char*, ...);
+
 #ifdef _DEBUG
 #define _D(x) x
 #else
@@ -72,21 +74,32 @@ void ShowError(UINT id, ...)
 	MessageBox(NULL, out, "KernelEx Core", MB_OK | MB_ICONERROR);
 }
 
-bool rerun_setup()
+bool VKernelEx_ioctl(DWORD command, PVOID buffer, DWORD buffer_size)
 {
-	char cmd[MAX_PATH];
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
+	BOOL result;
+	DWORD retlen;
+    HANDLE VKernelEx;
 
-	strcpy(cmd, "\"");
-	strcat(cmd, kernelex_dir);
-	strcat(cmd, "setupkex.exe\" /R");
-	
-	GetStartupInfo(&si);
-	if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	char vxdpath[MAX_PATH];
+	snprintf(vxdpath, sizeof(vxdpath), "\\\\.\\%sVKRNLEX.VXD", 
+		(const char*) kernelex_dir);
+
+	VKernelEx = CreateFile(vxdpath, 0, 0, 0, 0, FILE_FLAG_DELETE_ON_CLOSE, 0);
+
+	if (VKernelEx == INVALID_HANDLE_VALUE)
+	{
+		DBGPRINTF(("Failed to connect to VKernelEx!\n"));
 		return false;
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
+	}
+
+	result = DeviceIoControl(VKernelEx, command, NULL, 0, 
+		buffer, buffer_size, &retlen, NULL);
+
+	CloseHandle(VKernelEx);
+
+	if (!result || retlen > buffer_size)
+		return false;
+
 	return true;
 }
 

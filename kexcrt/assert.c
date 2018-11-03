@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 void _assert(const char *expr, const char *file, unsigned int line)
 {

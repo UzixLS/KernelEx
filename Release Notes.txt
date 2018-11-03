@@ -1,3 +1,19 @@
+KernelEx v4.5.2 by Xeno86
+2011-11-14
+
+What's new:
+----------------------------------
+* Added KernelEx Virtual Device (VKrnlEx.vxd) project which makes modification of kernel32.dll file on disk unnecessary by patching the image directly in memory from kernel space before the shell starts
+* Implemented a fix for a crash occuring when accessing a locked file through file mapping object
+* Some programs shouldn't complain about not having admin privileges anymore
+* Various bugfixes
+
+Apps fixed / now working:
+-------------------------
+* Now working: Mozilla Firefox 8.0
+
+#################################################
+
 KernelEx v4.5.1 by Xeno86
 2011-05-06
 

@@ -128,7 +128,12 @@ void __stdcall log_stub::pre_log(log_data* lgd)
 				lgd->target, lgd->api_name);
 
 		va_list ap = va_list((DWORD*) &lgd + 10);
-		z += ApiLogParams::inst().decode_parameters(lgd->target, lgd->api_name, ap, msg + z, sizeof(msg)-1 - z);
+		int limit = sizeof(msg) - 1 - z;
+		int zz = ApiLogParams::inst().decode_parameters(lgd->target, lgd->api_name, ap, msg + z, limit);
+		if (zz > limit)
+			z += limit;
+		else
+			z += zz;
 		strcpy(msg + z, "\n");
 
 		writer_fn(msg);

@@ -214,6 +214,7 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("TerminateJobObject", TerminateJobObject_new),
 	DECL_API("TryEnterCriticalSection", TryEnterCriticalSection_new),
 	DECL_API("TzSpecificLocalTimeToSystemTime", TzSpecificLocalTimeToSystemTime_new),
+	DECL_API("UnlockFileEx", UnlockFileEx_new),
 	DECL_API("VerLanguageNameW", VerLanguageNameW_new),
 	DECL_API("VerSetConditionMask", VerSetConditionMask_new),
 	DECL_API("VerifyVersionInfoA", VerifyVersionInfoA_NT2K),

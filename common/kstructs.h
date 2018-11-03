@@ -296,32 +296,6 @@ typedef struct _FILEMAPPING {  // Size = 0x28 (from Kernel32)
 
 #pragma pack(pop)
 
-#if defined(__GNUC__)
-
-static inline
-PDB98* get_pdb(void)
-{
-	PDB98* pdb;
-	__asm__(".byte 0x64\n\tmovl (0x30),%0" : "=r" (pdb));
-	return pdb;
-}
-
-static inline
-TIB98* get_tib(void)
-{
-	TIB98* tib;
-	__asm__(".byte 0x64\n\tmovl (0x18),%0" : "=r" (tib));
-	return tib;
-}
-
-static inline
-TDB98* get_tdb(void)
-{
-	return (TDB98*) ((unsigned long) get_tib()) - 8;
-}
-
-#else
-
 #pragma warning (disable:4035)		// turn off no return code warning
 
 static inline
@@ -344,7 +318,5 @@ TDB98* get_tdb(void)
 }
 
 #pragma warning (default:4035)		// turn on no return code warning
-
-#endif /* defined(__GNUC__) */
 
 #endif /* __KSTRUCTS_H */

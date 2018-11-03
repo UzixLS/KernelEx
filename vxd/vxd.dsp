@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="setup" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="VxD" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Console Application" 0x0103
 
-CFG=setup - Win32 Debug
+CFG=VxD - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "setup.mak".
+!MESSAGE NMAKE /f "vxd.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "setup.mak" CFG="setup - Win32 Debug"
+!MESSAGE NMAKE /f "vxd.mak" CFG="VxD - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "setup - Win32 Release" (based on "Win32 (x86) Console Application")
-!MESSAGE "setup - Win32 Debug" (based on "Win32 (x86) Console Application")
+!MESSAGE "VxD - Win32 Release" (based on "Win32 (x86) Console Application")
+!MESSAGE "VxD - Win32 Debug" (based on "Win32 (x86) Console Application")
 !MESSAGE 
 
 # Begin Project
@@ -28,7 +28,7 @@ CFG=setup - Win32 Debug
 CPP=cl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "setup - Win32 Release"
+!IF  "$(CFG)" == "VxD - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /O2 /I "." /I "../common" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GF /c
+# ADD CPP /nologo /W3 /O2 /D "NDEBUG" /FD /GF /c
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
 # ADD RSC /l 0x415 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,10 +50,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /entry:"mainCRTStartup" /subsystem:windows /machine:I386 /nodefaultlib /out:"Release/setupkex.exe" /OPT:NOWIN98
+# ADD LINK32 vxdwraps.clb libc.lib /nologo /map /machine:I386 /nodefaultlib /out:"Release/VKrnlEx.vxd" /vxd /ignore:4078 /ignore:4039
 # SUBTRACT LINK32 /pdb:none
 
-!ELSEIF  "$(CFG)" == "setup - Win32 Debug"
+!ELSEIF  "$(CFG)" == "VxD - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -67,7 +67,8 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /ZI /Od /I "." /I "../common" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /GF /c
+# ADD CPP /nologo /W3 /Gm /Zi /Od /D "_DEBUG" /FD /GF /Gs /c
+# SUBTRACT CPP /Gy
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
 # ADD RSC /l 0x415 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -75,29 +76,58 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib shell32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib /out:"Debug/setupkex.exe" /OPT:NOWIN98
+# ADD LINK32 vxdwraps.clb libc.lib /nologo /incremental:no /map /debug /machine:I386 /nodefaultlib /out:"Debug/VKrnlEx.vxd" /vxd /ignore:4078 /ignore:4039
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
 # Begin Target
 
-# Name "setup - Win32 Release"
-# Name "setup - Win32 Debug"
+# Name "VxD - Win32 Release"
+# Name "VxD - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=.\debug.cpp
+
+!IF  "$(CFG)" == "VxD - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "VxD - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\KernelEx.def
+# End Source File
 # Begin Source File
 
 SOURCE=.\patch.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\common\pemanip.cpp
+SOURCE=.\patch_ifsmgr.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\setup.cpp
+SOURCE=.\patch_kernel32.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\pemanip.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\util.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\vxdmain.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -105,11 +135,7 @@ SOURCE=.\setup.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\debug.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\loadstub.h
+SOURCE=.\interface.h
 # End Source File
 # Begin Source File
 
@@ -117,28 +143,28 @@ SOURCE=.\patch.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\common\pemanip.h
+SOURCE=.\patch_ifsmgr.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\resource.h
+SOURCE=.\patch_kernel32.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\setup.h
+SOURCE=.\pemanip.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\wininit.h
+SOURCE=.\util.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\vxdmain.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-# Begin Source File
-
-SOURCE=.\setup.rc
-# End Source File
 # End Group
 # End Target
 # End Project

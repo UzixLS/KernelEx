@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009-2010, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,12 +19,15 @@
  *
  */
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __PATCH_IFSMGR_H
+#define __PATCH_IFSMGR_H
 
-#define VERSION_STR      "4.5.2"
-#define VERSION_CODE     0x04050078
-#define RCVERSION        4, 5, 12, 0
-#define _RCVERSION_      "4, 5, 12, 0"
+#include "patch.h"
+
+class Patch_ifsmgr : public Patch
+{
+public:
+	bool apply();
+};
 
 #endif

@@ -1,3 +1,22 @@
+KernelEx v4.5.2 by Xeno86
+2011-11-14
+
+removed obsolete SETUPKEX project
+moved downgrade detection and detection of pre-4.0 KernelEx from SETUPKEX to the installer
+installer: show information about pending reboot before displaying the main window
+AppSettings: updated configuration for Firefox 4+ installers
+VKrnlEx: added IFSMgr fix, repairing the problem in accessing a locked file through file mapping object
+added "VKrnlEx" project which superseeds "SetupKex" project, VKrnlEx makes modification of kernel32.dll file on disk unnecessary by patching the image directly in memory from kernel space before the shell starts
+implemented KERNEL32.UnlockFileEx (required for Firefox 7)
+fix circular-reference problem in apihook initialization
+added SHELL32.IsUserAnAdmin ordinal export - some apps shouldn't complain about not having admin privileges anymore
+core: api configuration dump had improper ordinal numbers listed
+core: fixed crash if invalid handle was passed to kexGetProcAddress (fixes mysterious crash if UNICOWS.DLL could not be loaded)
+apihook/apilog: fixed bug in parameter logging, leading to crashes if resulting string exceeded buffer length
+AppSettings: Canon printing manager didn't appear to like working under NT mode
+
+---------------------------------------
+
 KernelEx v4.5.1 by Xeno86
 2011-05-06
 

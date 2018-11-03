@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2010, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,39 +19,44 @@
  *
  */
 
-#ifndef __PATCH_H
-#define __PATCH_H
+#ifndef __PATCH_KERNEL32_H
+#define __PATCH_KERNEL32_H
+
+#include "patch.h"
+#include "interface.h"
 
 class PEmanip;
 
-class Patch
+class Patch_kernel32 : public Patch
 {
 public:
-	Patch(PEmanip& pem);
-	void apply();
+	Patch_kernel32(PEmanip& pem);
+	bool apply();
+	
+	KernelEx_dataseg* stub_address;
 
 private:
-	int find_pattern(DWORD offset, int size, const short* pattern, int pat_len, DWORD* found_loc);
-	void set_pattern(DWORD loc, const short* new_pattern, int pat_len);
-	void prepare_subsystem_check();
-	void find_resource_check1();
-	void find_resource_check2();
-	void disable_named_and_rcdata_resources_mirroring();
-	void mod_imte_alloc();
-	void mod_mr_alloc();
-	void mod_pdb_alloc();
-	void find_ExportFromX();
-	void find_IsKnownDLL();
-	void find_FLoadTreeNotify1();
-	void find_FLoadTreeNotify2();
-	DWORD decode_call(DWORD addr, int len = 0);
-	DWORD decode_jmp(DWORD addr, int len = 0);
-	bool is_call_ref(DWORD loc, DWORD target);
-	void set_call_ref(DWORD loc, DWORD target);
-	void set_jmp_ref(DWORD loc, DWORD target);
+	bool find_signature();
+	bool prepare_subsystem_check();
+	bool find_resource_check1();
+	bool find_resource_check2();
+	bool disable_named_and_rcdata_resources_mirroring();
+	bool mod_imte_alloc();
+	bool mod_mr_alloc();
+	bool mod_pdb_alloc();
+	bool find_ExportFromX();
+	bool find_IsKnownDLL();
+	bool find_FLoadTreeNotify1();
+	bool find_FLoadTreeNotify2();
+	bool create_stubs();
 	bool is_fixupc(DWORD addr);
 
 	PEmanip& pefile;
+	DWORD code_seg_start;
+	DWORD code_seg_size;
+	DWORD data_seg_start;
+	DWORD data_seg_size;
+
 	DWORD _GetOrdinal;
 	DWORD _ExportFromOrdinal;
 	DWORD _ExportFromName;

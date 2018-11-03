@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009-2010, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,12 +19,17 @@
  *
  */
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __VXDMAIN_H
+#define __VXDMAIN_H
 
-#define VERSION_STR      "4.5.2"
-#define VERSION_CODE     0x04050078
-#define RCVERSION        4, 5, 12, 0
-#define _RCVERSION_      "4, 5, 12, 0"
+BOOL _stdcall VKernelEx_Critical_Init(void);
+BOOL _stdcall VKernelEx_Dynamic_Init(void);
+BOOL _stdcall VKernelEx_Dynamic_Exit(void);
+DWORD _stdcall VKernelEx_W32_DeviceIOControl(DWORD, DWORD, PDIOCPARAMETERS);
+DWORD _stdcall VKernelEx_CleanUp(void);
+DWORD _stdcall VKernelEx_IOCTL_Connect(DWORD, PDIOCPARAMETERS);
+BOOL _stdcall VKernelEx_Create_Process(DWORD pid);
+BOOL _stdcall VKernelEx_Destroy_Process(DWORD pid);
+BOOL _stdcall VKernelEx_Begin_PM_App(HVM hVM);
 
 #endif

@@ -69,9 +69,10 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_NOTREADY            "System is not KernelEx-ready.\nPlease reinstall KernelEx."
+    IDS_NODRIVER            "KernelEx was unable to find its kernel driver counterpart.\nPlease reinstall KernelEx."
     IDS_STUBMISMATCH        "Stub version mismatch (expected: %d, got: %d).\nPlease reinstall KernelEx."
     IDS_OLDVER              "Another KernelEx version has been detected: %s.\nPlease uninstall  all other versions and reinstall latest version."
+    IDS_DRIVERINITFAIL      "KernelEx Virtual Device has failed to initialize."
 END
 
 #endif    // Neutral resources

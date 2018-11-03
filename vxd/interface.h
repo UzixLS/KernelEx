@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2010, Xeno86
+ *  Copyright (C) 2008-2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,25 +19,29 @@
  *
  */
 
-#ifndef __LOADSTUB_H
-#define __LOADSTUB_H
+#ifndef __INTERFACE_H
+#define __INTERFACE_H
+
+/* Update this whenever patching functions are changed. */
+#define KEX_STUB_VER 11
 
 #define KEX_SIGNATURE "KrnlEx"
-/* Update this whenever patching functions are changed. */
-#define KEX_STUB_VER 10
 
-#define JTAB_SIZE 8
-#define JTAB_EFO_DYN 0
-#define JTAB_EFO_STA 1
-#define JTAB_EFN_DYN 2
-#define JTAB_EFN_STA 3
-#define JTAB_KNO_DLL 4
-#define JTAB_FLD_TRN 5
-#define JTAB_SYS_CHK 6
-#define JTAB_RES_CHK 7
+enum
+{
+	JTAB_EFO_DYN,
+	JTAB_EFO_STA,
+	JTAB_EFN_DYN,
+	JTAB_EFN_STA,
+	JTAB_KNO_DLL,
+	JTAB_FLD_TRN,
+	JTAB_SYS_CHK,
+	JTAB_RES_CHK,
+	JTAB_SIZE
+};
 
 #include <pshpack1.h>
-typedef struct
+struct KernelEx_codeseg
 {
 	char signature[6];   /* "KrnlEx" */
 	unsigned short version;
@@ -47,14 +51,27 @@ typedef struct
 		DWORD addr;   /* address to jtab */
 		WORD nop;    /* dword align */
 	} jmp_stub[JTAB_SIZE];
-} KernelEx_codeseg;
+};
 
-typedef struct
+struct KernelEx_dataseg
 {
 	char signature[6];   /* "KrnlEx" */
 	unsigned short version;
 	DWORD jtab[JTAB_SIZE];
-} KernelEx_dataseg;
+};
 #include <poppack.h>
+
+/*
+ * IOCTL Support	
+ */
+
+#define IOCTL_CONNECT		1
+
+struct ioctl_connect_params
+{
+	WORD vxd_version;
+	bool status;
+	KernelEx_dataseg* stub_ptr;
+};
 
 #endif

@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009-2010, Xeno86
+ *  Copyright (C) 2010-2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,12 +19,35 @@
  *
  */
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __PATCH_H
+#define __PATCH_H
 
-#define VERSION_STR      "4.5.2"
-#define VERSION_CODE     0x04050078
-#define RCVERSION        4, 5, 12, 0
-#define _RCVERSION_      "4, 5, 12, 0"
+enum MessageID
+{
+	IDS_NOPAT,
+	IDS_MULPAT,
+	IDS_FAILSEC,
+	IDS_ERRCHECK,
+	IDS_WINVER,
+	IDS_DOWNGRADE,
+};
+
+class Patch
+{
+public:
+	Patch() {}
+	virtual bool apply() = 0;
+	
+protected:
+	void ShowError(MessageID id, ...);
+	static int find_pattern(DWORD offset, int size, const short* pattern, int pat_len, DWORD* found_loc);
+	void set_pattern(DWORD loc, const short* new_pattern, int pat_len);
+	DWORD decode_call(DWORD addr, int len = 0);
+	DWORD decode_jmp(DWORD addr, int len = 0);
+	bool is_call_ref(DWORD loc, DWORD target);
+	void set_call_ref(DWORD loc, DWORD target);
+	void set_jmp_ref(DWORD loc, DWORD target);
+	void pagelock(DWORD addr, DWORD count);
+};
 
 #endif
