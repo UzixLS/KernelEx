@@ -25,17 +25,17 @@ BOOL WINAPI SystemFunction036_new(PVOID pbBuffer, ULONG dwLen);
 
 static LONG get_pointer_obfuscator(void)
 {
-    static LONG obfuscator;
+	static LONG obfuscator;
 
-    if (obfuscator == 0)
-    {
+	if (obfuscator == 0)
+	{
 		LONG rand;
 		SystemFunction036_new(&rand, sizeof(rand));
 		rand |= 0xc0000000;
 		InterlockedCompareExchange(&obfuscator, rand, 0);
-    }
+	}
 
-    return obfuscator;
+	return obfuscator;
 }
 
 /* FIXME: EncodePointer/DecodePointer should use per-process obfuscator */
@@ -46,6 +46,6 @@ static LONG get_pointer_obfuscator(void)
 /* MAKE_EXPORT XorPointer=DecodeSystemPointer */
 PVOID WINAPI XorPointer(PVOID ptr)
 {
-    LONG ptrval = (LONG) ptr;
-    return (PVOID)(ptrval ^ get_pointer_obfuscator());
+	LONG ptrval = (LONG) ptr;
+	return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }

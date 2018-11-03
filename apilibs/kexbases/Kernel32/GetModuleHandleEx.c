@@ -27,9 +27,9 @@
 
 /* MAKE_EXPORT GetModuleHandleExA_new=GetModuleHandleExA */
 BOOL WINAPI GetModuleHandleExA_new(
-  DWORD     dwFlags,
-  LPCSTR   lpModuleName,
-  HMODULE*  phModule
+	DWORD     dwFlags,
+	LPCSTR   lpModuleName,
+	HMODULE*  phModule
 )
 {
 	char buf[MAX_PATH];
@@ -60,9 +60,9 @@ BOOL WINAPI GetModuleHandleExA_new(
 
 /* MAKE_EXPORT GetModuleHandleExW_new=GetModuleHandleExW */
 BOOL WINAPI GetModuleHandleExW_new(
-  DWORD     dwFlags,
-  LPCWSTR   lpModuleNameW,
-  HMODULE*  phModule
+	DWORD     dwFlags,
+	LPCWSTR   lpModuleNameW,
+	HMODULE*  phModule
 )
 {
 	if (dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)

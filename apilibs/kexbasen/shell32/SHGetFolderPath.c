@@ -27,8 +27,8 @@
 #include <pshpack1.h>
 typedef struct
 {
-    BYTE jmp;
-    DWORD func;
+	BYTE jmp;
+	DWORD func;
 } LONGJMP, *PLONGJMP;
 #include <poppack.h>
 

@@ -44,23 +44,23 @@
 	
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
+	if (fdwReason == DLL_PROCESS_ATTACH)
 		DisableThreadLibraryCalls(hinstDLL);
-    return TRUE;
+	return TRUE;
 }
 
 
 BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
-  int nXOriginDest,            // x-coord of upper-left corner
-  int nYOriginDest,            // y-coord of upper-left corner
-  int nWidthDest,              // destination width
-  int nHeightDest,             // destination height
-  HDC hdcSrc,                  // handle to source DC
-  int nXOriginSrc,             // x-coord of upper-left corner
-  int nYOriginSrc,             // y-coord of upper-left corner
-  int nWidthSrc,               // source width
-  int nHeightSrc,              // source height
-  BLENDFUNCTION blendFunction  // alpha-blending function
+	int nXOriginDest,            // x-coord of upper-left corner
+	int nYOriginDest,            // y-coord of upper-left corner
+	int nWidthDest,              // destination width
+	int nHeightDest,             // destination height
+	HDC hdcSrc,                  // handle to source DC
+	int nXOriginSrc,             // x-coord of upper-left corner
+	int nYOriginSrc,             // y-coord of upper-left corner
+	int nWidthSrc,               // source width
+	int nHeightSrc,              // source height
+	BLENDFUNCTION blendFunction  // alpha-blending function
 )
 {
 	unsigned int srcalpha, dstalpha;
@@ -160,10 +160,10 @@ BOOL WINAPI GradientFill_NEW( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
   unsigned int i;
 
   if ( !hdc || !vert_array || ! grad_array )
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
 
   switch(mode) 
     {
@@ -275,7 +275,7 @@ BOOL WINAPI GradientFill_NEW( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
               int b2 = (v2->Blue  * y2 + v-> Blue  * (dy2 - y2)) / dy2;
                
               int x;
-	      if (x1 < x2)
+              if (x1 < x2)
                 {
                   int dx = x2 - x1;
                   for (x = 0; x < dx; x++)
@@ -307,19 +307,19 @@ BOOL WINAPI GradientFill_NEW( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
  *           GdiTransparentBlt [GDI32.@]
  */
 BOOL WINAPI TransparentBlt_NEW( HDC hdcDest, int xDest, int yDest, int widthDest, int heightDest,
-                            HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
-                            UINT crTransparent )
+                                HDC hdcSrc, int xSrc, int ySrc, int widthSrc, int heightSrc,
+                                UINT crTransparent )
 {
-    BOOL ret = FALSE;
-    HDC hdcWork;
-    HBITMAP bmpWork;
-    HGDIOBJ oldWork;
-    HDC hdcMask = NULL;
-    HBITMAP bmpMask = NULL;
-    HBITMAP oldMask = NULL;
-    COLORREF oldBackground;
-    COLORREF oldForeground;
-    int oldStretchMode;
+	BOOL ret = FALSE;
+	HDC hdcWork;
+	HBITMAP bmpWork;
+	HGDIOBJ oldWork;
+	HDC hdcMask = NULL;
+	HBITMAP bmpMask = NULL;
+	HBITMAP oldMask = NULL;
+	COLORREF oldBackground;
+	COLORREF oldForeground;
+	int oldStretchMode;
 
 	if ( !hdcDest || !hdcSrc )
 	{
@@ -327,56 +327,56 @@ BOOL WINAPI TransparentBlt_NEW( HDC hdcDest, int xDest, int yDest, int widthDest
 		return FALSE;
 	}
 
-    if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
-        return FALSE;
-    }
+	if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
+		return FALSE;
+	}
 
-    oldBackground = SetBkColor(hdcDest, RGB(255,255,255));
-    oldForeground = SetTextColor(hdcDest, RGB(0,0,0));
+	oldBackground = SetBkColor(hdcDest, RGB(255,255,255));
+	oldForeground = SetTextColor(hdcDest, RGB(0,0,0));
 
-    /* Stretch bitmap */
-    oldStretchMode = GetStretchBltMode(hdcSrc);
-    if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
-        SetStretchBltMode(hdcSrc, COLORONCOLOR);
-    hdcWork = CreateCompatibleDC(hdcDest);
-    bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
-    oldWork = SelectObject(hdcWork, bmpWork);
-    if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) goto error;
-    SetBkColor(hdcWork, crTransparent);
+	/* Stretch bitmap */
+	oldStretchMode = GetStretchBltMode(hdcSrc);
+	if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
+		SetStretchBltMode(hdcSrc, COLORONCOLOR);
+	hdcWork = CreateCompatibleDC(hdcDest);
+	bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
+	oldWork = SelectObject(hdcWork, bmpWork);
+	if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) goto error;
+	SetBkColor(hdcWork, crTransparent);
 
-    /* Create mask */
-    hdcMask = CreateCompatibleDC(hdcDest);
-    bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
-    oldMask = SelectObject(hdcMask, bmpMask);
-    if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) goto error;
+	/* Create mask */
+	hdcMask = CreateCompatibleDC(hdcDest);
+	bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
+	oldMask = SelectObject(hdcMask, bmpMask);
+	if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) goto error;
 
-    /* Replace transparent color with black */
-    SetBkColor(hdcWork, RGB(0,0,0));
-    SetTextColor(hdcWork, RGB(255,255,255));
-    if(!BitBlt(hdcWork, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) goto error;
+	/* Replace transparent color with black */
+	SetBkColor(hdcWork, RGB(0,0,0));
+	SetTextColor(hdcWork, RGB(255,255,255));
+	if(!BitBlt(hdcWork, 0, 0, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) goto error;
 
-    /* Replace non-transparent area on destination with black */
-    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) goto error;
+	/* Replace non-transparent area on destination with black */
+	if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcMask, 0, 0, SRCAND)) goto error;
 
-    /* Draw the image */
-    if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcWork, 0, 0, SRCPAINT)) goto error;
+	/* Draw the image */
+	if(!BitBlt(hdcDest, xDest, yDest, widthDest, heightDest, hdcWork, 0, 0, SRCPAINT)) goto error;
 
-    ret = TRUE;
+	ret = TRUE;
 error:
-    SetStretchBltMode(hdcSrc, oldStretchMode);
-    SetBkColor(hdcDest, oldBackground);
-    SetTextColor(hdcDest, oldForeground);
-    if(hdcWork) {
-        SelectObject(hdcWork, oldWork);
-        DeleteDC(hdcWork);
-    }
-    if(bmpWork) DeleteObject(bmpWork);
-    if(hdcMask) {
-        SelectObject(hdcMask, oldMask);
-        DeleteDC(hdcMask);
-    }
-    if(bmpMask) DeleteObject(bmpMask);
-    return ret;
+	SetStretchBltMode(hdcSrc, oldStretchMode);
+	SetBkColor(hdcDest, oldBackground);
+	SetTextColor(hdcDest, oldForeground);
+	if(hdcWork) {
+		SelectObject(hdcWork, oldWork);
+		DeleteDC(hdcWork);
+	}
+	if(bmpWork) DeleteObject(bmpWork);
+	if(hdcMask) {
+		SelectObject(hdcMask, oldMask);
+		DeleteDC(hdcMask);
+	}
+	if(bmpMask) DeleteObject(bmpMask);
+	return ret;
 }
 
 void WINAPI vSetDdrawflag()

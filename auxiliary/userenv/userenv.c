@@ -41,54 +41,54 @@
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("%p %d %p\n", hinstDLL, fdwReason, lpvReserved);
+	TRACE("%p %d %p\n", hinstDLL, fdwReason, lpvReserved);
 
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
+	switch (fdwReason)
+	{
+	case DLL_PROCESS_ATTACH:
+		DisableThreadLibraryCalls(hinstDLL);
+		break;
+	case DLL_PROCESS_DETACH:
+		break;
+	}
+	return TRUE;
 }
 
 BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
                      HANDLE hToken, BOOL bInherit )
 {
-    FIXME("%p %p %d\n", lpEnvironment, hToken, bInherit );
-    return FALSE;
+	FIXME("%p %p %d\n", lpEnvironment, hToken, bInherit );
+	return FALSE;
 }
 
 BOOL WINAPI DestroyEnvironmentBlock( LPVOID lpEnvironment )
 {
-    FIXME("%p\n", lpEnvironment);
+	FIXME("%p\n", lpEnvironment);
 	return FALSE;
 }
 
 BOOL WINAPI ExpandEnvironmentStringsForUserA( HANDLE hToken, LPCSTR lpSrc,
                      LPSTR lpDest, DWORD dwSize )
 {
-    BOOL ret;
+	BOOL ret;
 
-    TRACE("%p %s %p %d\n", hToken, debugstr_a(lpSrc), lpDest, dwSize);
+	TRACE("%p %s %p %d\n", hToken, debugstr_a(lpSrc), lpDest, dwSize);
 
-    ret = ExpandEnvironmentStringsA( lpSrc, lpDest, dwSize );
-    TRACE("<- %s\n", debugstr_a(lpDest));
-    return ret;
+	ret = ExpandEnvironmentStringsA( lpSrc, lpDest, dwSize );
+	TRACE("<- %s\n", debugstr_a(lpDest));
+	return ret;
 }
 
 BOOL WINAPI ExpandEnvironmentStringsForUserW( HANDLE hToken, LPCWSTR lpSrc,
                      LPWSTR lpDest, DWORD dwSize )
 {
-    BOOL ret;
+	BOOL ret;
 
-    TRACE("%p %s %p %d\n", hToken, debugstr_w(lpSrc), lpDest, dwSize);
+	TRACE("%p %s %p %d\n", hToken, debugstr_w(lpSrc), lpDest, dwSize);
 
-    ret = ExpandEnvironmentStringsW( lpSrc, lpDest, dwSize );
-    TRACE("<- %s\n", debugstr_w(lpDest));
-    return ret;
+	ret = ExpandEnvironmentStringsW( lpSrc, lpDest, dwSize );
+	TRACE("<- %s\n", debugstr_w(lpDest));
+	return ret;
 }
 
 static int getsubdirpath(int nFolder, LPSTR lpBuffer, LPSTR lpSubDir)
@@ -154,49 +154,49 @@ int WINAPI GetAllUsersProfileDirectoryW( LPWSTR lpProfileDir, LPDWORD lpcchSize 
 
 int WINAPI GetProfilesDirectoryA( LPSTR lpProfilesDir, LPDWORD lpcchSize )
 {
-    return GetSpecialSubdirPathA(CSIDL_APPDATA,"..\\..",lpProfilesDir,lpcchSize);
+	return GetSpecialSubdirPathA(CSIDL_APPDATA,"..\\..",lpProfilesDir,lpcchSize);
 }
 
 int WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
 {
-    return GetSpecialSubdirPathW(CSIDL_APPDATA,"..\\..",lpProfilesDir,lpcchSize);
+	return GetSpecialSubdirPathW(CSIDL_APPDATA,"..\\..",lpProfilesDir,lpcchSize);
 }
 
 BOOL WINAPI GetProfileType( DWORD *pdwFlags )
 {
-    FIXME("%p\n", pdwFlags );
-    *pdwFlags = 0;
-    return TRUE;
+	FIXME("%p\n", pdwFlags );
+	*pdwFlags = 0;
+	return TRUE;
 }
 
 BOOL WINAPI LoadUserProfileA( HANDLE hToken, LPPROFILEINFOA lpProfileInfo )
 {
-    FIXME("%p %p\n", hToken, lpProfileInfo );
-    lpProfileInfo->hProfile = HKEY_CURRENT_USER;
-    return TRUE;
+	FIXME("%p %p\n", hToken, lpProfileInfo );
+	lpProfileInfo->hProfile = HKEY_CURRENT_USER;
+	return TRUE;
 }
 
 BOOL WINAPI LoadUserProfileW( HANDLE hToken, LPPROFILEINFOW lpProfileInfo )
 {
-    FIXME("%p %p\n", hToken, lpProfileInfo );
-    lpProfileInfo->hProfile = HKEY_CURRENT_USER;
-    return TRUE;
+	FIXME("%p %p\n", hToken, lpProfileInfo );
+	lpProfileInfo->hProfile = HKEY_CURRENT_USER;
+	return TRUE;
 }
 
 BOOL WINAPI RegisterGPNotification( HANDLE event, BOOL machine )
 {
-    FIXME("%p %d\n", event, machine );
-    return TRUE;
+	FIXME("%p %d\n", event, machine );
+	return TRUE;
 }
 
 BOOL WINAPI UnregisterGPNotification( HANDLE event )
 {
-    FIXME("%p\n", event );
-    return TRUE;
+	FIXME("%p\n", event );
+	return TRUE;
 }
 
 BOOL WINAPI UnloadUserProfile( HANDLE hToken, HANDLE hProfile )
 {
-    FIXME("(%p, %p): stub\n", hToken, hProfile);
-    return FALSE;
+	FIXME("(%p, %p): stub\n", hToken, hProfile);
+	return FALSE;
 }

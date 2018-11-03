@@ -1,3 +1,37 @@
+KernelEx v4.5 Final by Xeno86
+2010-12-30
+
+setup: Start Menu shortcuts, included Release Notes.txt
+verifier: new welcome screen
+core/setup: make KernelEx compatible with kernel32.dll updates: 
+- uninstalling KernelEx won't revert kernel32 updates anymore; 
+- KernelEx doesn't need to be reinstalled anymore if kernel32 is updated
+- kernel32 backup is now stored in sysbckup directory
+core: don't load api libraries if resolver failed to initialize
+SystemParametersInfo: fix SPI_GETCARETWIDTH erroneous zero caret width return
+kernel32.TlsFree(ext) fixes:
+- fixed a possible deadlock situation which could lead to system hang
+- return error if TLS index has already been freed
+- return 1 for success consistently for better compatibility
+comdlg32 GetOpen[Save]FileName: avoid HeapFree(null), changes last-error
+MSI shim database integration
+MSI shim database: transforms for office 2003; office 2007 converters; google earth 5.1,5.2,6.0b; acrobat reader 7
+settings: force Windows Installer into default configuration
+gdi32/textout: don't hold Win16Lock while calling GDI apis
+added Shim database create utility SDBcreate for MSI installer files patching
+settings: set GTAPI.DLL in Win2000 mode (Google Earth setup)
+implemented cryptui.CryptUIDlgViewContext (Google Earth 5.2)
+implemented kernel32.FindFirstFileExA/W (Opera)
+user32: per-thread keyboard state is now updated for left/right modifier keys (Qt 4.6+ hotkeys)
+user32: MapVirtualKey now maps left/right modifier key codes to AT keyboard scan codes.
+gdi32 unicode APIs: wrong conversion macros were used;
+gdi32: rewritten EnumFont*W APIs, FONTSIGNATURE is now passed to callback function; populated in registry cache (affects Qt 4.6+)
+DC objects are revalidated after text API calls
+replace MSLU's shell32.DragQueryFileW with custom implementation (fixes Foxit Reader 3.1 drag&drop crash)
+minor GDI text api fixes
+
+---------------------------------------
+
 KernelEx v4.5 RC 5 by Xeno86
 2010-11-02
 

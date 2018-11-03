@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -53,11 +53,11 @@ int kexInit()
 	if (!internals_init())
 		goto __error1;
 
-	if (!apiconfmgr.load_api_configurations())
-		goto __error2;
-
 	if (!resolver_init())
 		goto __error2;
+
+	if (!apiconfmgr.load_api_configurations())
+		goto __error3;
 
 	resolver_hook();
 	
@@ -68,6 +68,8 @@ int kexInit()
 	DBGPRINTF(("Initialized successfully\n"));
 	return ++init_count;
 
+__error3:
+	resolver_uninit();
 __error2:
 	internals_uninit();
 __error1:

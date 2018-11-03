@@ -24,15 +24,15 @@
 
 /* MAKE_EXPORT UpdateLayeredWindow_new=UpdateLayeredWindow */
 BOOL WINAPI UpdateLayeredWindow_new(
-  HWND hwnd,             // handle to layered window
-  HDC hdcDst,            // handle to screen DC
-  POINT *pptDst,         // new screen position
-  SIZE *psize,           // new size of the layered window
-  HDC hdcSrc,            // handle to surface DC
-  POINT *pptSrc,         // layer position
-  COLORREF crKey,        // color key
-  BLENDFUNCTION *pblend, // blend function
-  DWORD dwFlags          // options
+	HWND hwnd,             // handle to layered window
+	HDC hdcDst,            // handle to screen DC
+	POINT *pptDst,         // new screen position
+	SIZE *psize,           // new size of the layered window
+	HDC hdcSrc,            // handle to surface DC
+	POINT *pptSrc,         // layer position
+	COLORREF crKey,        // color key
+	BLENDFUNCTION *pblend, // blend function
+	DWORD dwFlags          // options
 )
 {
 	BOOL ret = FALSE;

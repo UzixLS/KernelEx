@@ -65,17 +65,16 @@ typedef struct _WND
 	WORD    classAtom;         // 56h See also offs. 2 in the field 24 struct ptr
 } WND, *PWND;
 
-
 typedef struct _MSGQUEUE
 {
 	WORD    nextQueue;  // 00h  next queue in the list
 	WORD    hTask;      // 02h  Task that this queue is associated with
 	WORD    headMsg;    // 04h  Near ptr to head of linked list of QUEUEMSGs
 	WORD    tailMsg;    // 06h  Near ptr to end of list of QUEUEMSGs
-	WORD    lastMsg;    // 08h  Near ptr to last msg retrieved (not really!)
-	WORD    cMsgs;      // 0Ah  Number of messages (not really for win98?)
+	WORD    cMsgs;      // 08h  Number of posted messages (98,Me)
+	WORD    nilword;	// 0Ah  ???
 	BYTE    un1;        // 0Ch  ???
-	BYTE    sig[3];     // 0Dh  "MJT" (Jon Thomason?)
+	BYTE    sig[3];     // 0Dh  "MJT" (Michael Jackson ..??)
 	WORD    npPerQueue; // 10h  16 bit offset in USER DGROUP to PERQUEUEDATA
 	                    //      type == LT_USER_VWININFO???
 	WORD    un2;        // 12h  ???
@@ -87,7 +86,9 @@ typedef struct _MSGQUEUE
 	WORD    un4;        // 2Ch  ??? (seems to always be 0)
 	WORD    lastMsg2;   // 2Eh  Near ptr to last retrieved QUEUEMSG
 	DWORD   extraInfo;  // 30h  returned by GetMessageExtraInfo()
-	DWORD   un5[2];     // 34h  ???
+	DWORD   un5;		// 34h  ???
+	WORD	cQuit;		// 38h	PostQuitMessage
+	WORD	exitCode;	// 3Ah	same	
 	DWORD   threadId;   // 3Ch  See GetWindowProcessThreadId
 	WORD    un6;        // 40h  ??
 	WORD    expWinVer;  // 42h  Version of Windows this app expects
@@ -98,7 +99,8 @@ typedef struct _MSGQUEUE
 	                    //      waiting for
 	WORD    un8;        // 4Eh  ???
 	WORD    hQueueSend; // 50h  App that's in SendMessage to this queue
-	DWORD   un9;        // 52h  ???
+	WORD	hSMS;       // 52h  SMS (inter-thread sendmessage) struct ptr
+	WORD	dunno;		// 54h  ???
 	WORD    sig2;       // 56h  "HQ"
 	HKL     hkl;        // 58h  current thread HKL (keyboard layout)
 	DWORD   un10[3];    // 5Ch  ??? filler
@@ -107,8 +109,38 @@ typedef struct _MSGQUEUE
 	DWORD   un12[3];    // 5Eh+0Ah+4    ??? filler
 	WORD    block2;     // 5Eh+1Ah      block for SendMessageA (event?)
 } MSGQUEUE, *PMSGQUEUE;
+
+typedef struct _PERQUEUEDATA
+{
+	WORD    npNext;         // 00h a USER heap handle (type == LT_USER_VWININFO)
+	WORD    un2;            // 02h
+	WORD    wSumFlags;      // 04h
+	WORD    npQMsg;         // 06h type == LT_USER_QMSG
+	WORD    un5;            // 08h
+	WORD    un6;            // 0Ah
+	WORD    un7;            // 0Ch
+	WORD    un8;            // 0Eh
+	WORD    un9;            // 10h
+	WORD    un10;           // 12h
+	WORD    somehQueue1;    // 14h a msg queue handle
+	WORD    somehQueue2;    // 16h a msg queue handle
+	DWORD   hWndCapture;    // 18h
+	DWORD   hWndFocus;      // 1Ch
+	DWORD   hWndActive;     // 20h
+	BYTE	filler[0x34];	// 24h
+	DWORD	keysbuffer;		// 58h 16:16 keyboard state ptr
+} PERQUEUEDATA, *PPERQUEUEDATA;
+
+typedef struct _QUEUEKEYBUFFER
+{
+	BYTE filler[0x20];		// 00h sth
+	BYTE keystate[0xFF];	// 20h keys state (0x80-pressed, 0x1-toggled)
+} QUEUEKEYBUFFER, *PQUEUEKEYBUFFER;
+
+
 #pragma pack()
 
-typedef PWND (WINAPI *HTOP_API) (HWND hwnd);
+/* IsWindow returns PWND */
+#define HWNDtoPWND(hwnd) (PWND)IsWindow(hwnd) 
 
 #endif

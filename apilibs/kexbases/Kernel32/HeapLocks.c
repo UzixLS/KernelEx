@@ -32,7 +32,7 @@ static BOOL IsValidHeap(HANDLE hHeap)
 
 /* MAKE_EXPORT HeapLock_new=HeapLock */
 BOOL WINAPI HeapLock_new(
-  HANDLE hHeap
+	HANDLE hHeap
 )
 {
 	if ( !IsValidHeap(hHeap) ) return FALSE;
@@ -42,7 +42,7 @@ BOOL WINAPI HeapLock_new(
 
 /* MAKE_EXPORT HeapUnlock_new=HeapUnlock */
 BOOL WINAPI HeapUnlock_new(
-  HANDLE hHeap
+	HANDLE hHeap
 )
 {
 	if ( !IsValidHeap(hHeap) ) return FALSE;
@@ -54,7 +54,7 @@ BOOL WINAPI HeapUnlock_new(
 
 /* MAKE_EXPORT GlobalLock_fix=GlobalLock */
 LPVOID WINAPI GlobalLock_fix(
-    HGLOBAL hMem 	// address of the global memory object 
+	HGLOBAL hMem    // address of the global memory object 
 )
 {
 	if (ISPOINTER(hMem))
@@ -64,7 +64,7 @@ LPVOID WINAPI GlobalLock_fix(
 
 /* MAKE_EXPORT GlobalUnlock_fix=GlobalUnlock */
 BOOL WINAPI GlobalUnlock_fix(
-    HGLOBAL hMem 	// handle to the global memory object 
+	HGLOBAL hMem    // handle to the global memory object 
 )
 {
 	if (ISPOINTER(hMem)) 

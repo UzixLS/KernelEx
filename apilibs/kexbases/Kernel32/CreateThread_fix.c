@@ -23,12 +23,12 @@
 
 /* MAKE_EXPORT CreateThread_fix=CreateThread */
 HANDLE WINAPI CreateThread_fix(
-  LPSECURITY_ATTRIBUTES lpThreadAttributes, // SD
-  SIZE_T dwStackSize,                       // initial stack size
-  LPTHREAD_START_ROUTINE lpStartAddress,    // thread function
-  LPVOID lpParameter,                       // thread argument
-  DWORD dwCreationFlags,                    // creation option
-  LPDWORD lpThreadId                        // thread identifier
+	LPSECURITY_ATTRIBUTES lpThreadAttributes, // SD
+	SIZE_T dwStackSize,                       // initial stack size
+	LPTHREAD_START_ROUTINE lpStartAddress,    // thread function
+	LPVOID lpParameter,                       // thread argument
+	DWORD dwCreationFlags,                    // creation option
+	LPDWORD lpThreadId                        // thread identifier
 )
 {
 	DWORD dummy;

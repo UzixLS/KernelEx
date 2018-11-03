@@ -1,7 +1,7 @@
 /*
  *  KernelEx
  *
- *  Copyright (C) 2009, Tihiy
+ *  Copyright (C) 2009-2010, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -119,7 +119,10 @@ BOOL WINAPI GetMessageA_NEW( LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wM
 	if ( !lpMsg ) return -1;		//9x fails to check that
 	ret = GetMessageA( lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax );
 	if ( ret && ((lpMsg->message>=WM_KEYFIRST && lpMsg->message<=WM_KEYLAST)||(lpMsg->message>=WM_MOUSEFIRST && lpMsg->message<=WM_MOUSELAST)) )
+	{
 		g_LastInputTime = GetTickCount();
+		UpdateLRKeyState(lpMsg);
+	}
 	return ret;
 }
 
@@ -130,7 +133,10 @@ BOOL WINAPI PeekMessageA_NEW( LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT w
 	if ( !lpMsg ) return FALSE;		//9x fails to check that
 	ret = PeekMessageA( lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg );
 	if ( ret && ((lpMsg->message>=WM_KEYFIRST && lpMsg->message<=WM_KEYLAST)||(lpMsg->message>=WM_MOUSEFIRST && lpMsg->message<=WM_MOUSELAST)) )
+	{
 		g_LastInputTime = GetTickCount();
+		UpdateLRKeyState(lpMsg);
+	}
 	return ret;	
 }
 

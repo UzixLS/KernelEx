@@ -20,25 +20,7 @@
  */
 
 #include <windows.h>
-#include "k32ord.h"
-#include "hwnd9x.h"
-
-static DWORD g_UserBase;
-static HTOP_API HWNDtoPWND;
-
-//those are in thunilay
-void GrabWin16Lock();
-void ReleaseWin16Lock();
-
-#define REBASEUSER(x) ((x) != 0 ? g_UserBase + (DWORD)(x) : 0)
-
-BOOL SetParent_fix_init()
-{
-	g_UserBase = MapSL(LoadLibrary16("user") << 16);
-	/* IsWindow returns PWND */
-	HWNDtoPWND = (HTOP_API)IsWindow;
-	return (g_UserBase != 0 && HWNDtoPWND != 0);
-}
+#include "thuni_layer.h"
 
 /* returns TRUE if hwnd is a parent of hwndNewParent */
 static BOOL WINAPI TestChild(HWND hwnd, HWND hwndNewParent)

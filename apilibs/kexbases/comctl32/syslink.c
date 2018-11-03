@@ -58,15 +58,15 @@ int WINAPI StrCmpNIW(LPCWSTR lpStr1,LPCWSTR lpStr2,int nChar)
 	static CC361 StrCmpNIW_dld;
 
 	if (!StrCmpNIW_dld)
-		StrCmpNIW_dld = (CC361)kexGetProcAddress(GetModuleHandle("COMCTL32.DLL"),(LPSTR)361);
+		StrCmpNIW_dld = (CC361) kexGetProcAddress(GetModuleHandle("COMCTL32.DLL"),(LPSTR)361);
 	
 	return StrCmpNIW_dld(lpStr1,lpStr2,nChar);
 }
 
-BOOL WINAPI GetTextExtentExPointW_lame( HDC hdc, LPCWSTR lpszStr, int cchString, int nMaxExtent, 
-									    LPINT lpnFit, LPINT alpDx, LPSIZE lpSize)
+BOOL WINAPI GetTextExtentExPointW_lame (HDC hdc, LPCWSTR lpszStr, int cchString, int nMaxExtent, 
+                                        LPINT lpnFit, LPINT alpDx, LPSIZE lpSize)
 {
-	if ( GetTextExtentPointW(hdc,lpszStr,cchString,lpSize) )
+	if (GetTextExtentPointW(hdc,lpszStr,cchString,lpSize))
 	{
 		if (lpnFit)
 		{
@@ -75,7 +75,7 @@ BOOL WINAPI GetTextExtentExPointW_lame( HDC hdc, LPCWSTR lpszStr, int cchString,
 			while (dummy.cx>nMaxExtent && cchString>0)
 			{
 				cchString--;
-				GetTextExtentPointW(hdc,lpszStr,cchString,&dummy);					
+				GetTextExtentPointW(hdc,lpszStr,cchString,&dummy);
 			}
 			*lpnFit = cchString;
 		}		
@@ -96,9 +96,9 @@ BOOL WINAPI GetTextExtentExPointW_lame( HDC hdc, LPCWSTR lpszStr, int cchString,
 
 typedef struct
 {
-    int nChars;
-    int nSkip;
-    RECT rc;
+	int nChars;
+	int nSkip;
+	RECT rc;
 } DOC_TEXTBLOCK, *PDOC_TEXTBLOCK;
 
 #define LIF_FLAGSMASK   (LIF_STATE | LIF_ITEMID | LIF_URL)
@@ -106,48 +106,48 @@ typedef struct
 
 typedef enum
 {
-    slText = 0,
-    slLink
+	slText = 0,
+	slLink
 } SL_ITEM_TYPE;
 
 typedef struct _DOC_ITEM
 {
-    struct _DOC_ITEM *Next; /* Address to the next item */
-    UINT nText;             /* Number of characters of the text */
-    SL_ITEM_TYPE Type;      /* type of the item */
-    PDOC_TEXTBLOCK Blocks;  /* Array of text blocks */
-    union
-    {
-        struct
-        {
-            UINT state;     /* Link state */
-            WCHAR *szID;    /* Link ID string */
-            WCHAR *szUrl;   /* Link URL string */
-        } Link;
-        struct
-        {
-            UINT Dummy;
-        } Text;
-    } u;
-    WCHAR Text[1];          /* Text of the document item */
+	struct _DOC_ITEM *Next; /* Address to the next item */
+	UINT nText;             /* Number of characters of the text */
+	SL_ITEM_TYPE Type;      /* type of the item */
+	PDOC_TEXTBLOCK Blocks;  /* Array of text blocks */
+	union
+	{
+		struct
+		{
+			UINT state;     /* Link state */
+			WCHAR *szID;    /* Link ID string */
+			WCHAR *szUrl;   /* Link URL string */
+		} Link;
+		struct
+		{
+			UINT Dummy;
+		} Text;
+	} u;
+	WCHAR Text[1];          /* Text of the document item */
 } DOC_ITEM, *PDOC_ITEM;
 
 typedef struct
 {
-    HWND      Self;         /* The window handle for this control */
-    HWND      Notify;       /* The parent handle to receive notifications */
-    DWORD     Style;        /* Styles for this control */
-    PDOC_ITEM Items;        /* Address to the first document item */
-    BOOL      HasFocus;     /* Whether the control has the input focus */
-    int       MouseDownID;  /* ID of the link that the mouse button first selected */
-    HFONT     Font;         /* Handle to the font for text */
-    HFONT     LinkFont;     /* Handle to the font for links */
-    COLORREF  TextColor;    /* Color of the text */
-    COLORREF  LinkColor;    /* Color of links */
-    COLORREF  VisitedColor; /* Color of visited links */
-    COLORREF  BackColor;    /* Background color, set on creation */
-    WCHAR     BreakChar;    /* Break Character for the current font */
-    BOOL      IgnoreReturn; /* (infoPtr->Style & LWS_IGNORERETURN) on creation */
+	HWND      Self;         /* The window handle for this control */
+	HWND      Notify;       /* The parent handle to receive notifications */
+	DWORD     Style;        /* Styles for this control */
+	PDOC_ITEM Items;        /* Address to the first document item */
+	BOOL      HasFocus;     /* Whether the control has the input focus */
+	int       MouseDownID;  /* ID of the link that the mouse button first selected */
+	HFONT     Font;         /* Handle to the font for text */
+	HFONT     LinkFont;     /* Handle to the font for links */
+	COLORREF  TextColor;    /* Color of the text */
+	COLORREF  LinkColor;    /* Color of links */
+	COLORREF  VisitedColor; /* Color of visited links */
+	COLORREF  BackColor;    /* Background color, set on creation */
+	WCHAR     BreakChar;    /* Break Character for the current font */
+	BOOL      IgnoreReturn; /* (infoPtr->Style & LWS_IGNORERETURN) on creation */
 } SYSLINK_INFO;
 
 static const WCHAR SL_LINKOPEN[] =  { '<','a', 0 };
@@ -168,16 +168,16 @@ static const WCHAR SL_LINKCLOSE[] = { '<','/','a','>',0 };
  */
 static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
 {
-    if(DocItem->Type == slLink)
-    {
-        Free(DocItem->u.Link.szID);
-        Free(DocItem->u.Link.szUrl);
-    }
+	if(DocItem->Type == slLink)
+	{
+		Free(DocItem->u.Link.szID);
+		Free(DocItem->u.Link.szUrl);
+	}
 
-    /* we don't free Text because it's just a pointer to a character in the
-       entire window text string */
+	/* we don't free Text because it's just a pointer to a character in the
+	   entire window text string */
 
-    Free(DocItem);
+	Free(DocItem);
 }
 
 /***********************************************************************
@@ -187,33 +187,33 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
 static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPCWSTR Text, UINT textlen,
                                         SL_ITEM_TYPE type, PDOC_ITEM LastItem)
 {
-    PDOC_ITEM Item;
+	PDOC_ITEM Item;
 
-    textlen = min(textlen, (UINT)lstrlenW(Text));
-    Item = (PDOC_ITEM)Alloc(FIELD_OFFSET(DOC_ITEM, Text[textlen + 1]));
-    if(Item == NULL)
-    {
-        ERR("Failed to alloc DOC_ITEM structure!\n");
-        return NULL;
-    }
+	textlen = min(textlen, (UINT)lstrlenW(Text));
+	Item = (PDOC_ITEM)Alloc(FIELD_OFFSET(DOC_ITEM, Text[textlen + 1]));
+	if(Item == NULL)
+	{
+		ERR("Failed to alloc DOC_ITEM structure!\n");
+		return NULL;
+	}
 
-    Item->Next = NULL;
-    Item->nText = textlen;
-    Item->Type = type;
-    Item->Blocks = NULL;
-    
-    if(LastItem != NULL)
-    {
-        LastItem->Next = Item;
-    }
-    else
-    {
-        infoPtr->Items = Item;
-    }
-    
-    lstrcpynW(Item->Text, Text, textlen + 1);
-    
-    return Item;
+	Item->Next = NULL;
+	Item->nText = textlen;
+	Item->Type = type;
+	Item->Blocks = NULL;
+
+	if(LastItem != NULL)
+	{
+		LastItem->Next = Item;
+	}
+	else
+	{
+		infoPtr->Items = Item;
+	}
+
+	lstrcpynW(Item->Text, Text, textlen + 1);
+
+	return Item;
 }
 
 /***********************************************************************
@@ -222,17 +222,17 @@ static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPCWSTR Text, UIN
  */
 static VOID SYSLINK_ClearDoc (SYSLINK_INFO *infoPtr)
 {
-    PDOC_ITEM Item, Next;
-    
-    Item = infoPtr->Items;
-    while(Item != NULL)
-    {
-        Next = Item->Next;
-        SYSLINK_FreeDocItem(Item);
-        Item = Next;
-    }
-    
-    infoPtr->Items = NULL;
+	PDOC_ITEM Item, Next;
+
+	Item = infoPtr->Items;
+	while(Item != NULL)
+	{
+		Next = Item->Next;
+		SYSLINK_FreeDocItem(Item);
+		Item = Next;
+	}
+
+	infoPtr->Items = NULL;
 }
 
 /***********************************************************************
@@ -242,283 +242,283 @@ static VOID SYSLINK_ClearDoc (SYSLINK_INFO *infoPtr)
  */
 static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 {
-    LPCWSTR current, textstart = NULL, linktext = NULL, firsttag = NULL;
-    int taglen = 0, textlen = 0, linklen = 0, docitems = 0;
-    PDOC_ITEM Last = NULL;
-    SL_ITEM_TYPE CurrentType = slText;
-    LPCWSTR lpID, lpUrl;
-    UINT lenId, lenUrl;
+	LPCWSTR current, textstart = NULL, linktext = NULL, firsttag = NULL;
+	int taglen = 0, textlen = 0, linklen = 0, docitems = 0;
+	PDOC_ITEM Last = NULL;
+	SL_ITEM_TYPE CurrentType = slText;
+	LPCWSTR lpID, lpUrl;
+	UINT lenId, lenUrl;
 
-    TRACE("(%p %s)\n", infoPtr, debugstr_w(Text));
+	TRACE("(%p %s)\n", infoPtr, debugstr_w(Text));
 
-    for(current = Text; *current != 0;)
-    {
-        if(*current == '<')
-        {
-            if(!StrCmpNIW(current, SL_LINKOPEN, 2) && (CurrentType == slText))
-            {
-                BOOL ValidParam = FALSE, ValidLink = FALSE;
+	for(current = Text; *current != 0;)
+	{
+		if(*current == '<')
+		{
+			if(!StrCmpNIW(current, SL_LINKOPEN, 2) && (CurrentType == slText))
+			{
+				BOOL ValidParam = FALSE, ValidLink = FALSE;
 
-                if(*(current + 2) == '>')
-                {
-                    /* we just have to deal with a <a> tag */
-                    taglen = 3;
-                    ValidLink = TRUE;
-                    ValidParam = TRUE;
-                    firsttag = current;
-                    linklen = 0;
-                    lpID = NULL;
-                    lpUrl = NULL;
-                }
-                else if(*(current + 2) == infoPtr->BreakChar)
-                {
-                    /* we expect parameters, parse them */
-                    LPCWSTR *CurrentParameter = NULL, tmp;
-                    UINT *CurrentParameterLen = NULL;
+				if(*(current + 2) == '>')
+				{
+					/* we just have to deal with a <a> tag */
+					taglen = 3;
+					ValidLink = TRUE;
+					ValidParam = TRUE;
+					firsttag = current;
+					linklen = 0;
+					lpID = NULL;
+					lpUrl = NULL;
+				}
+				else if(*(current + 2) == infoPtr->BreakChar)
+				{
+					/* we expect parameters, parse them */
+					LPCWSTR *CurrentParameter = NULL, tmp;
+					UINT *CurrentParameterLen = NULL;
 
-                    taglen = 3;
-                    tmp = current + taglen;
-                    lpID = NULL;
-                    lpUrl = NULL;
-                    
+					taglen = 3;
+					tmp = current + taglen;
+					lpID = NULL;
+					lpUrl = NULL;
+					
 CheckParameter:
-                    /* compare the current position with all known parameters */
-                    if(!StrCmpNIW(tmp, SL_HREF, 6))
-                    {
-                        taglen += 6;
-                        ValidParam = TRUE;
-                        CurrentParameter = &lpUrl;
-                        CurrentParameterLen = &lenUrl;
-                    }
-                    else if(!StrCmpNIW(tmp, SL_ID, 4))
-                    {
-                        taglen += 4;
-                        ValidParam = TRUE;
-                        CurrentParameter = &lpID;
-                        CurrentParameterLen = &lenId;
-                    }
-                    else
-                    {
-                        ValidParam = FALSE;
-                    }
-                    
-                    if(ValidParam)
-                    {
-                        /* we got a known parameter, now search until the next " character.
-                           If we can't find a " character, there's a syntax error and we just assume it's text */
-                        ValidParam = FALSE;
-                        *CurrentParameter = current + taglen;
-                        *CurrentParameterLen = 0;
+					/* compare the current position with all known parameters */
+					if(!StrCmpNIW(tmp, SL_HREF, 6))
+					{
+						taglen += 6;
+						ValidParam = TRUE;
+						CurrentParameter = &lpUrl;
+						CurrentParameterLen = &lenUrl;
+					}
+					else if(!StrCmpNIW(tmp, SL_ID, 4))
+					{
+						taglen += 4;
+						ValidParam = TRUE;
+						CurrentParameter = &lpID;
+						CurrentParameterLen = &lenId;
+					}
+					else
+					{
+						ValidParam = FALSE;
+					}
+					
+					if(ValidParam)
+					{
+						/* we got a known parameter, now search until the next " character.
+						   If we can't find a " character, there's a syntax error and we just assume it's text */
+						ValidParam = FALSE;
+						*CurrentParameter = current + taglen;
+						*CurrentParameterLen = 0;
 
-                        for(tmp = *CurrentParameter; *tmp != 0; tmp++)
-                        {
-                            taglen++;
-                            if(*tmp == '\"')
-                            {
-                                ValidParam = TRUE;
-                                tmp++;
-                                break;
-                            }
-                            (*CurrentParameterLen)++;
-                        }
-                    }
-                    if(ValidParam)
-                    {
-                        /* we're done with this parameter, now there are only 2 possibilities:
-                         * 1. another parameter is coming, so expect a ' ' (space) character
-                         * 2. the tag is being closed, so expect a '<' character
-                         */
-                        if(*tmp == infoPtr->BreakChar)
-                        {
-                            /* we expect another parameter, do the whole thing again */
-                            taglen++;
-                            tmp++;
-                            goto CheckParameter;
-                        }
-                        else if(*tmp == '>')
-                        {
-                            /* the tag is being closed, we're done */
-                            ValidLink = TRUE;
-                            taglen++;
-                        }
-                    }
-                }
-                
-                if(ValidLink && ValidParam)
-                {
-                    /* the <a ...> tag appears to be valid. save all information
-                       so we can add the link if we find a valid </a> tag later */
-                    CurrentType = slLink;
-                    linktext = current + taglen;
-                    linklen = 0;
-                    firsttag = current;
-                }
-                else
-                {
-                    taglen = 1;
-                    lpID = NULL;
-                    lpUrl = NULL;
-                    if(textstart == NULL)
-                    {
-                        textstart = current;
-                    }
-                }
-            }
-            else if(!StrCmpNIW(current, SL_LINKCLOSE, 4) && (CurrentType == slLink) && firsttag)
-            {
-                /* there's a <a...> tag opened, first add the previous text, if present */
-                if(textstart != NULL && textlen > 0 && firsttag > textstart)
-                {
-                    Last = SYSLINK_AppendDocItem(infoPtr, textstart, firsttag - textstart, slText, Last);
-                    if(Last == NULL)
-                    {
-                        ERR("Unable to create new document item!\n");
-                        return docitems;
-                    }
-                    docitems++;
-                    textstart = NULL;
-                    textlen = 0;
-                }
-                
-                /* now it's time to add the link to the document */
-                current += 4;
-                if(linktext != NULL && linklen > 0)
-                {
-                    Last = SYSLINK_AppendDocItem(infoPtr, linktext, linklen, slLink, Last);
-                    if(Last == NULL)
-                    {
-                        ERR("Unable to create new document item!\n");
-                        return docitems;
-                    }
-                    docitems++;
-                    if(CurrentType == slLink)
-                    {
-                        int nc;
+						for(tmp = *CurrentParameter; *tmp != 0; tmp++)
+						{
+							taglen++;
+							if(*tmp == '\"')
+							{
+								ValidParam = TRUE;
+								tmp++;
+								break;
+							}
+							(*CurrentParameterLen)++;
+						}
+					}
+					if(ValidParam)
+					{
+						/* we're done with this parameter, now there are only 2 possibilities:
+						 * 1. another parameter is coming, so expect a ' ' (space) character
+						 * 2. the tag is being closed, so expect a '<' character
+						 */
+						if(*tmp == infoPtr->BreakChar)
+						{
+							/* we expect another parameter, do the whole thing again */
+							taglen++;
+							tmp++;
+							goto CheckParameter;
+						}
+						else if(*tmp == '>')
+						{
+							/* the tag is being closed, we're done */
+							ValidLink = TRUE;
+							taglen++;
+						}
+					}
+				}
+				
+				if(ValidLink && ValidParam)
+				{
+					/* the <a ...> tag appears to be valid. save all information
+					   so we can add the link if we find a valid </a> tag later */
+					CurrentType = slLink;
+					linktext = current + taglen;
+					linklen = 0;
+					firsttag = current;
+				}
+				else
+				{
+					taglen = 1;
+					lpID = NULL;
+					lpUrl = NULL;
+					if(textstart == NULL)
+					{
+						textstart = current;
+					}
+				}
+			}
+			else if(!StrCmpNIW(current, SL_LINKCLOSE, 4) && (CurrentType == slLink) && firsttag)
+			{
+				/* there's a <a...> tag opened, first add the previous text, if present */
+				if(textstart != NULL && textlen > 0 && firsttag > textstart)
+				{
+					Last = SYSLINK_AppendDocItem(infoPtr, textstart, firsttag - textstart, slText, Last);
+					if(Last == NULL)
+					{
+						ERR("Unable to create new document item!\n");
+						return docitems;
+					}
+					docitems++;
+					textstart = NULL;
+					textlen = 0;
+				}
+				
+				/* now it's time to add the link to the document */
+				current += 4;
+				if(linktext != NULL && linklen > 0)
+				{
+					Last = SYSLINK_AppendDocItem(infoPtr, linktext, linklen, slLink, Last);
+					if(Last == NULL)
+					{
+						ERR("Unable to create new document item!\n");
+						return docitems;
+					}
+					docitems++;
+					if(CurrentType == slLink)
+					{
+						int nc;
 
-                        if(!(infoPtr->Style & WS_DISABLED))
-                        {
-                            Last->u.Link.state |= LIS_ENABLED;
-                        }
-                        /* Copy the tag parameters */
-                        if(lpID != NULL)
-                        {
-                            nc = min(lenId, (UINT)lstrlenW(lpID));
-                            nc = min(nc, MAX_LINKID_TEXT - 1);
-                            Last->u.Link.szID = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
-                            if(Last->u.Link.szID != NULL)
-                            {
-                                lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
-                            }
-                        }
-                        else
-                            Last->u.Link.szID = NULL;
-                        if(lpUrl != NULL)
-                        {
-                            nc = min(lenUrl, (UINT)lstrlenW(lpUrl));
-                            nc = min(nc, L_MAX_URL_LENGTH - 1);
-                            Last->u.Link.szUrl = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
-                            if(Last->u.Link.szUrl != NULL)
-                            {
-                                lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
-                            }
-                        }
-                        else
-                            Last->u.Link.szUrl = NULL;
-                    }
-                    linktext = NULL;
-                }
-                CurrentType = slText;
-                firsttag = NULL;
-                textstart = NULL;
-                continue;
-            }
-            else
-            {
-                /* we don't know what tag it is, so just continue */
-                taglen = 1;
-                linklen++;
-                if(CurrentType == slText && textstart == NULL)
-                {
-                    textstart = current;
-                }
-            }
-            
-            textlen += taglen;
-            current += taglen;
-        }
-        else
-        {
-            textlen++;
-            linklen++;
+						if(!(infoPtr->Style & WS_DISABLED))
+						{
+							Last->u.Link.state |= LIS_ENABLED;
+						}
+						/* Copy the tag parameters */
+						if(lpID != NULL)
+						{
+							nc = min(lenId, (UINT)lstrlenW(lpID));
+							nc = min(nc, MAX_LINKID_TEXT - 1);
+							Last->u.Link.szID = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
+							if(Last->u.Link.szID != NULL)
+							{
+								lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
+							}
+						}
+						else
+							Last->u.Link.szID = NULL;
+						if(lpUrl != NULL)
+						{
+							nc = min(lenUrl, (UINT)lstrlenW(lpUrl));
+							nc = min(nc, L_MAX_URL_LENGTH - 1);
+							Last->u.Link.szUrl = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
+							if(Last->u.Link.szUrl != NULL)
+							{
+								lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
+							}
+						}
+						else
+							Last->u.Link.szUrl = NULL;
+					}
+					linktext = NULL;
+				}
+				CurrentType = slText;
+				firsttag = NULL;
+				textstart = NULL;
+				continue;
+			}
+			else
+			{
+				/* we don't know what tag it is, so just continue */
+				taglen = 1;
+				linklen++;
+				if(CurrentType == slText && textstart == NULL)
+				{
+					textstart = current;
+				}
+			}
+			
+			textlen += taglen;
+			current += taglen;
+		}
+		else
+		{
+			textlen++;
+			linklen++;
 
-            /* save the pointer of the current text item if we couldn't find a tag */
-            if(textstart == NULL && CurrentType == slText)
-            {
-                textstart = current;
-            }
-            
-            current++;
-        }
-    }
-    
-    if(textstart != NULL && textlen > 0)
-    {
-        Last = SYSLINK_AppendDocItem(infoPtr, textstart, textlen, CurrentType, Last);
-        if(Last == NULL)
-        {
-            ERR("Unable to create new document item!\n");
-            return docitems;
-        }
-        if(CurrentType == slLink)
-        {
-            int nc;
+			/* save the pointer of the current text item if we couldn't find a tag */
+			if(textstart == NULL && CurrentType == slText)
+			{
+				textstart = current;
+			}
+			
+			current++;
+		}
+	}
 
-            if(!(infoPtr->Style & WS_DISABLED))
-            {
-                Last->u.Link.state |= LIS_ENABLED;
-            }
-            /* Copy the tag parameters */
-            if(lpID != NULL)
-            {
-                nc = min(lenId, (UINT)lstrlenW(lpID));
-                nc = min(nc, MAX_LINKID_TEXT - 1);
-                Last->u.Link.szID = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
-                if(Last->u.Link.szID != NULL)
-                {
-                    lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
-                }
-            }
-            else
-                Last->u.Link.szID = NULL;
-            if(lpUrl != NULL)
-            {
-                nc = min(lenUrl, (UINT)lstrlenW(lpUrl));
-                nc = min(nc, L_MAX_URL_LENGTH - 1);
-                Last->u.Link.szUrl = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
-                if(Last->u.Link.szUrl != NULL)
-                {
-                    lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
-                }
-            }
-            else
-                Last->u.Link.szUrl = NULL;
-        }
-        docitems++;
-    }
+	if(textstart != NULL && textlen > 0)
+	{
+		Last = SYSLINK_AppendDocItem(infoPtr, textstart, textlen, CurrentType, Last);
+		if(Last == NULL)
+		{
+			ERR("Unable to create new document item!\n");
+			return docitems;
+		}
+		if(CurrentType == slLink)
+		{
+			int nc;
 
-    if(linktext != NULL && linklen > 0)
-    {
-        /* we got an unclosed link, just display the text */
-        Last = SYSLINK_AppendDocItem(infoPtr, linktext, linklen, slText, Last);
-        if(Last == NULL)
-        {
-            ERR("Unable to create new document item!\n");
-            return docitems;
-        }
-        docitems++;
-    }
+			if(!(infoPtr->Style & WS_DISABLED))
+			{
+				Last->u.Link.state |= LIS_ENABLED;
+			}
+			/* Copy the tag parameters */
+			if(lpID != NULL)
+			{
+				nc = min(lenId, (UINT)lstrlenW(lpID));
+				nc = min(nc, MAX_LINKID_TEXT - 1);
+				Last->u.Link.szID = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
+				if(Last->u.Link.szID != NULL)
+				{
+					lstrcpynW(Last->u.Link.szID, lpID, nc + 1);
+				}
+			}
+			else
+				Last->u.Link.szID = NULL;
+			if(lpUrl != NULL)
+			{
+				nc = min(lenUrl, (UINT)lstrlenW(lpUrl));
+				nc = min(nc, L_MAX_URL_LENGTH - 1);
+				Last->u.Link.szUrl = (WCHAR*)Alloc((nc + 1) * sizeof(WCHAR));
+				if(Last->u.Link.szUrl != NULL)
+				{
+					lstrcpynW(Last->u.Link.szUrl, lpUrl, nc + 1);
+				}
+			}
+			else
+				Last->u.Link.szUrl = NULL;
+		}
+		docitems++;
+	}
 
-    return docitems;
+	if(linktext != NULL && linklen > 0)
+	{
+		/* we got an unclosed link, just display the text */
+		Last = SYSLINK_AppendDocItem(infoPtr, linktext, linklen, slText, Last);
+		if(Last == NULL)
+		{
+			ERR("Unable to create new document item!\n");
+			return docitems;
+		}
+		docitems++;
+	}
+
+	return docitems;
 }
 
 /***********************************************************************
@@ -527,27 +527,27 @@ CheckParameter:
  */
 static VOID SYSLINK_RepaintLink (const SYSLINK_INFO *infoPtr, const DOC_ITEM *DocItem)
 {
-    PDOC_TEXTBLOCK bl;
-    int n;
+	PDOC_TEXTBLOCK bl;
+	int n;
 
-    if(DocItem->Type != slLink)
-    {
-        ERR("DocItem not a link!\n");
-        return;
-    }
-    
-    bl = DocItem->Blocks;
-    if (bl != NULL)
-    {
-        n = DocItem->nText;
-        
-        while(n > 0)
-        {
-            InvalidateRect(infoPtr->Self, &bl->rc, TRUE);
-            n -= bl->nChars + bl->nSkip;
-            bl++;
-        }
-    }
+	if(DocItem->Type != slLink)
+	{
+		ERR("DocItem not a link!\n");
+		return;
+	}
+
+	bl = DocItem->Blocks;
+	if (bl != NULL)
+	{
+		n = DocItem->nText;
+		
+		while(n > 0)
+		{
+			InvalidateRect(infoPtr->Self, &bl->rc, TRUE);
+			n -= bl->nChars + bl->nSkip;
+			bl++;
+		}
+	}
 }
 
 /***********************************************************************
@@ -556,17 +556,17 @@ static VOID SYSLINK_RepaintLink (const SYSLINK_INFO *infoPtr, const DOC_ITEM *Do
  */
 static PDOC_ITEM SYSLINK_GetLinkItemByIndex (const SYSLINK_INFO *infoPtr, int iLink)
 {
-    PDOC_ITEM Current = infoPtr->Items;
+	PDOC_ITEM Current = infoPtr->Items;
 
-    while(Current != NULL)
-    {
-        if((Current->Type == slLink) && (iLink-- <= 0))
-        {
-            return Current;
-        }
-        Current = Current->Next;
-    }
-    return NULL;
+	while(Current != NULL)
+	{
+		if((Current->Type == slLink) && (iLink-- <= 0))
+		{
+			return Current;
+		}
+		Current = Current->Next;
+	}
+	return NULL;
 }
 
 /***********************************************************************
@@ -575,24 +575,24 @@ static PDOC_ITEM SYSLINK_GetLinkItemByIndex (const SYSLINK_INFO *infoPtr, int iL
  */
 static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
 {
-    PDOC_ITEM Current = infoPtr->Items;
-    int id = 0;
+	PDOC_ITEM Current = infoPtr->Items;
+	int id = 0;
 
-    while(Current != NULL)
-    {
-        if((Current->Type == slLink))
-        {
-            if(Current->u.Link.state & LIS_FOCUSED)
-            {
-                if(LinkId != NULL)
-                    *LinkId = id;
-                return Current;
-            }
-            id++;
-        }
-        Current = Current->Next;
-    }
-    return NULL;
+	while(Current != NULL)
+	{
+		if((Current->Type == slLink))
+		{
+			if(Current->u.Link.state & LIS_FOCUSED)
+			{
+				if(LinkId != NULL)
+					*LinkId = id;
+				return Current;
+			}
+			id++;
+		}
+		Current = Current->Next;
+	}
+	return NULL;
 }
 
 /***********************************************************************
@@ -601,16 +601,16 @@ static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
  */
 static PDOC_ITEM SYSLINK_GetNextLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Current)
 {
-    for(Current = (Current != NULL ? Current->Next : infoPtr->Items);
-        Current != NULL;
-        Current = Current->Next)
-    {
-        if(Current->Type == slLink)
-        {
-            return Current;
-        }
-    }
-    return NULL;
+	for(Current = (Current != NULL ? Current->Next : infoPtr->Items);
+		Current != NULL;
+		Current = Current->Next)
+	{
+		if(Current->Type == slLink)
+		{
+			return Current;
+		}
+	}
+	return NULL;
 }
 
 /***********************************************************************
@@ -619,38 +619,38 @@ static PDOC_ITEM SYSLINK_GetNextLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Cur
  */
 static PDOC_ITEM SYSLINK_GetPrevLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Current)
 {
-    if(Current == NULL)
-    {
-        /* returns the last link */
-        PDOC_ITEM Last = NULL;
-        
-        for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-        {
-            if(Current->Type == slLink)
-            {
-                Last = Current;
-            }
-        }
-        return Last;
-    }
-    else
-    {
-        /* returns the previous link */
-        PDOC_ITEM Cur, Prev = NULL;
-        
-        for(Cur = infoPtr->Items; Cur != NULL; Cur = Cur->Next)
-        {
-            if(Cur == Current)
-            {
-                break;
-            }
-            if(Cur->Type == slLink)
-            {
-                Prev = Cur;
-            }
-        }
-        return Prev;
-    }
+	if(Current == NULL)
+	{
+		/* returns the last link */
+		PDOC_ITEM Last = NULL;
+		
+		for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+		{
+			if(Current->Type == slLink)
+			{
+				Last = Current;
+			}
+		}
+		return Last;
+	}
+	else
+	{
+		/* returns the previous link */
+		PDOC_ITEM Cur, Prev = NULL;
+		
+		for(Cur = infoPtr->Items; Cur != NULL; Cur = Cur->Next)
+		{
+			if(Cur == Current)
+			{
+				break;
+			}
+			if(Cur->Type == slLink)
+			{
+				Prev = Cur;
+			}
+		}
+		return Prev;
+	}
 }
 
 /***********************************************************************
@@ -660,36 +660,36 @@ static PDOC_ITEM SYSLINK_GetPrevLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Cur
 static BOOL SYSLINK_WrapLine (LPWSTR Text, WCHAR BreakChar, int *LineLen,
                              int nFit, LPSIZE Extent)
 {
-    WCHAR *Current;
+	WCHAR *Current;
 
-    if(nFit == *LineLen)
-    {
-        return FALSE;
-    }
+	if(nFit == *LineLen)
+	{
+		return FALSE;
+	}
 
-    *LineLen = nFit;
+	*LineLen = nFit;
 
-    Current = Text + nFit;
-    
-    /* check if we're in the middle of a word */
-    if((*Current) != BreakChar)
-    {
-        /* search for the beginning of the word */
-        while(Current > Text && (*(Current - 1)) != BreakChar)
-        {
-            Current--;
-            (*LineLen)--;
-        }
-        
-        if((*LineLen) == 0)
-        {
-            Extent->cx = 0;
-            Extent->cy = 0;
-        }
-        return TRUE;
-    }
+	Current = Text + nFit;
 
-    return TRUE;
+	/* check if we're in the middle of a word */
+	if((*Current) != BreakChar)
+	{
+		/* search for the beginning of the word */
+		while(Current > Text && (*(Current - 1)) != BreakChar)
+		{
+			Current--;
+			(*LineLen)--;
+		}
+		
+		if((*LineLen) == 0)
+		{
+			Extent->cx = 0;
+			Extent->cy = 0;
+		}
+		return TRUE;
+	}
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -698,179 +698,179 @@ static BOOL SYSLINK_WrapLine (LPWSTR Text, WCHAR BreakChar, int *LineLen,
  */
 static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
 {
-    RECT rc;
-    PDOC_ITEM Current;
-    HGDIOBJ hOldFont;
-    int x, y, LineHeight;
-    SIZE szDoc;
+	RECT rc;
+	PDOC_ITEM Current;
+	HGDIOBJ hOldFont;
+	int x, y, LineHeight;
+	SIZE szDoc;
 
-    szDoc.cx = szDoc.cy = 0;
+	szDoc.cx = szDoc.cy = 0;
 
-    rc = *pRect;
-    rc.right -= SL_RIGHTMARGIN;
-    rc.bottom -= SL_BOTTOMMARGIN;
+	rc = *pRect;
+	rc.right -= SL_RIGHTMARGIN;
+	rc.bottom -= SL_BOTTOMMARGIN;
 
-    if(rc.right - SL_LEFTMARGIN < 0)
-        rc.right = MAXLONG;
-    if (rc.bottom - SL_TOPMARGIN < 0)
-        rc.bottom = MAXLONG;
-    
-    hOldFont = SelectObject(hdc, infoPtr->Font);
-    
-    x = SL_LEFTMARGIN;
-    y = SL_TOPMARGIN;
-    LineHeight = 0;
-    
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-    {
-        int n, nBlocks;
-        LPWSTR tx;
-        PDOC_TEXTBLOCK bl, cbl;
-        INT nFit;
-        SIZE szDim;
+	if(rc.right - SL_LEFTMARGIN < 0)
+		rc.right = MAXLONG;
+	if (rc.bottom - SL_TOPMARGIN < 0)
+		rc.bottom = MAXLONG;
 
-        if(Current->nText == 0)
-        {
-            continue;
-        }
+	hOldFont = SelectObject(hdc, infoPtr->Font);
 
-        tx = Current->Text;
-        n = Current->nText;
+	x = SL_LEFTMARGIN;
+	y = SL_TOPMARGIN;
+	LineHeight = 0;
 
-        Free(Current->Blocks);
-        Current->Blocks = NULL;
-        bl = NULL;
-        nBlocks = 0;
+	for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+	{
+		int n, nBlocks;
+		LPWSTR tx;
+		PDOC_TEXTBLOCK bl, cbl;
+		INT nFit;
+		SIZE szDim;
 
-        if(Current->Type == slText)
-        {
-            SelectObject(hdc, infoPtr->Font);
-        }
-        else if(Current->Type == slLink)
-        {
-            SelectObject(hdc, infoPtr->LinkFont);
-        }
-        
-        while(n > 0)
-        {
-            int SkipChars = 0;
+		if(Current->nText == 0)
+		{
+			continue;
+		}
 
-            /* skip break characters unless they're the first of the doc item */
-            if(tx != Current->Text || x == SL_LEFTMARGIN)
-            {
-                while(n > 0 && (*tx) == infoPtr->BreakChar)
-                {
-                    tx++;
-                    SkipChars++;
-                    n--;
-                }
-            }
+		tx = Current->Text;
+		n = Current->nText;
 
-            if((n == 0 && SkipChars != 0) ||
-               GetTextExtentExPointW(hdc, tx, n, rc.right - x, &nFit, NULL, &szDim))
-            {
-                int LineLen = n;
-                BOOL Wrap = FALSE;
-                PDOC_TEXTBLOCK nbl;
-                
-                if(n != 0)
-                {
-                    Wrap = SYSLINK_WrapLine(tx, infoPtr->BreakChar, &LineLen, nFit, &szDim);
+		Free(Current->Blocks);
+		Current->Blocks = NULL;
+		bl = NULL;
+		nBlocks = 0;
 
-                    if(LineLen == 0)
-                    {
-                        if(x > SL_LEFTMARGIN)
-                        {
-                            /* move one line down, the word didn't fit into the line */
-                            x = SL_LEFTMARGIN;
-                            y += LineHeight;
-                            LineHeight = 0;
-                            continue;
-                        }
-                        else
-                        {
-                            /* the word starts at the beginning of the line and doesn't
-                               fit into the line, so break it at the last character that fits */
-                            LineLen = max(nFit, 1);
-                        }
-                    }
+		if(Current->Type == slText)
+		{
+			SelectObject(hdc, infoPtr->Font);
+		}
+		else if(Current->Type == slLink)
+		{
+			SelectObject(hdc, infoPtr->LinkFont);
+		}
+		
+		while(n > 0)
+		{
+			int SkipChars = 0;
 
-                    if(LineLen != n)
-                    {
-                        if(!GetTextExtentExPointW(hdc, tx, LineLen, rc.right - x, NULL, NULL, &szDim))
-                        {
-                            if(bl != NULL)
-                            {
-                                Free(bl);
-                                bl = NULL;
-                                nBlocks = 0;
-                            }
-                            break;
-                        }
-                    }
-                }
-                
-                nbl = (PDOC_TEXTBLOCK)ReAlloc(bl, (nBlocks + 1) * sizeof(DOC_TEXTBLOCK));
-                if (nbl != NULL)
-                {
-                    bl = nbl;
-                    nBlocks++;
+			/* skip break characters unless they're the first of the doc item */
+			if(tx != Current->Text || x == SL_LEFTMARGIN)
+			{
+				while(n > 0 && (*tx) == infoPtr->BreakChar)
+				{
+					tx++;
+					SkipChars++;
+					n--;
+				}
+			}
 
-                    cbl = bl + nBlocks - 1;
-                    
-                    cbl->nChars = LineLen;
-                    cbl->nSkip = SkipChars;
-                    cbl->rc.left = x;
-                    cbl->rc.top = y;
-                    cbl->rc.right = x + szDim.cx;
-                    cbl->rc.bottom = y + szDim.cy;
+			if((n == 0 && SkipChars != 0) ||
+			   GetTextExtentExPointW(hdc, tx, n, rc.right - x, &nFit, NULL, &szDim))
+			{
+				int LineLen = n;
+				BOOL Wrap = FALSE;
+				PDOC_TEXTBLOCK nbl;
+				
+				if(n != 0)
+				{
+					Wrap = SYSLINK_WrapLine(tx, infoPtr->BreakChar, &LineLen, nFit, &szDim);
 
-                    if (cbl->rc.right > szDoc.cx)
-                        szDoc.cx = cbl->rc.right;
-                    if (cbl->rc.bottom > szDoc.cy)
-                        szDoc.cy = cbl->rc.bottom;
+					if(LineLen == 0)
+					{
+						if(x > SL_LEFTMARGIN)
+						{
+							/* move one line down, the word didn't fit into the line */
+							x = SL_LEFTMARGIN;
+							y += LineHeight;
+							LineHeight = 0;
+							continue;
+						}
+						else
+						{
+							/* the word starts at the beginning of the line and doesn't
+							   fit into the line, so break it at the last character that fits */
+							LineLen = max(nFit, 1);
+						}
+					}
 
-                    if(LineLen != 0)
-                    {
-                        x += szDim.cx;
-                        LineHeight = max(LineHeight, szDim.cy);
+					if(LineLen != n)
+					{
+						if(!GetTextExtentExPointW(hdc, tx, LineLen, rc.right - x, NULL, NULL, &szDim))
+						{
+							if(bl != NULL)
+							{
+								Free(bl);
+								bl = NULL;
+								nBlocks = 0;
+							}
+							break;
+						}
+					}
+				}
+				
+				nbl = (PDOC_TEXTBLOCK)ReAlloc(bl, (nBlocks + 1) * sizeof(DOC_TEXTBLOCK));
+				if (nbl != NULL)
+				{
+					bl = nbl;
+					nBlocks++;
 
-                        if(Wrap)
-                        {
-                            x = SL_LEFTMARGIN;
-                            y += LineHeight;
-                            LineHeight = 0;
-                        }
-                    }
-                }
-                else
-                {
-                    Free(bl);
-                    bl = NULL;
-                    nBlocks = 0;
+					cbl = bl + nBlocks - 1;
+					
+					cbl->nChars = LineLen;
+					cbl->nSkip = SkipChars;
+					cbl->rc.left = x;
+					cbl->rc.top = y;
+					cbl->rc.right = x + szDim.cx;
+					cbl->rc.bottom = y + szDim.cy;
 
-                    ERR("Failed to alloc DOC_TEXTBLOCK structure!\n");
-                    break;
-                }
-                n -= LineLen;
-                tx += LineLen;
-            }
-            else
-            {
-                n--;
-            }
-        }
+					if (cbl->rc.right > szDoc.cx)
+						szDoc.cx = cbl->rc.right;
+					if (cbl->rc.bottom > szDoc.cy)
+						szDoc.cy = cbl->rc.bottom;
 
-        if(nBlocks != 0)
-        {
-            Current->Blocks = bl;
-        }
-    }
-    
-    SelectObject(hdc, hOldFont);
+					if(LineLen != 0)
+					{
+						x += szDim.cx;
+						LineHeight = max(LineHeight, szDim.cy);
 
-    pRect->right = pRect->left + szDoc.cx;
-    pRect->bottom = pRect->top + szDoc.cy;
+						if(Wrap)
+						{
+							x = SL_LEFTMARGIN;
+							y += LineHeight;
+							LineHeight = 0;
+						}
+					}
+				}
+				else
+				{
+					Free(bl);
+					bl = NULL;
+					nBlocks = 0;
+
+					ERR("Failed to alloc DOC_TEXTBLOCK structure!\n");
+					break;
+				}
+				n -= LineLen;
+				tx += LineLen;
+			}
+			else
+			{
+				n--;
+			}
+		}
+
+		if(nBlocks != 0)
+		{
+			Current->Blocks = bl;
+		}
+	}
+
+	SelectObject(hdc, hOldFont);
+
+	pRect->right = pRect->left + szDoc.cx;
+	pRect->bottom = pRect->top + szDoc.cy;
 }
 
 /***********************************************************************
@@ -879,67 +879,67 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
  */
 static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
 {
-    RECT rc;
-    PDOC_ITEM Current;
-    HFONT hOldFont;
-    COLORREF OldTextColor, OldBkColor;
+	RECT rc;
+	PDOC_ITEM Current;
+	HFONT hOldFont;
+	COLORREF OldTextColor, OldBkColor;
 
-    hOldFont = (HFONT)SelectObject(hdc, infoPtr->Font);
-    OldTextColor = SetTextColor(hdc, infoPtr->TextColor);
-    OldBkColor = SetBkColor(hdc, infoPtr->BackColor);
-    
-    GetClientRect(infoPtr->Self, &rc);
-    rc.right -= SL_RIGHTMARGIN + SL_LEFTMARGIN;
-    rc.bottom -= SL_BOTTOMMARGIN + SL_TOPMARGIN;
+	hOldFont = (HFONT)SelectObject(hdc, infoPtr->Font);
+	OldTextColor = SetTextColor(hdc, infoPtr->TextColor);
+	OldBkColor = SetBkColor(hdc, infoPtr->BackColor);
 
-    if(rc.right < 0 || rc.bottom < 0) return 0;
+	GetClientRect(infoPtr->Self, &rc);
+	rc.right -= SL_RIGHTMARGIN + SL_LEFTMARGIN;
+	rc.bottom -= SL_BOTTOMMARGIN + SL_TOPMARGIN;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-    {
-        int n;
-        LPWSTR tx;
-        PDOC_TEXTBLOCK bl;
-        
-        bl = Current->Blocks;
-        if(bl != NULL)
-        {
-            tx = Current->Text;
-            n = Current->nText;
+	if(rc.right < 0 || rc.bottom < 0) return 0;
 
-            if(Current->Type == slText)
-            {
-                 SelectObject(hdc, infoPtr->Font);
-                 SetTextColor(hdc, infoPtr->TextColor);
-            }
-            else
-            {
-                 SelectObject(hdc, infoPtr->LinkFont);
-                 SetTextColor(hdc, (!(Current->u.Link.state & LIS_VISITED) ? infoPtr->LinkColor : infoPtr->VisitedColor));
-            }
+	for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+	{
+		int n;
+		LPWSTR tx;
+		PDOC_TEXTBLOCK bl;
+		
+		bl = Current->Blocks;
+		if(bl != NULL)
+		{
+			tx = Current->Text;
+			n = Current->nText;
 
-            while(n > 0)
-            {
-                tx += bl->nSkip;
-                ExtTextOutW(hdc, bl->rc.left, bl->rc.top, ETO_OPAQUE | ETO_CLIPPED, &bl->rc, tx, bl->nChars, NULL);
-                if((Current->Type == slLink) && (Current->u.Link.state & LIS_FOCUSED) && infoPtr->HasFocus)
-                {
-                    COLORREF PrevTextColor;
-                    PrevTextColor = SetTextColor(hdc, infoPtr->TextColor);
-                    DrawFocusRect(hdc, &bl->rc);
-                    SetTextColor(hdc, PrevTextColor);
-                }
-                tx += bl->nChars;
-                n -= bl->nChars + bl->nSkip;
-                bl++;
-            }
-        }
-    }
+			if(Current->Type == slText)
+			{
+				 SelectObject(hdc, infoPtr->Font);
+				 SetTextColor(hdc, infoPtr->TextColor);
+			}
+			else
+			{
+				 SelectObject(hdc, infoPtr->LinkFont);
+				 SetTextColor(hdc, (!(Current->u.Link.state & LIS_VISITED) ? infoPtr->LinkColor : infoPtr->VisitedColor));
+			}
 
-    SetBkColor(hdc, OldBkColor);
-    SetTextColor(hdc, OldTextColor);
-    SelectObject(hdc, hOldFont);
-    
-    return 0;
+			while(n > 0)
+			{
+				tx += bl->nSkip;
+				ExtTextOutW(hdc, bl->rc.left, bl->rc.top, ETO_OPAQUE | ETO_CLIPPED, &bl->rc, tx, bl->nChars, NULL);
+				if((Current->Type == slLink) && (Current->u.Link.state & LIS_FOCUSED) && infoPtr->HasFocus)
+				{
+					COLORREF PrevTextColor;
+					PrevTextColor = SetTextColor(hdc, infoPtr->TextColor);
+					DrawFocusRect(hdc, &bl->rc);
+					SetTextColor(hdc, PrevTextColor);
+				}
+				tx += bl->nChars;
+				n -= bl->nChars + bl->nSkip;
+				bl++;
+			}
+		}
+	}
+
+	SetBkColor(hdc, OldBkColor);
+	SetTextColor(hdc, OldTextColor);
+	SelectObject(hdc, hOldFont);
+
+	return 0;
 }
 
 
@@ -949,16 +949,16 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
  */
 static LRESULT SYSLINK_Paint (const SYSLINK_INFO *infoPtr, HDC hdcParam)
 {
-    HDC hdc;
-    PAINTSTRUCT ps;
+	HDC hdc;
+	PAINTSTRUCT ps;
 
-    hdc = hdcParam ? hdcParam : BeginPaint (infoPtr->Self, &ps);
-    if (hdc)
-    {
-        SYSLINK_Draw (infoPtr, hdc);
-        if (!hdcParam) EndPaint (infoPtr->Self, &ps);
-    }
-    return 0;
+	hdc = hdcParam ? hdcParam : BeginPaint (infoPtr->Self, &ps);
+	if (hdc)
+	{
+		SYSLINK_Draw (infoPtr, hdc);
+		if (!hdcParam) EndPaint (infoPtr->Self, &ps);
+	}
+	return 0;
 }
 
 /***********************************************************************
@@ -967,15 +967,15 @@ static LRESULT SYSLINK_Paint (const SYSLINK_INFO *infoPtr, HDC hdcParam)
  */
 static LRESULT SYSLINK_EraseBkgnd (const SYSLINK_INFO *infoPtr, HDC hdc)
 {
-   HBRUSH hbr;
-   RECT r;
+	HBRUSH hbr;
+	RECT r;
 
-   GetClientRect(infoPtr->Self, &r);
-   hbr = CreateSolidBrush(infoPtr->BackColor);
-   FillRect(hdc, &r, hbr);
-   DeleteObject(hbr);
+	GetClientRect(infoPtr->Self, &r);
+	hbr = CreateSolidBrush(infoPtr->BackColor);
+	FillRect(hdc, &r, hbr);
+	DeleteObject(hbr);
 
-   return 1;
+	return 1;
 }
 
 /***********************************************************************
@@ -984,50 +984,50 @@ static LRESULT SYSLINK_EraseBkgnd (const SYSLINK_INFO *infoPtr, HDC hdc)
  */
 static HFONT SYSLINK_SetFont (SYSLINK_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
 {
-    HDC hdc;
-    LOGFONTA lf;
-    TEXTMETRICA tm;
-    RECT rcClient;
-    HFONT hOldFont = infoPtr->Font;
-    infoPtr->Font = hFont;
-    
-    /* free the underline font */
-    if(infoPtr->LinkFont != NULL)
-    {
-        DeleteObject(infoPtr->LinkFont);
-        infoPtr->LinkFont = NULL;
-    }
+	HDC hdc;
+	LOGFONTA lf;
+	TEXTMETRICA tm;
+	RECT rcClient;
+	HFONT hOldFont = infoPtr->Font;
+	infoPtr->Font = hFont;
 
-    /* Render text position and word wrapping in memory */
-    if (GetClientRect(infoPtr->Self, &rcClient))
-    {
-        hdc = GetDC(infoPtr->Self);
-        if(hdc != NULL)
-        {
-            /* create a new underline font */
-            if(GetTextMetricsA(hdc, &tm) &&
-               GetObjectA(infoPtr->Font, sizeof(LOGFONTA), &lf))
-            {
-                lf.lfUnderline = TRUE;
-                infoPtr->LinkFont = CreateFontIndirectA(&lf);
-                infoPtr->BreakChar = tm.tmBreakChar;
-            }
-            else
-            {
-                ERR("Failed to create link font!\n");
-            }
+	/* free the underline font */
+	if(infoPtr->LinkFont != NULL)
+	{
+		DeleteObject(infoPtr->LinkFont);
+		infoPtr->LinkFont = NULL;
+	}
 
-            SYSLINK_Render(infoPtr, hdc, &rcClient);
-            ReleaseDC(infoPtr->Self, hdc);
-        }
-    }
-    
-    if(bRedraw)
-    {
-        RedrawWindow(infoPtr->Self, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-    }
-    
-    return hOldFont;
+	/* Render text position and word wrapping in memory */
+	if (GetClientRect(infoPtr->Self, &rcClient))
+	{
+		hdc = GetDC(infoPtr->Self);
+		if(hdc != NULL)
+		{
+			/* create a new underline font */
+			if(GetTextMetricsA(hdc, &tm) &&
+			   GetObjectA(infoPtr->Font, sizeof(LOGFONTA), &lf))
+			{
+				lf.lfUnderline = TRUE;
+				infoPtr->LinkFont = CreateFontIndirectA(&lf);
+				infoPtr->BreakChar = tm.tmBreakChar;
+			}
+			else
+			{
+				ERR("Failed to create link font!\n");
+			}
+
+			SYSLINK_Render(infoPtr, hdc, &rcClient);
+			ReleaseDC(infoPtr->Self, hdc);
+		}
+	}
+
+	if(bRedraw)
+	{
+		RedrawWindow(infoPtr->Self, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	}
+
+	return hOldFont;
 }
 
 /***********************************************************************
@@ -1036,34 +1036,34 @@ static HFONT SYSLINK_SetFont (SYSLINK_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
  */
 static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 {
-    /* clear the document */
-    SYSLINK_ClearDoc(infoPtr);
+	/* clear the document */
+	SYSLINK_ClearDoc(infoPtr);
 
-    if(Text == NULL || *Text == 0)
-    {
-        return TRUE;
-    }
+	if(Text == NULL || *Text == 0)
+	{
+		return TRUE;
+	}
 
-    /* let's parse the string and create a document */
-    if(SYSLINK_ParseText(infoPtr, Text) > 0)
-    {
-        RECT rcClient;
+	/* let's parse the string and create a document */
+	if(SYSLINK_ParseText(infoPtr, Text) > 0)
+	{
+		RECT rcClient;
 
-        /* Render text position and word wrapping in memory */
-        if (GetClientRect(infoPtr->Self, &rcClient))
-        {
-            HDC hdc = GetDC(infoPtr->Self);
-            if (hdc != NULL)
-            {
-                SYSLINK_Render(infoPtr, hdc, &rcClient);
-                ReleaseDC(infoPtr->Self, hdc);
+		/* Render text position and word wrapping in memory */
+		if (GetClientRect(infoPtr->Self, &rcClient))
+		{
+			HDC hdc = GetDC(infoPtr->Self);
+			if (hdc != NULL)
+			{
+				SYSLINK_Render(infoPtr, hdc, &rcClient);
+				ReleaseDC(infoPtr->Self, hdc);
 
-                InvalidateRect(infoPtr->Self, NULL, TRUE);
-            }
-        }
-    }
-    
-    return TRUE;
+				InvalidateRect(infoPtr->Self, NULL, TRUE);
+			}
+		}
+	}
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -1074,29 +1074,29 @@ static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
  */
 static PDOC_ITEM SYSLINK_SetFocusLink (const SYSLINK_INFO *infoPtr, const DOC_ITEM *DocItem)
 {
-    PDOC_ITEM Current, PrevFocus = NULL;
-    
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-    {
-        if(Current->Type == slLink)
-        {
-            if((PrevFocus == NULL) && (Current->u.Link.state & LIS_FOCUSED))
-            {
-                PrevFocus = Current;
-            }
-            
-            if(Current == DocItem)
-            {
-                Current->u.Link.state |= LIS_FOCUSED;
-            }
-            else
-            {
-                Current->u.Link.state &= ~LIS_FOCUSED;
-            }
-        }
-    }
-    
-    return PrevFocus;
+	PDOC_ITEM Current, PrevFocus = NULL;
+
+	for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+	{
+		if(Current->Type == slLink)
+		{
+			if((PrevFocus == NULL) && (Current->u.Link.state & LIS_FOCUSED))
+			{
+				PrevFocus = Current;
+			}
+			
+			if(Current == DocItem)
+			{
+				Current->u.Link.state |= LIS_FOCUSED;
+			}
+			else
+			{
+				Current->u.Link.state &= ~LIS_FOCUSED;
+			}
+		}
+	}
+
+	return PrevFocus;
 }
 
 /***********************************************************************
@@ -1105,88 +1105,88 @@ static PDOC_ITEM SYSLINK_SetFocusLink (const SYSLINK_INFO *infoPtr, const DOC_IT
  */
 static LRESULT SYSLINK_SetItem (const SYSLINK_INFO *infoPtr, const LITEM *Item)
 {
-    PDOC_ITEM di;
-    int nc;
-    PWSTR szId = NULL;
-    PWSTR szUrl = NULL;
-    BOOL Repaint = FALSE;
+	PDOC_ITEM di;
+	int nc;
+	PWSTR szId = NULL;
+	PWSTR szUrl = NULL;
+	BOOL Repaint = FALSE;
 
-    if(!(Item->mask & LIF_ITEMINDEX) || !(Item->mask & (LIF_FLAGSMASK)))
-    {
-        ERR("Invalid Flags!\n");
-        return FALSE;
-    }
+	if(!(Item->mask & LIF_ITEMINDEX) || !(Item->mask & (LIF_FLAGSMASK)))
+	{
+		ERR("Invalid Flags!\n");
+		return FALSE;
+	}
 
-    di = SYSLINK_GetLinkItemByIndex(infoPtr, Item->iLink);
-    if(di == NULL)
-    {
-        ERR("Link %d couldn't be found\n", Item->iLink);
-        return FALSE;
-    }
+	di = SYSLINK_GetLinkItemByIndex(infoPtr, Item->iLink);
+	if(di == NULL)
+	{
+		ERR("Link %d couldn't be found\n", Item->iLink);
+		return FALSE;
+	}
 
-    if(Item->mask & LIF_ITEMID)
-    {
-        nc = min(lstrlenW(Item->szID), MAX_LINKID_TEXT - 1);
-        szId = (PWSTR)Alloc((nc + 1) * sizeof(WCHAR));
-        if(szId)
-        {
-            lstrcpynW(szId, Item->szID, nc + 1);
-        }
-        else
-        {
-            ERR("Unable to allocate memory for link id\n");
-            return FALSE;
-        }
-    }
+	if(Item->mask & LIF_ITEMID)
+	{
+		nc = min(lstrlenW(Item->szID), MAX_LINKID_TEXT - 1);
+		szId = (PWSTR)Alloc((nc + 1) * sizeof(WCHAR));
+		if(szId)
+		{
+			lstrcpynW(szId, Item->szID, nc + 1);
+		}
+		else
+		{
+			ERR("Unable to allocate memory for link id\n");
+			return FALSE;
+		}
+	}
 
-    if(Item->mask & LIF_URL)
-    {
-        nc = min(lstrlenW(Item->szUrl), L_MAX_URL_LENGTH - 1);
-        szUrl = (PWSTR)Alloc((nc + 1) * sizeof(WCHAR));
-        if(szUrl)
-        {
-            lstrcpynW(szUrl, Item->szUrl, nc + 1);
-        }
-        else
-        {
-            Free(szId);
+	if(Item->mask & LIF_URL)
+	{
+		nc = min(lstrlenW(Item->szUrl), L_MAX_URL_LENGTH - 1);
+		szUrl = (PWSTR)Alloc((nc + 1) * sizeof(WCHAR));
+		if(szUrl)
+		{
+			lstrcpynW(szUrl, Item->szUrl, nc + 1);
+		}
+		else
+		{
+			Free(szId);
 
-            ERR("Unable to allocate memory for link url\n");
-            return FALSE;
-        }
-    }
+			ERR("Unable to allocate memory for link url\n");
+			return FALSE;
+		}
+	}
 
-    if(Item->mask & LIF_ITEMID)
-    {
-        Free(di->u.Link.szID);
-        di->u.Link.szID = szId;
-    }
+	if(Item->mask & LIF_ITEMID)
+	{
+		Free(di->u.Link.szID);
+		di->u.Link.szID = szId;
+	}
 
-    if(Item->mask & LIF_URL)
-    {
-        Free(di->u.Link.szUrl);
-        di->u.Link.szUrl = szUrl;
-    }
+	if(Item->mask & LIF_URL)
+	{
+		Free(di->u.Link.szUrl);
+		di->u.Link.szUrl = szUrl;
+	}
 
-    if(Item->mask & LIF_STATE)
-    {
-        UINT oldstate = di->u.Link.state;
-        /* clear the masked bits */
-        di->u.Link.state &= ~(Item->stateMask & LIS_MASK);
-        /* copy the bits */
-        di->u.Link.state |= (Item->state & Item->stateMask) & LIS_MASK;
-        Repaint = (oldstate != di->u.Link.state);
-        
-        /* update the focus */
-        SYSLINK_SetFocusLink(infoPtr, ((di->u.Link.state & LIS_FOCUSED) ? di : NULL));
-    }
-    
-    if(Repaint)
-    {
-        SYSLINK_RepaintLink(infoPtr, di);
-    }
-    
-    return TRUE;
+	if(Item->mask & LIF_STATE)
+	{
+		UINT oldstate = di->u.Link.state;
+		/* clear the masked bits */
+		di->u.Link.state &= ~(Item->stateMask & LIS_MASK);
+		/* copy the bits */
+		di->u.Link.state |= (Item->state & Item->stateMask) & LIS_MASK;
+		Repaint = (oldstate != di->u.Link.state);
+		
+		/* update the focus */
+		SYSLINK_SetFocusLink(infoPtr, ((di->u.Link.state & LIS_FOCUSED) ? di : NULL));
+	}
+
+	if(Repaint)
+	{
+		SYSLINK_RepaintLink(infoPtr, di);
+	}
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -1195,56 +1195,56 @@ static LRESULT SYSLINK_SetItem (const SYSLINK_INFO *infoPtr, const LITEM *Item)
  */
 static LRESULT SYSLINK_GetItem (const SYSLINK_INFO *infoPtr, PLITEM Item)
 {
-    PDOC_ITEM di;
-    
-    if(!(Item->mask & LIF_ITEMINDEX) || !(Item->mask & (LIF_FLAGSMASK)))
-    {
-        ERR("Invalid Flags!\n");
-        return FALSE;
-    }
-    
-    di = SYSLINK_GetLinkItemByIndex(infoPtr, Item->iLink);
-    if(di == NULL)
-    {
-        ERR("Link %d couldn't be found\n", Item->iLink);
-        return FALSE;
-    }
-    
-    if(Item->mask & LIF_STATE)
-    {
-        Item->state = (di->u.Link.state & Item->stateMask);
-        if(!infoPtr->HasFocus)
-        {
-            /* remove the LIS_FOCUSED bit if the control doesn't have focus */
-            Item->state &= ~LIS_FOCUSED;
-        }
-    }
-    
-    if(Item->mask & LIF_ITEMID)
-    {
-        if(di->u.Link.szID)
-        {
-            lstrcpyW(Item->szID, di->u.Link.szID);
-        }
-        else
-        {
-            Item->szID[0] = 0;
-        }
-    }
-    
-    if(Item->mask & LIF_URL)
-    {
-        if(di->u.Link.szUrl)
-        {
-            lstrcpyW(Item->szUrl, di->u.Link.szUrl);
-        }
-        else
-        {
-            Item->szUrl[0] = 0;
-        }
-    }
-    
-    return TRUE;
+	PDOC_ITEM di;
+
+	if(!(Item->mask & LIF_ITEMINDEX) || !(Item->mask & (LIF_FLAGSMASK)))
+	{
+		ERR("Invalid Flags!\n");
+		return FALSE;
+	}
+
+	di = SYSLINK_GetLinkItemByIndex(infoPtr, Item->iLink);
+	if(di == NULL)
+	{
+		ERR("Link %d couldn't be found\n", Item->iLink);
+		return FALSE;
+	}
+
+	if(Item->mask & LIF_STATE)
+	{
+		Item->state = (di->u.Link.state & Item->stateMask);
+		if(!infoPtr->HasFocus)
+		{
+			/* remove the LIS_FOCUSED bit if the control doesn't have focus */
+			Item->state &= ~LIS_FOCUSED;
+		}
+	}
+
+	if(Item->mask & LIF_ITEMID)
+	{
+		if(di->u.Link.szID)
+		{
+			lstrcpyW(Item->szID, di->u.Link.szID);
+		}
+		else
+		{
+			Item->szID[0] = 0;
+		}
+	}
+
+	if(Item->mask & LIF_URL)
+	{
+		if(di->u.Link.szUrl)
+		{
+			lstrcpyW(Item->szUrl, di->u.Link.szUrl);
+		}
+		else
+		{
+			Item->szUrl[0] = 0;
+		}
+	}
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -1253,26 +1253,26 @@ static LRESULT SYSLINK_GetItem (const SYSLINK_INFO *infoPtr, PLITEM Item)
  */
 static BOOL SYSLINK_PtInDocItem (const DOC_ITEM *DocItem, POINT pt)
 {
-    PDOC_TEXTBLOCK bl;
-    int n;
+	PDOC_TEXTBLOCK bl;
+	int n;
 
-    bl = DocItem->Blocks;
-    if (bl != NULL)
-    {
-        n = DocItem->nText;
+	bl = DocItem->Blocks;
+	if (bl != NULL)
+	{
+		n = DocItem->nText;
 
-        while(n > 0)
-        {
-            if (PtInRect(&bl->rc, pt))
-            {
-                return TRUE;
-            }
-            n -= bl->nChars + bl->nSkip;
-            bl++;
-        }
-    }
-    
-    return FALSE;
+		while(n > 0)
+		{
+			if (PtInRect(&bl->rc, pt))
+			{
+				return TRUE;
+			}
+			n -= bl->nChars + bl->nSkip;
+			bl++;
+		}
+	}
+
+	return FALSE;
 }
 
 /***********************************************************************
@@ -1281,42 +1281,42 @@ static BOOL SYSLINK_PtInDocItem (const DOC_ITEM *DocItem, POINT pt)
  */
 static LRESULT SYSLINK_HitTest (const SYSLINK_INFO *infoPtr, PLHITTESTINFO HitTest)
 {
-    PDOC_ITEM Current;
-    int id = 0;
+	PDOC_ITEM Current;
+	int id = 0;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-    {
-        if(Current->Type == slLink)
-        {
-            if(SYSLINK_PtInDocItem(Current, HitTest->pt))
-            {
-                HitTest->item.mask = 0;
-                HitTest->item.iLink = id;
-                HitTest->item.state = 0;
-                HitTest->item.stateMask = 0;
-                if(Current->u.Link.szID)
-                {
-                    lstrcpyW(HitTest->item.szID, Current->u.Link.szID);
-                }
-                else
-                {
-                    HitTest->item.szID[0] = 0;
-                }
-                if(Current->u.Link.szUrl)
-                {
-                    lstrcpyW(HitTest->item.szUrl, Current->u.Link.szUrl);
-                }
-                else
-                {
-                    HitTest->item.szUrl[0] = 0;
-                }
-                return TRUE;
-            }
-            id++;
-        }
-    }
-    
-    return FALSE;
+	for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+	{
+		if(Current->Type == slLink)
+		{
+			if(SYSLINK_PtInDocItem(Current, HitTest->pt))
+			{
+				HitTest->item.mask = 0;
+				HitTest->item.iLink = id;
+				HitTest->item.state = 0;
+				HitTest->item.stateMask = 0;
+				if(Current->u.Link.szID)
+				{
+					lstrcpyW(HitTest->item.szID, Current->u.Link.szID);
+				}
+				else
+				{
+					HitTest->item.szID[0] = 0;
+				}
+				if(Current->u.Link.szUrl)
+				{
+					lstrcpyW(HitTest->item.szUrl, Current->u.Link.szUrl);
+				}
+				else
+				{
+					HitTest->item.szUrl[0] = 0;
+				}
+				return TRUE;
+			}
+			id++;
+		}
+	}
+
+	return FALSE;
 }
 
 /***********************************************************************
@@ -1325,27 +1325,27 @@ static LRESULT SYSLINK_HitTest (const SYSLINK_INFO *infoPtr, PLHITTESTINFO HitTe
  */
 static LRESULT SYSLINK_GetIdealHeight (const SYSLINK_INFO *infoPtr)
 {
-    HDC hdc = GetDC(infoPtr->Self);
-    if(hdc != NULL)
-    {
-        LRESULT height;
-        TEXTMETRICA tm;
-        HGDIOBJ hOldFont = SelectObject(hdc, infoPtr->Font);
-        
-        if(GetTextMetricsA(hdc, &tm))
-        {
-            height = tm.tmHeight;
-        }
-        else
-        {
-            height = 0;
-        }
-        SelectObject(hdc, hOldFont);
-        ReleaseDC(infoPtr->Self, hdc);
-        
-        return height;
-    }
-    return 0;
+	HDC hdc = GetDC(infoPtr->Self);
+	if(hdc != NULL)
+	{
+		LRESULT height;
+		TEXTMETRICA tm;
+		HGDIOBJ hOldFont = SelectObject(hdc, infoPtr->Font);
+		
+		if(GetTextMetricsA(hdc, &tm))
+		{
+			height = tm.tmHeight;
+		}
+		else
+		{
+			height = 0;
+		}
+		SelectObject(hdc, hOldFont);
+		ReleaseDC(infoPtr->Self, hdc);
+		
+		return height;
+	}
+	return 0;
 }
 
 /***********************************************************************
@@ -1354,34 +1354,34 @@ static LRESULT SYSLINK_GetIdealHeight (const SYSLINK_INFO *infoPtr)
  */
 static LRESULT SYSLINK_SendParentNotify (const SYSLINK_INFO *infoPtr, UINT code, const DOC_ITEM *Link, int iLink)
 {
-    NMLINK nml;
+	NMLINK nml;
 
-    nml.hdr.hwndFrom = infoPtr->Self;
-    nml.hdr.idFrom = GetWindowLongA(infoPtr->Self, GWLP_ID);
-    nml.hdr.code = code;
+	nml.hdr.hwndFrom = infoPtr->Self;
+	nml.hdr.idFrom = GetWindowLongA(infoPtr->Self, GWLP_ID);
+	nml.hdr.code = code;
 
-    nml.item.mask = 0;
-    nml.item.iLink = iLink;
-    nml.item.state = 0;
-    nml.item.stateMask = 0;
-    if(Link->u.Link.szID)
-    {
-        lstrcpyW(nml.item.szID, Link->u.Link.szID);
-    }
-    else
-    {
-        nml.item.szID[0] = 0;
-    }
-    if(Link->u.Link.szUrl)
-    {
-        lstrcpyW(nml.item.szUrl, Link->u.Link.szUrl);
-    }
-    else
-    {
-        nml.item.szUrl[0] = 0;
-    }
+	nml.item.mask = 0;
+	nml.item.iLink = iLink;
+	nml.item.state = 0;
+	nml.item.stateMask = 0;
+	if(Link->u.Link.szID)
+	{
+		lstrcpyW(nml.item.szID, Link->u.Link.szID);
+	}
+	else
+	{
+		nml.item.szID[0] = 0;
+	}
+	if(Link->u.Link.szUrl)
+	{
+		lstrcpyW(nml.item.szUrl, Link->u.Link.szUrl);
+	}
+	else
+	{
+		nml.item.szUrl[0] = 0;
+	}
 
-    return SendMessageA(infoPtr->Notify, WM_NOTIFY, nml.hdr.idFrom, (LPARAM)&nml);
+	return SendMessageA(infoPtr->Notify, WM_NOTIFY, nml.hdr.idFrom, (LPARAM)&nml);
 }
 
 /***********************************************************************
@@ -1390,19 +1390,19 @@ static LRESULT SYSLINK_SendParentNotify (const SYSLINK_INFO *infoPtr, UINT code,
  */
 static LRESULT SYSLINK_SetFocus (SYSLINK_INFO *infoPtr)
 {
-    PDOC_ITEM Focus;
-    
-    infoPtr->HasFocus = TRUE;
+	PDOC_ITEM Focus;
 
-    /* We always select the first link, even if we activated the control using
-       SHIFT+TAB. This is the default behavior */
-    Focus = SYSLINK_GetNextLink(infoPtr, NULL);
-    if(Focus != NULL)
-    {
-        SYSLINK_SetFocusLink(infoPtr, Focus);
-        SYSLINK_RepaintLink(infoPtr, Focus);
-    }
-    return 0;
+	infoPtr->HasFocus = TRUE;
+
+	/* We always select the first link, even if we activated the control using
+	   SHIFT+TAB. This is the default behavior */
+	Focus = SYSLINK_GetNextLink(infoPtr, NULL);
+	if(Focus != NULL)
+	{
+		SYSLINK_SetFocusLink(infoPtr, Focus);
+		SYSLINK_RepaintLink(infoPtr, Focus);
+	}
+	return 0;
 }
 
 /***********************************************************************
@@ -1411,17 +1411,17 @@ static LRESULT SYSLINK_SetFocus (SYSLINK_INFO *infoPtr)
  */
 static LRESULT SYSLINK_KillFocus (SYSLINK_INFO *infoPtr)
 {
-    PDOC_ITEM Focus;
-    
-    infoPtr->HasFocus = FALSE;
-    Focus = SYSLINK_GetFocusLink(infoPtr, NULL);
-    
-    if(Focus != NULL)
-    {
-        SYSLINK_RepaintLink(infoPtr, Focus);
-    }
+	PDOC_ITEM Focus;
 
-    return 0;
+	infoPtr->HasFocus = FALSE;
+	Focus = SYSLINK_GetFocusLink(infoPtr, NULL);
+
+	if(Focus != NULL)
+	{
+		SYSLINK_RepaintLink(infoPtr, Focus);
+	}
+
+	return 0;
 }
 
 /***********************************************************************
@@ -1430,24 +1430,24 @@ static LRESULT SYSLINK_KillFocus (SYSLINK_INFO *infoPtr)
  */
 static PDOC_ITEM SYSLINK_LinkAtPt (const SYSLINK_INFO *infoPtr, const POINT *pt, int *LinkId, BOOL MustBeEnabled)
 {
-    PDOC_ITEM Current;
-    int id = 0;
+	PDOC_ITEM Current;
+	int id = 0;
 
-    for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
-    {
-        if((Current->Type == slLink) && SYSLINK_PtInDocItem(Current, *pt) &&
-           (!MustBeEnabled || (MustBeEnabled && (Current->u.Link.state & LIS_ENABLED))))
-        {
-            if(LinkId != NULL)
-            {
-                *LinkId = id;
-            }
-            return Current;
-        }
-        id++;
-    }
+	for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
+	{
+		if((Current->Type == slLink) && SYSLINK_PtInDocItem(Current, *pt) &&
+		   (!MustBeEnabled || (MustBeEnabled && (Current->u.Link.state & LIS_ENABLED))))
+		{
+			if(LinkId != NULL)
+			{
+				*LinkId = id;
+			}
+			return Current;
+		}
+		id++;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /***********************************************************************
@@ -1456,24 +1456,24 @@ static PDOC_ITEM SYSLINK_LinkAtPt (const SYSLINK_INFO *infoPtr, const POINT *pt,
  */
 static LRESULT SYSLINK_LButtonDown (SYSLINK_INFO *infoPtr, const POINT *pt)
 {
-    PDOC_ITEM Current, Old;
-    int id;
+	PDOC_ITEM Current, Old;
+	int id;
 
-    Current = SYSLINK_LinkAtPt(infoPtr, pt, &id, TRUE);
-    if(Current != NULL)
-    {
-      SetFocus(infoPtr->Self);
+	Current = SYSLINK_LinkAtPt(infoPtr, pt, &id, TRUE);
+	if(Current != NULL)
+	{
+		SetFocus(infoPtr->Self);
 
-      Old = SYSLINK_SetFocusLink(infoPtr, Current);
-      if(Old != NULL && Old != Current)
-      {
-          SYSLINK_RepaintLink(infoPtr, Old);
-      }
-      infoPtr->MouseDownID = id;
-      SYSLINK_RepaintLink(infoPtr, Current);
-    }
+		Old = SYSLINK_SetFocusLink(infoPtr, Current);
+		if(Old != NULL && Old != Current)
+		{
+			SYSLINK_RepaintLink(infoPtr, Old);
+		}
+		infoPtr->MouseDownID = id;
+		SYSLINK_RepaintLink(infoPtr, Current);
+	}
 
-    return 0;
+	return 0;
 }
 
 /***********************************************************************
@@ -1482,21 +1482,21 @@ static LRESULT SYSLINK_LButtonDown (SYSLINK_INFO *infoPtr, const POINT *pt)
  */
 static LRESULT SYSLINK_LButtonUp (SYSLINK_INFO *infoPtr, const POINT *pt)
 {
-    if(infoPtr->MouseDownID > -1)
-    {
-        PDOC_ITEM Current;
-        int id;
-        
-        Current = SYSLINK_LinkAtPt(infoPtr, pt, &id, TRUE);
-        if((Current != NULL) && (Current->u.Link.state & LIS_FOCUSED) && (infoPtr->MouseDownID == id))
-        {
-            SYSLINK_SendParentNotify(infoPtr, NM_CLICK, Current, id);
-        }
-    }
+	if(infoPtr->MouseDownID > -1)
+	{
+		PDOC_ITEM Current;
+		int id;
+		
+		Current = SYSLINK_LinkAtPt(infoPtr, pt, &id, TRUE);
+		if((Current != NULL) && (Current->u.Link.state & LIS_FOCUSED) && (infoPtr->MouseDownID == id))
+		{
+			SYSLINK_SendParentNotify(infoPtr, NM_CLICK, Current, id);
+		}
+	}
 
-    infoPtr->MouseDownID = -1;
+	infoPtr->MouseDownID = -1;
 
-    return 0;
+	return 0;
 }
 
 /***********************************************************************
@@ -1505,19 +1505,19 @@ static LRESULT SYSLINK_LButtonUp (SYSLINK_INFO *infoPtr, const POINT *pt)
  */
 static BOOL SYSLINK_OnEnter (const SYSLINK_INFO *infoPtr)
 {
-    if(infoPtr->HasFocus && !infoPtr->IgnoreReturn)
-    {
-        PDOC_ITEM Focus;
-        int id;
-        
-        Focus = SYSLINK_GetFocusLink(infoPtr, &id);
-        if(Focus)
-        {
-            SYSLINK_SendParentNotify(infoPtr, NM_RETURN, Focus, id);
-            return TRUE;
-        }
-    }
-    return FALSE;
+	if(infoPtr->HasFocus && !infoPtr->IgnoreReturn)
+	{
+		PDOC_ITEM Focus;
+		int id;
+		
+		Focus = SYSLINK_GetFocusLink(infoPtr, &id);
+		if(Focus)
+		{
+			SYSLINK_SendParentNotify(infoPtr, NM_RETURN, Focus, id);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 /***********************************************************************
@@ -1526,35 +1526,35 @@ static BOOL SYSLINK_OnEnter (const SYSLINK_INFO *infoPtr)
  */
 static BOOL SYSKEY_SelectNextPrevLink (const SYSLINK_INFO *infoPtr, BOOL Prev)
 {
-    if(infoPtr->HasFocus)
-    {
-        PDOC_ITEM Focus;
-        int id;
+	if(infoPtr->HasFocus)
+	{
+		PDOC_ITEM Focus;
+		int id;
 
-        Focus = SYSLINK_GetFocusLink(infoPtr, &id);
-        if(Focus != NULL)
-        {
-            PDOC_ITEM NewFocus, OldFocus;
+		Focus = SYSLINK_GetFocusLink(infoPtr, &id);
+		if(Focus != NULL)
+		{
+			PDOC_ITEM NewFocus, OldFocus;
 
-            if(Prev)
-                NewFocus = SYSLINK_GetPrevLink(infoPtr, Focus);
-            else
-                NewFocus = SYSLINK_GetNextLink(infoPtr, Focus);
+			if(Prev)
+				NewFocus = SYSLINK_GetPrevLink(infoPtr, Focus);
+			else
+				NewFocus = SYSLINK_GetNextLink(infoPtr, Focus);
 
-            if(NewFocus != NULL)
-            {
-                OldFocus = SYSLINK_SetFocusLink(infoPtr, NewFocus);
+			if(NewFocus != NULL)
+			{
+				OldFocus = SYSLINK_SetFocusLink(infoPtr, NewFocus);
 
-                if(OldFocus && OldFocus != NewFocus)
-                {
-                    SYSLINK_RepaintLink(infoPtr, OldFocus);
-                }
-                SYSLINK_RepaintLink(infoPtr, NewFocus);
-                return TRUE;
-            }
-        }
-    }
-    return FALSE;
+				if(OldFocus && OldFocus != NewFocus)
+				{
+					SYSLINK_RepaintLink(infoPtr, OldFocus);
+				}
+				SYSLINK_RepaintLink(infoPtr, NewFocus);
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 /***********************************************************************
@@ -1564,15 +1564,15 @@ static BOOL SYSKEY_SelectNextPrevLink (const SYSLINK_INFO *infoPtr, BOOL Prev)
  */
 static BOOL SYSLINK_NoNextLink (const SYSLINK_INFO *infoPtr, BOOL Prev)
 {
-    PDOC_ITEM Focus, NewFocus;
+	PDOC_ITEM Focus, NewFocus;
 
-    Focus = SYSLINK_GetFocusLink(infoPtr, NULL);
-    if(Prev)
-        NewFocus = SYSLINK_GetPrevLink(infoPtr, Focus);
-    else
-        NewFocus = SYSLINK_GetNextLink(infoPtr, Focus);
+	Focus = SYSLINK_GetFocusLink(infoPtr, NULL);
+	if(Prev)
+		NewFocus = SYSLINK_GetPrevLink(infoPtr, Focus);
+	else
+		NewFocus = SYSLINK_GetNextLink(infoPtr, Focus);
 
-    return NewFocus == NULL;
+	return NewFocus == NULL;
 }
 
 /***********************************************************************
@@ -1581,25 +1581,25 @@ static BOOL SYSLINK_NoNextLink (const SYSLINK_INFO *infoPtr, BOOL Prev)
  */
 static VOID SYSLINK_GetIdealSize (const SYSLINK_INFO *infoPtr, int cxMaxWidth, LPSIZE lpSize)
 {
-    RECT rc;
-    HDC hdc;
+	RECT rc;
+	HDC hdc;
 
-    rc.left = rc.top = rc.bottom = 0;
-    rc.right = cxMaxWidth;
+	rc.left = rc.top = rc.bottom = 0;
+	rc.right = cxMaxWidth;
 
-    hdc = GetDC(infoPtr->Self);
-    if (hdc != NULL)
-    {
-        HGDIOBJ hOldFont = SelectObject(hdc, infoPtr->Font);
+	hdc = GetDC(infoPtr->Self);
+	if (hdc != NULL)
+	{
+		HGDIOBJ hOldFont = SelectObject(hdc, infoPtr->Font);
 
-        SYSLINK_Render(infoPtr, hdc, &rc);
+		SYSLINK_Render(infoPtr, hdc, &rc);
 
-        SelectObject(hdc, hOldFont);
-        ReleaseDC(infoPtr->Self, hdc);
+		SelectObject(hdc, hOldFont);
+		ReleaseDC(infoPtr->Self, hdc);
 
-        lpSize->cx = rc.right;
-        lpSize->cy = rc.bottom;
-    }
+		lpSize->cx = rc.right;
+		lpSize->cy = rc.bottom;
+	}
 }
 
 /***********************************************************************
@@ -1608,228 +1608,228 @@ static VOID SYSLINK_GetIdealSize (const SYSLINK_INFO *infoPtr, int cxMaxWidth, L
 static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam)
 {
-    SYSLINK_INFO *infoPtr;
+	SYSLINK_INFO *infoPtr;
 
-    TRACE("hwnd=%p msg=%04x wparam=%lx lParam=%lx\n", hwnd, message, wParam, lParam);
+	TRACE("hwnd=%p msg=%04x wparam=%lx lParam=%lx\n", hwnd, message, wParam, lParam);
 
-    infoPtr = (SYSLINK_INFO *)GetWindowLongA(hwnd, 0);
+	infoPtr = (SYSLINK_INFO *)GetWindowLongA(hwnd, 0);
 
-    if (!infoPtr && message != WM_CREATE)
-        goto HandleDefaultMessage;
+	if (!infoPtr && message != WM_CREATE)
+		goto HandleDefaultMessage;
 
-    switch(message) {
-    case WM_PRINTCLIENT:
-    case WM_PAINT:
-        return SYSLINK_Paint (infoPtr, (HDC)wParam);
+	switch(message) {
+	case WM_PRINTCLIENT:
+	case WM_PAINT:
+		return SYSLINK_Paint (infoPtr, (HDC)wParam);
 
-    case WM_ERASEBKGND:
-        return SYSLINK_EraseBkgnd(infoPtr, (HDC)wParam);
+	case WM_ERASEBKGND:
+		return SYSLINK_EraseBkgnd(infoPtr, (HDC)wParam);
 
-    case WM_SETCURSOR:
-    {
-        LHITTESTINFO ht;
-        DWORD mp = GetMessagePos();
-        
-        ht.pt.x = (short)LOWORD(mp);
-        ht.pt.y = (short)HIWORD(mp);
-        
-        ScreenToClient(infoPtr->Self, &ht.pt);
-        if(SYSLINK_HitTest (infoPtr, &ht))
-        {
-            SetCursor(LoadCursorA(0, (LPCSTR)IDC_HAND));
-            return TRUE;
-        }
-        /* let the default window proc handle this message */
-        goto HandleDefaultMessage;
-    }
+	case WM_SETCURSOR:
+	{
+		LHITTESTINFO ht;
+		DWORD mp = GetMessagePos();
+		
+		ht.pt.x = (short)LOWORD(mp);
+		ht.pt.y = (short)HIWORD(mp);
+		
+		ScreenToClient(infoPtr->Self, &ht.pt);
+		if(SYSLINK_HitTest (infoPtr, &ht))
+		{
+			SetCursor(LoadCursorA(0, (LPCSTR)IDC_HAND));
+			return TRUE;
+		}
+		/* let the default window proc handle this message */
+		goto HandleDefaultMessage;
+	}
 
-    case WM_SIZE:
-    {
-        RECT rcClient;
-        if (GetClientRect(infoPtr->Self, &rcClient))
-        {
-            HDC hdc = GetDC(infoPtr->Self);
-            if(hdc != NULL)
-            {
-                SYSLINK_Render(infoPtr, hdc, &rcClient);
-                ReleaseDC(infoPtr->Self, hdc);
-            }
-        }
-        return 0;
-    }
+	case WM_SIZE:
+	{
+		RECT rcClient;
+		if (GetClientRect(infoPtr->Self, &rcClient))
+		{
+			HDC hdc = GetDC(infoPtr->Self);
+			if(hdc != NULL)
+			{
+				SYSLINK_Render(infoPtr, hdc, &rcClient);
+				ReleaseDC(infoPtr->Self, hdc);
+			}
+		}
+		return 0;
+	}
 
-    case WM_GETFONT:
-        return (LRESULT)infoPtr->Font;
+	case WM_GETFONT:
+		return (LRESULT)infoPtr->Font;
 
-    case WM_SETFONT:
-        return (LRESULT)SYSLINK_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
+	case WM_SETFONT:
+		return (LRESULT)SYSLINK_SetFont(infoPtr, (HFONT)wParam, (BOOL)lParam);
 
-    case WM_SETTEXT:
-        SYSLINK_SetText(infoPtr, (LPWSTR)lParam);
-        goto HandleDefaultMessage;
+	case WM_SETTEXT:
+		SYSLINK_SetText(infoPtr, (LPWSTR)lParam);
+		goto HandleDefaultMessage;
 
-    case WM_LBUTTONDOWN:
-    {
-        POINT pt;
-        pt.x = (short)LOWORD(lParam);
-        pt.y = (short)HIWORD(lParam);
-        return SYSLINK_LButtonDown(infoPtr, &pt);
-    }
-    case WM_LBUTTONUP:
-    {
-        POINT pt;
-        pt.x = (short)LOWORD(lParam);
-        pt.y = (short)HIWORD(lParam);
-        return SYSLINK_LButtonUp(infoPtr, &pt);
-    }
-    
-    case WM_KEYDOWN:
-    {
-        switch(wParam)
-        {
-        case VK_RETURN:
-            SYSLINK_OnEnter(infoPtr);
-            return 0;
-        case VK_TAB:
-        {
-            BOOL shift = GetKeyState(VK_SHIFT) & 0x8000;
-            SYSKEY_SelectNextPrevLink(infoPtr, shift);
-            return 0;
-        }
-        }
-        goto HandleDefaultMessage;
-    }
-    
-    case WM_GETDLGCODE:
-    {
-        LRESULT Ret = DLGC_HASSETSEL;
-        int vk = (lParam != 0 ? (int)((LPMSG)lParam)->wParam : 0);
-        switch(vk)
-        {
-        case VK_RETURN:
-            Ret |= DLGC_WANTMESSAGE;
-            break;
-        case VK_TAB:
-        {
-            BOOL shift = GetKeyState(VK_SHIFT) & 0x8000;
-            if(!SYSLINK_NoNextLink(infoPtr, shift))
-            {
-                Ret |= DLGC_WANTTAB;
-            }
-            else
-            {
-                Ret |= DLGC_WANTCHARS;
-            }
-            break;
-        }
-        }
-        return Ret;
-    }
-    
-    case WM_NCHITTEST:
-    {
-        POINT pt;
-        RECT rc;
-        pt.x = (short)LOWORD(lParam);
-        pt.y = (short)HIWORD(lParam);
-        
-        GetClientRect(infoPtr->Self, &rc);
-        ScreenToClient(infoPtr->Self, &pt);
-        if(pt.x < 0 || pt.y < 0 || pt.x > rc.right || pt.y > rc.bottom)
-        {
-            return HTNOWHERE;
-        }
+	case WM_LBUTTONDOWN:
+	{
+		POINT pt;
+		pt.x = (short)LOWORD(lParam);
+		pt.y = (short)HIWORD(lParam);
+		return SYSLINK_LButtonDown(infoPtr, &pt);
+	}
+	case WM_LBUTTONUP:
+	{
+		POINT pt;
+		pt.x = (short)LOWORD(lParam);
+		pt.y = (short)HIWORD(lParam);
+		return SYSLINK_LButtonUp(infoPtr, &pt);
+	}
 
-        if(SYSLINK_LinkAtPt(infoPtr, &pt, NULL, FALSE))
-        {
-            return HTCLIENT;
-        }
-        
-        return HTTRANSPARENT;
-    }
+	case WM_KEYDOWN:
+	{
+		switch(wParam)
+		{
+		case VK_RETURN:
+			SYSLINK_OnEnter(infoPtr);
+			return 0;
+		case VK_TAB:
+		{
+			BOOL shift = GetKeyState(VK_SHIFT) & 0x8000;
+			SYSKEY_SelectNextPrevLink(infoPtr, shift);
+			return 0;
+		}
+		}
+		goto HandleDefaultMessage;
+	}
 
-    case LM_HITTEST:
-        return SYSLINK_HitTest(infoPtr, (PLHITTESTINFO)lParam);
+	case WM_GETDLGCODE:
+	{
+		LRESULT Ret = DLGC_HASSETSEL;
+		int vk = (lParam != 0 ? (int)((LPMSG)lParam)->wParam : 0);
+		switch(vk)
+		{
+		case VK_RETURN:
+			Ret |= DLGC_WANTMESSAGE;
+			break;
+		case VK_TAB:
+		{
+			BOOL shift = GetKeyState(VK_SHIFT) & 0x8000;
+			if(!SYSLINK_NoNextLink(infoPtr, shift))
+			{
+				Ret |= DLGC_WANTTAB;
+			}
+			else
+			{
+				Ret |= DLGC_WANTCHARS;
+			}
+			break;
+		}
+		}
+		return Ret;
+	}
 
-    case LM_SETITEM:
-        return SYSLINK_SetItem(infoPtr, (PLITEM)lParam);
+	case WM_NCHITTEST:
+	{
+		POINT pt;
+		RECT rc;
+		pt.x = (short)LOWORD(lParam);
+		pt.y = (short)HIWORD(lParam);
+		
+		GetClientRect(infoPtr->Self, &rc);
+		ScreenToClient(infoPtr->Self, &pt);
+		if(pt.x < 0 || pt.y < 0 || pt.x > rc.right || pt.y > rc.bottom)
+		{
+			return HTNOWHERE;
+		}
 
-    case LM_GETITEM:
-        return SYSLINK_GetItem(infoPtr, (PLITEM)lParam);
+		if(SYSLINK_LinkAtPt(infoPtr, &pt, NULL, FALSE))
+		{
+			return HTCLIENT;
+		}
+		
+		return HTTRANSPARENT;
+	}
 
-    case LM_GETIDEALHEIGHT:
-        if (lParam)
-        {
-            /* LM_GETIDEALSIZE */
-            SYSLINK_GetIdealSize(infoPtr, (int)wParam, (LPSIZE)lParam);
-        }
-        return SYSLINK_GetIdealHeight(infoPtr);
+	case LM_HITTEST:
+		return SYSLINK_HitTest(infoPtr, (PLHITTESTINFO)lParam);
 
-    case WM_SETFOCUS:
-        return SYSLINK_SetFocus(infoPtr);
+	case LM_SETITEM:
+		return SYSLINK_SetItem(infoPtr, (PLITEM)lParam);
 
-    case WM_KILLFOCUS:
-        return SYSLINK_KillFocus(infoPtr);
+	case LM_GETITEM:
+		return SYSLINK_GetItem(infoPtr, (PLITEM)lParam);
 
-    case WM_ENABLE:
-        infoPtr->Style &= ~WS_DISABLED;
-        infoPtr->Style |= (wParam ? 0 : WS_DISABLED);
-        InvalidateRect (infoPtr->Self, NULL, FALSE);
-        return 0;
+	case LM_GETIDEALHEIGHT:
+		if (lParam)
+		{
+			/* LM_GETIDEALSIZE */
+			SYSLINK_GetIdealSize(infoPtr, (int)wParam, (LPSIZE)lParam);
+		}
+		return SYSLINK_GetIdealHeight(infoPtr);
 
-    case WM_STYLECHANGED:
-        if (wParam == GWL_STYLE)
-        {
-            infoPtr->Style = ((LPSTYLESTRUCT)lParam)->styleNew;
+	case WM_SETFOCUS:
+		return SYSLINK_SetFocus(infoPtr);
 
-            InvalidateRect(infoPtr->Self, NULL, TRUE);
-        }
-        return 0;
+	case WM_KILLFOCUS:
+		return SYSLINK_KillFocus(infoPtr);
 
-    case WM_CREATE:
-        /* allocate memory for info struct */
-        infoPtr = (SYSLINK_INFO *)Alloc (sizeof(SYSLINK_INFO));
-        if (!infoPtr) return -1;
-        SetWindowLongA(hwnd, 0, (DWORD_PTR)infoPtr);
+	case WM_ENABLE:
+		infoPtr->Style &= ~WS_DISABLED;
+		infoPtr->Style |= (wParam ? 0 : WS_DISABLED);
+		InvalidateRect (infoPtr->Self, NULL, FALSE);
+		return 0;
 
-        /* initialize the info struct */
-        infoPtr->Self = hwnd;
-        infoPtr->Notify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-        infoPtr->Style = ((LPCREATESTRUCTW)lParam)->style;
-        infoPtr->Font = 0;
-        infoPtr->LinkFont = 0;
-        infoPtr->Items = NULL;
-        infoPtr->HasFocus = FALSE;
-        infoPtr->MouseDownID = -1;
-        infoPtr->TextColor = GetSysColor(COLOR_WINDOWTEXT);
-        infoPtr->LinkColor = GetSysColor(COLOR_HIGHLIGHT);
-        infoPtr->VisitedColor = GetSysColor(COLOR_HIGHLIGHT);
-        infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
-                             GetSysColor(COLOR_WINDOW) : GetSysColor(COLOR_BTNFACE);
-        infoPtr->BreakChar = ' ';
-        infoPtr->IgnoreReturn = infoPtr->Style & LWS_IGNORERETURN;
-        TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
-        SYSLINK_SetText(infoPtr, ((LPCREATESTRUCTW)lParam)->lpszName);
-        return 0;
+	case WM_STYLECHANGED:
+		if (wParam == GWL_STYLE)
+		{
+			infoPtr->Style = ((LPSTYLESTRUCT)lParam)->styleNew;
 
-    case WM_DESTROY:
-        TRACE("SysLink Ctrl destruction, hwnd=%p\n", hwnd);
-        SYSLINK_ClearDoc(infoPtr);
-        if(infoPtr->Font != 0) DeleteObject(infoPtr->Font);
-        if(infoPtr->LinkFont != 0) DeleteObject(infoPtr->LinkFont);
-        SetWindowLongA(hwnd, 0, 0);
-        Free (infoPtr);
-        return 0;
+			InvalidateRect(infoPtr->Self, NULL, TRUE);
+		}
+		return 0;
 
-    case WM_SYSCOLORCHANGE:
-        if (infoPtr->Style & LWS_TRANSPARENT)
-            infoPtr->BackColor = GetSysColor(COLOR_WINDOW);
-        return 0;
+	case WM_CREATE:
+		/* allocate memory for info struct */
+		infoPtr = (SYSLINK_INFO *)Alloc (sizeof(SYSLINK_INFO));
+		if (!infoPtr) return -1;
+		SetWindowLongA(hwnd, 0, (DWORD_PTR)infoPtr);
 
-    default:
+		/* initialize the info struct */
+		infoPtr->Self = hwnd;
+		infoPtr->Notify = ((LPCREATESTRUCTW)lParam)->hwndParent;
+		infoPtr->Style = ((LPCREATESTRUCTW)lParam)->style;
+		infoPtr->Font = 0;
+		infoPtr->LinkFont = 0;
+		infoPtr->Items = NULL;
+		infoPtr->HasFocus = FALSE;
+		infoPtr->MouseDownID = -1;
+		infoPtr->TextColor = GetSysColor(COLOR_WINDOWTEXT);
+		infoPtr->LinkColor = GetSysColor(COLOR_HIGHLIGHT);
+		infoPtr->VisitedColor = GetSysColor(COLOR_HIGHLIGHT);
+		infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
+							 GetSysColor(COLOR_WINDOW) : GetSysColor(COLOR_BTNFACE);
+		infoPtr->BreakChar = ' ';
+		infoPtr->IgnoreReturn = infoPtr->Style & LWS_IGNORERETURN;
+		TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
+		SYSLINK_SetText(infoPtr, ((LPCREATESTRUCTW)lParam)->lpszName);
+		return 0;
+
+	case WM_DESTROY:
+		TRACE("SysLink Ctrl destruction, hwnd=%p\n", hwnd);
+		SYSLINK_ClearDoc(infoPtr);
+		if(infoPtr->Font != 0) DeleteObject(infoPtr->Font);
+		if(infoPtr->LinkFont != 0) DeleteObject(infoPtr->LinkFont);
+		SetWindowLongA(hwnd, 0, 0);
+		Free (infoPtr);
+		return 0;
+
+	case WM_SYSCOLORCHANGE:
+		if (infoPtr->Style & LWS_TRANSPARENT)
+			infoPtr->BackColor = GetSysColor(COLOR_WINDOW);
+		return 0;
+
+	default:
 HandleDefaultMessage:
-        return DefWindowProcW(hwnd, message, wParam, lParam);
-    }
+		return DefWindowProcW(hwnd, message, wParam, lParam);
+	}
 }
 
 
@@ -1840,15 +1840,15 @@ HandleDefaultMessage:
  */
 VOID SYSLINK_Register (void)
 {
-    WNDCLASSW wndClass;
+	WNDCLASSW wndClass;
 
-    ZeroMemory (&wndClass, sizeof(wndClass));
-    wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
-    wndClass.lpfnWndProc   = SysLinkWindowProc;
-    wndClass.cbClsExtra    = 0;
-    wndClass.cbWndExtra    = sizeof (SYSLINK_INFO *);
-    wndClass.hCursor       = LoadCursorA(NULL,(LPSTR)IDC_ARROW);
-    wndClass.lpszClassName = WC_LINK;
+	ZeroMemory (&wndClass, sizeof(wndClass));
+	wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
+	wndClass.lpfnWndProc   = SysLinkWindowProc;
+	wndClass.cbClsExtra    = 0;
+	wndClass.cbWndExtra    = sizeof (SYSLINK_INFO *);
+	wndClass.hCursor       = LoadCursorA(NULL,(LPSTR)IDC_ARROW);
+	wndClass.lpszClassName = WC_LINK;
 
-    RegisterClassW(&wndClass);
+	RegisterClassW(&wndClass);
 }

@@ -25,17 +25,17 @@
 BOOL WINAPI GetVolumePathNameA_new(LPCSTR filename, LPSTR volumepathname, DWORD buflen)
 {
 	//semi-stub - doesn't work with UNC
-    const char *p = filename;
+	const char *p = filename;
 
-    if (p && tolower(p[0]) >= 'a' && tolower(p[0]) <= 'z' && p[1] ==':' && p[2] == '\\' && buflen >= 4)
-    {
-        volumepathname[0] = p[0];
-        volumepathname[1] = ':';
-        volumepathname[2] = '\\';
-        volumepathname[3] = 0;
-        return TRUE;
-    }
-    return FALSE;
+	if (p && tolower(p[0]) >= 'a' && tolower(p[0]) <= 'z' && p[1] ==':' && p[2] == '\\' && buflen >= 4)
+	{
+		volumepathname[0] = p[0];
+		volumepathname[1] = ':';
+		volumepathname[2] = '\\';
+		volumepathname[3] = 0;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 /* MAKE_EXPORT GetVolumePathNameW_new=GetVolumePathNameW */

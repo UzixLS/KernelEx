@@ -86,14 +86,14 @@ LONG WINAPI RegQueryValueExW_new(HKEY hKey, LPCWSTR lpValueNameW, LPDWORD lpRese
 
 //MAKE_EXPORT RegEnumValueW_new=RegEnumValueW
 LONG WINAPI RegEnumValueW_new(
-  HKEY hKey,             // handle to key to query
-  DWORD dwIndex,         // index of value to query
-  LPWSTR lpValueName,    // value buffer
-  LPDWORD lpcValueName,  // size of value buffer
-  LPDWORD lpReserved,    // reserved
-  LPDWORD lpType,        // type buffer
-  LPBYTE lpData,         // data buffer
-  LPDWORD lpcbData       // size of data buffer
+	HKEY hKey,             // handle to key to query
+	DWORD dwIndex,         // index of value to query
+	LPWSTR lpValueName,    // value buffer
+	LPDWORD lpcValueName,  // size of value buffer
+	LPDWORD lpReserved,    // reserved
+	LPDWORD lpType,        // type buffer
+	LPBYTE lpData,         // data buffer
+	LPDWORD lpcbData       // size of data buffer
 )
 {
 	LONG ret;

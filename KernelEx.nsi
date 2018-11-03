@@ -1,4 +1,4 @@
-  !define _VERSION '4.5 RC 5'
+  !define _VERSION '4.5 Final'
   
   !ifndef _DEBUG
     !define FLAVOUR 'Release'
@@ -37,6 +37,7 @@
 
   Var ENABLEBUTTON
   Var WARNING_TEXT
+  Var StartMenuFolder
 
 ;--------------------------------
 ;Interface Settings
@@ -50,6 +51,13 @@
 
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "License.txt"
+
+  ;Start Menu Folder Page Configuration
+  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\KernelEx" 
+  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "SMDir"
+  !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
+
   !insertmacro MUI_PAGE_INSTFILES
   Page custom PageDefConfig PageLeaveDefConfig
   !insertmacro MUI_PAGE_FINISH
@@ -208,24 +216,38 @@ Section "Install"
     Abort
 
   SetOutPath "$INSTDIR"
-    
-  SetOverwrite on
-  File setup\${FLAVOUR}\setupkex.exe
-  SetOverwrite lastused
+
+  GetTempFileName $R0 "$INSTDIR"
+  File /oname=$R0 "setup\${FLAVOUR}\setupkex.exe"
+  
+  StrCpy $R1 "none"
+  IfFileExists "$INSTDIR\kernel32.bak" 0 +6
+    StrCpy $R1 "copy"
+    ClearErrors
+    CopyFiles /SILENT "$INSTDIR\kernel32.bak" "$WINDIR\SYSBCKUP\KERNEL32.DLL"
+    IfErrors 0 +2
+      StrCpy $R1 "exist" ;File already exists
   
 !ifdef _DEBUG
-  nsExec::ExecToLog '"$INSTDIR\setupkex.exe" "$INSTDIR\kernel32.bak"'
+  nsExec::ExecToLog '"$R0"'
   Pop $0
 !else
-  ExecWait '"$INSTDIR\setupkex.exe" "$INSTDIR\kernel32.bak"' $0
+  ExecWait '"$R0"' $0
   StrCmp $0 "" 0 +2
     StrCpy $0 "error"
 !endif
   DetailPrint "    setup returned: $0"
-  Delete "$INSTDIR\setupkex.exe"
-  StrCmp $0 "0" +3
+  StrCmp $0 "0" +6
+    Delete $R0 ;delete temporary setupkex.exe
+    StrCmp $R1 "copy" 0 +2 ;undo copy
+      Delete "$WINDIR\SYSBCKUP\KERNEL32.DLL"
     RMDir "$INSTDIR"
     Abort
+  
+  Rename /REBOOTOK $R0  "$INSTDIR\setupkex.exe"
+  StrCmp $R1 "copy" +2 0
+  StrCmp $R1 "exist" 0 +2
+    Delete /REBOOTOK "$INSTDIR\kernel32.bak" ;delete deprecated update file
   
   ;Files to install
   
@@ -271,6 +293,7 @@ Section "Install"
   File apilibs\core.ini
   File apilibs\settings.reg
   File license.txt
+  File "Release Notes.txt"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\msimg32.dll
@@ -318,6 +341,12 @@ Section "Install"
   
   ExecWait '"$WINDIR\regedit.exe" /s "$INSTDIR\settings.reg"'
   Delete "$INSTDIR\settings.reg"
+  
+  CreateDirectory $WINDIR\AppPatch\Custom
+  File /oname=$WINDIR\AppPatch\Custom\KernelEx.sdb "util\sdbcreate\sdbdb\KernelEx.sdb"  
+  File "util\sdbcreate\sdbdb\kexsdb.i.reg"
+  ExecWait '"$WINDIR\regedit.exe" /s "$INSTDIR\kexsdb.i.reg"'
+  Delete "$INSTDIR\kexsdb.i.reg"
 
   ;Store installation folder
   WriteRegStr HKLM "Software\KernelEx" "InstallDir" $INSTDIR
@@ -341,7 +370,16 @@ Section "Install"
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot" ""
+  ;Create shortcuts
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+    CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Release Notes.lnk" "$INSTDIR\Release Notes.txt"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Verify Installation.lnk" "$INSTDIR\verify.exe"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\KernelEx Home Page.lnk" "http://kernelex.sourceforge.net/"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\KernelEx Wiki.lnk" "http://kernelex.sourceforge.net/wiki/"
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  !insertmacro MUI_STARTMENU_WRITE_END
+
   SetRebootFlag true
 
 SectionEnd
@@ -361,10 +399,10 @@ Section "Uninstall"
     Abort
   
   ;Files to uninstall
-  IfFileExists "$INSTDIR\kernel32.bak" 0 +5
+  IfFileExists "$WINDIR\SYSBCKUP\KERNEL32.DLL" 0 +5
     GetTempFileName $0 "$SYSDIR"
     Delete $0
-    Rename "$INSTDIR\kernel32.bak" $0
+    CopyFiles /SILENT "$WINDIR\SYSBCKUP\KERNEL32.DLL" $0
     Rename /REBOOTOK $0 "$SYSDIR\kernel32.dll"
 
   Delete /REBOOTOK "$INSTDIR\KernelEx.dll"
@@ -376,6 +414,7 @@ Section "Uninstall"
   UnRegDLL "$INSTDIR\kexCOM.dll"
   Delete /REBOOTOK "$INSTDIR\kexCOM.dll"
   Delete "$INSTDIR\license.txt"
+  Delete "$INSTDIR\Release Notes.txt"
   
   Delete /REBOOTOK "$INSTDIR\msimg32.dll"
   DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "MSIMG32"
@@ -390,6 +429,12 @@ Section "Uninstall"
   Delete /REBOOTOK "$INSTDIR\userenv.dll"
   DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "USERENV"
   
+  File "util\sdbcreate\sdbdb\kexsdb.u.reg"
+  ExecWait '"$WINDIR\regedit.exe" /s "$INSTDIR\kexsdb.u.reg"'
+  Delete "$INSTDIR\kexsdb.u.reg"
+  Delete /REBOOTOK "$WINDIR\AppPatch\Custom\KernelEx.sdb"
+  RMDir "$WINDIR\AppPatch\Custom"
+  
   Delete "$INSTDIR\verify.exe"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "KexVerify"
 
@@ -397,6 +442,10 @@ Section "Uninstall"
 
   RMDir /r "$INSTDIR\MSLU"
   WriteINIStr $WINDIR\wininit.ini Rename DIRNUL $INSTDIR
+
+  ;remove Start Menu shortcuts
+  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+  RMDir /r "$SMPROGRAMS\$StartMenuFolder"
 
   MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "$(DESC_SETTINGS_PRESERVE)" IDYES +2 IDNO 0
     DeleteRegKey HKLM "Software\KernelEx"

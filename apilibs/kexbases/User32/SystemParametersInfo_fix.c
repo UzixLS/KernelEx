@@ -44,5 +44,15 @@ BOOL WINAPI SystemParametersInfoA_fix(
 		ret = TRUE;
 	}
 
+	if (ret && uiAction == SPI_GETCARETWIDTH && pvParam)
+	{
+		//there's a bug in USER: default caret width is 0
+		//(should be 1). although NT can be forced to set
+		//caret width to 0, it's not sane so we fix this.
+		DWORD* pCaretWidth = (DWORD*)pvParam;
+		if (*pCaretWidth == 0)
+			*pCaretWidth = 1;
+	}
+
 	return ret;
 }

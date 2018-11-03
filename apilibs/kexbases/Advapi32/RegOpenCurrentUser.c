@@ -24,5 +24,5 @@
 /* MAKE_EXPORT RegOpenCurrentUser_new=RegOpenCurrentUser */
 LONG WINAPI RegOpenCurrentUser_new(REGSAM access, PHKEY retkey)
 {
-    return RegOpenKeyExA(HKEY_CURRENT_USER, NULL, 0, access, retkey);
+	return RegOpenKeyExA(HKEY_CURRENT_USER, NULL, 0, access, retkey);
 }

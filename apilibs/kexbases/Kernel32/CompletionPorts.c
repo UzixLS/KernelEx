@@ -51,10 +51,10 @@ typedef struct
 
 /* MAKE_EXPORT CreateIoCompletionPort_new=CreateIoCompletionPort */
 HANDLE WINAPI CreateIoCompletionPort_new(
-  HANDLE FileHandle,              // handle to file
-  HANDLE ExistingCompletionPort,  // handle to I/O completion port
-  ULONG_PTR CompletionKey,        // completion key
-  DWORD NumberOfConcurrentThreads // number of threads to execute concurrently
+	HANDLE FileHandle,              // handle to file
+	HANDLE ExistingCompletionPort,  // handle to I/O completion port
+	ULONG_PTR CompletionKey,        // completion key
+	DWORD NumberOfConcurrentThreads // number of threads to execute concurrently
 )
 {
 	//kexDebugPrint("CreateIoCompletionPort FileHandle %p Port %p Key %p Threads %d",FileHandle,ExistingCompletionPort,CompletionKey,NumberOfConcurrentThreads);
@@ -81,11 +81,11 @@ HANDLE WINAPI CreateIoCompletionPort_new(
 
 /* MAKE_EXPORT GetQueuedCompletionStatus_new=GetQueuedCompletionStatus */
 BOOL WINAPI GetQueuedCompletionStatus_new(
-  HANDLE CompletionPort,       // handle to completion port
-  LPDWORD lpNumberOfBytes,     // bytes transferred
-  PULONG_PTR lpCompletionKey,  // file completion key
-  LPOVERLAPPED *lpOverlapped,  // buffer
-  DWORD dwMilliseconds         // optional timeout value
+	HANDLE CompletionPort,       // handle to completion port
+	LPDWORD lpNumberOfBytes,     // bytes transferred
+	PULONG_PTR lpCompletionKey,  // file completion key
+	LPOVERLAPPED *lpOverlapped,  // buffer
+	DWORD dwMilliseconds         // optional timeout value
 )
 {
 	PCOMPLET_PORT port = (PCOMPLET_PORT)MapViewOfFile(CompletionPort,FILE_MAP_ALL_ACCESS,0,0,0);
@@ -120,10 +120,10 @@ BOOL WINAPI GetQueuedCompletionStatus_new(
 
 /* MAKE_EXPORT PostQueuedCompletionStatus_new=PostQueuedCompletionStatus */
 BOOL WINAPI PostQueuedCompletionStatus_new(
-  HANDLE CompletionPort,            // handle to an I/O completion port
-  DWORD dwNumberOfBytesTransferred, // bytes transferred
-  ULONG_PTR dwCompletionKey,        // completion key 
-  LPOVERLAPPED lpOverlapped         // overlapped buffer
+	HANDLE CompletionPort,            // handle to an I/O completion port
+	DWORD dwNumberOfBytesTransferred, // bytes transferred
+	ULONG_PTR dwCompletionKey,        // completion key 
+	LPOVERLAPPED lpOverlapped         // overlapped buffer
 )
 {
 	PCOMPLET_PORT port = (PCOMPLET_PORT)MapViewOfFile(CompletionPort,FILE_MAP_ALL_ACCESS,0,0,0);

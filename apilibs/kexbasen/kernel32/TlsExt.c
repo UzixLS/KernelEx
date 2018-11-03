@@ -109,14 +109,8 @@ BOOL init_exttls(void)
 
 void detach_exttls(void)
 {
-	TDB98* tdb;
-	LPVOID* ext;
-
-	__asm mov eax, fs:18h;
-	__asm sub eax, 8;
-	__asm mov tdb, eax;
-
-	ext = (LPVOID*) tdb->TlsSlots[TLS_SIZE-1];
+	TDB98* tdb = get_tdb();
+	LPVOID ext = tdb->TlsSlots[TLS_SIZE-1];
 	if (ext)
 	{
 		HeapFree(GetProcessHeap(), 0, ext);
@@ -176,37 +170,37 @@ DWORD WINAPI TlsAlloc_new(void)
 /* MAKE_EXPORT TlsFree_new=TlsFree */
 BOOL WINAPI TlsFree_new(DWORD dwTlsIndex)
 {
-	int ret;
+	int ret = 0;
 	PDB98* pdb = get_pdb();
 
+	_EnterSysLevel(k32lock);
 	_EnterSysLevel(TlsLock);
 
 	if (dwTlsIndex < TLS_SIZE-1)
 	{
 		int rem = dwTlsIndex % (sizeof(DWORD) * 8);
 		int div = dwTlsIndex / (sizeof(DWORD) * 8);
-		pdb->tlsInUseBits[div] &= ~(1 << rem);
-		ret = 1;
+		if (pdb->tlsInUseBits[div] & (1 << rem))
+		{
+			pdb->tlsInUseBits[div] &= ~(1 << rem);
+			ret = 1;
+		}
 	}
 	else if (dwTlsIndex < TOTAL_TLS_SIZE)
 	{
 		dwTlsIndex -= TLS_SIZE-1;
 		int rem = dwTlsIndex % (sizeof(DWORD) * 8);
 		int div = dwTlsIndex / (sizeof(DWORD) * 8);
-		ExtTlsBitmap[div] &= ~(1 << rem);
-		ret = 2;
-	}
-	else
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		ret = 0;
+		if (ExtTlsBitmap[div] & (1 << rem))
+		{
+			ExtTlsBitmap[div] &= ~(1 << rem);
+			ret = 2;
+		}
 	}
 
 	if (ret)
 	{
 		const NODE* thread;
-
-		_EnterSysLevel(k32lock);
 
 		for (thread = pdb->ThreadList->firstNode ; thread != NULL ; thread = thread->next)
 		{
@@ -220,13 +214,14 @@ BOOL WINAPI TlsFree_new(DWORD dwTlsIndex)
 					ext[dwTlsIndex] = 0;
 			}
 		}
-
-		_LeaveSysLevel(k32lock);
 	}
 
 	_LeaveSysLevel(TlsLock);
+	_LeaveSysLevel(k32lock);
 
-	return ret;
+	if (!ret)
+		SetLastError(ERROR_INVALID_PARAMETER);
+	return (ret != 0);
 }
 
 #ifdef __ASM_IS_L33T__
@@ -315,11 +310,7 @@ static inline void SetLastError_fast(TDB98* tdb, DWORD error)
 
 LPVOID WINAPI TlsGetValue_new2(DWORD dwTlsIndex)
 {
-	TDB98* tdb;
-
-	__asm mov eax, fs:18h;
-	__asm sub eax, 8;
-	__asm mov tdb, eax;
+	TDB98* tdb = get_tdb();
 
 	if (dwTlsIndex < TLS_SIZE-1)
 	{
@@ -344,11 +335,7 @@ LPVOID WINAPI TlsGetValue_new2(DWORD dwTlsIndex)
 
 BOOL WINAPI TlsSetValue_new2(DWORD dwTlsIndex, LPVOID lpTlsValue)
 {
-	TDB98* tdb;
-
-	__asm mov eax, fs:18h;
-	__asm sub eax, 8;
-	__asm mov tdb, eax;
+	TDB98* tdb = get_tdb();
 
 	if (dwTlsIndex < TLS_SIZE-1)
 	{

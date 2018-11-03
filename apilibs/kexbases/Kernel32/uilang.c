@@ -113,24 +113,24 @@ BOOL WINAPI EnumUILanguagesA_new(UILANGUAGE_ENUMPROCA pUILangEnumProc, DWORD dwF
 	char buf[10];
 	LANGID lid;
 
-    if (!pUILangEnumProc) 
+	if (!pUILangEnumProc) 
 	{
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
-    if (dwFlags) 
+	if (dwFlags) 
 	{
-        SetLastError(ERROR_INVALID_FLAGS);
-        return FALSE;
-    }
+		SetLastError(ERROR_INVALID_FLAGS);
+		return FALSE;
+	}
 
 	lid = GetSystemDefaultUILanguage_new();
 
 	dword_to_hexstr(lid, buf, FALSE);
 
 	pUILangEnumProc(buf, lParam);
-    return TRUE;
+	return TRUE;
 }
 
 /* MAKE_EXPORT EnumUILanguagesW_new=EnumUILanguagesW */
@@ -139,22 +139,22 @@ BOOL WINAPI EnumUILanguagesW_new(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwF
 	WCHAR buf[10];
 	LANGID lid;
 
-    if (!pUILangEnumProc) 
+	if (!pUILangEnumProc) 
 	{
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
-    if (dwFlags) 
+	if (dwFlags) 
 	{
-        SetLastError(ERROR_INVALID_FLAGS);
-        return FALSE;
-    }
+		SetLastError(ERROR_INVALID_FLAGS);
+		return FALSE;
+	}
 
 	lid = GetSystemDefaultUILanguage_new();
 
 	dword_to_hexstr(lid, buf, TRUE);
 
 	pUILangEnumProc(buf, lParam);
-    return TRUE;
+	return TRUE;
 }

@@ -54,8 +54,8 @@ DWORD WINAPI GetFontUnicodeRanges_new(
 /* On 9x fallback to system function */
 /* MAKE_EXPORT SetGraphicsMode_NT=SetGraphicsMode */
 int WINAPI SetGraphicsMode_NT(
-  HDC hdc,    // handle to device context
-  int iMode   // graphics mode
+	HDC hdc,    // handle to device context
+	int iMode   // graphics mode
 )
 {
 	return GM_COMPATIBLE;
@@ -63,8 +63,8 @@ int WINAPI SetGraphicsMode_NT(
 
 /* MAKE_EXPORT SetWorldTransform_9x=SetWorldTransform */
 BOOL WINAPI SetWorldTransform_9x(
-  HDC hdc,               // handle to device context
-  CONST XFORM *lpXform   // transformation data
+	HDC hdc,               // handle to device context
+	CONST XFORM *lpXform   // transformation data
 )
 {
 	return FALSE;
@@ -72,9 +72,9 @@ BOOL WINAPI SetWorldTransform_9x(
 
 /* MAKE_EXPORT GetRandomRgn_NT=GetRandomRgn */
 int WINAPI GetRandomRgn_NT(
-  HDC  hdc,    // handle to DC
-  HRGN hrgn,   // handle to region
-  INT  iNum    // must be SYSRGN
+	HDC  hdc,    // handle to DC
+	HRGN hrgn,   // handle to region
+	INT  iNum    // must be SYSRGN
 )
 {
 	int result = GetRandomRgn(hdc,hrgn,iNum);
@@ -106,8 +106,8 @@ void floattofrac( float f, int* m, int* d)
 
 /* MAKE_EXPORT SetWorldTransform_NT=SetWorldTransform */
 BOOL WINAPI SetWorldTransform_NT(
-  HDC hdc,               // handle to device context
-  CONST XFORM *lpXform   // transformation data
+	HDC hdc,               // handle to device context
+	CONST XFORM *lpXform   // transformation data
 )
 {
 	GrabWin16Lock();
@@ -129,23 +129,26 @@ BOOL WINAPI SetWorldTransform_NT(
 	//hack DC mode to anisotropic to make Set*ExtEx work
 	savemapmode = dcobj->mapmode;
 	dcobj->mapmode = MM_ANISOTROPIC;
+	ReleaseWin16Lock();
 	SetWindowExtEx(hdc,wx,wy,NULL);
 	SetViewportExtEx(hdc,vx,vy,NULL);
 	SetViewportOrgEx(hdc,(int)lpXform->eDx,(int)lpXform->eDy,NULL);
 	//set it back
+	GrabWin16Lock();
+	dcobj = GetDCObj(hdc);
 	dcobj->mapmode = savemapmode;
 	ReleaseWin16Lock();
 	return TRUE;
 }
 
 /************************************************************************/
-/* Those hacks shouldn't hurt anybody.	                                */
+/* Those hacks shouldn't hurt anybody.                                  */
 /************************************************************************/
 
 /* MAKE_EXPORT SetMapMode_NT=SetMapMode */
 int WINAPI SetMapMode_NT( 
-  HDC hdc,        // handle to device context
-  int fnMapMode   // new mapping mode
+	HDC hdc,        // handle to device context
+	int fnMapMode   // new mapping mode
 )
 {
 	
@@ -155,8 +158,8 @@ int WINAPI SetMapMode_NT(
 
 /* MAKE_EXPORT GetTextMetricsA_NT=GetTextMetricsA */
 BOOL WINAPI GetTextMetricsA_NT(
-  HDC hdc,            // handle to DC
-  LPTEXTMETRIC lptm   // text metrics
+	HDC hdc,            // handle to DC
+	LPTEXTMETRIC lptm   // text metrics
 )
 {
 	GrabWin16Lock();
@@ -170,20 +173,22 @@ BOOL WINAPI GetTextMetricsA_NT(
 	}
 	if ( dcobj->ViewportExtX != 1 || dcobj->ViewportExtY != 1 || dcobj->WindowExtX != 1 || dcobj->WindowExtY != 1 )
 	{
+		ReleaseWin16Lock();
 		saved = SaveDC(hdc);
 		ResetMapMode(hdc);
 	}
+	else
+		ReleaseWin16Lock();	
 	retval = GetTextMetricsA(hdc,lptm);
 	if ( saved )
-		RestoreDC(hdc,-1);
-	ReleaseWin16Lock();
+		RestoreDC(hdc,-1);	
 	return retval;
 }
 
 /* MAKE_EXPORT GetWorldTransform_NT=GetWorldTransform */
 BOOL WINAPI GetWorldTransform_NT(
-  HDC hdc,         // handle to device context
-  LPXFORM lpXform  // transformation
+	HDC hdc,         // handle to device context
+	LPXFORM lpXform  // transformation
 )
 {
 	SIZE v;
@@ -204,9 +209,9 @@ BOOL WINAPI GetWorldTransform_NT(
 
 /* MAKE_EXPORT ModifyWorldTransform_NT=ModifyWorldTransform */
 BOOL WINAPI ModifyWorldTransform_NT(
-  HDC hdc,               // handle to device context
-  CONST XFORM *lpXform,  // transformation data
-  DWORD iMode            // modification mode
+	HDC hdc,               // handle to device context
+	CONST XFORM *lpXform,  // transformation data
+	DWORD iMode            // modification mode
 )
 {
 	//we accept only 'reset world' scenario
@@ -242,14 +247,14 @@ static void WINAPI MakeDxFromDxDy(const int* lpDx, int* newlpDx, UINT cbCount)
 
 /* MAKE_EXPORT ExtTextOutA_new=ExtTextOutA */
 BOOL WINAPI ExtTextOutA_new(
-  HDC hdc,          // handle to DC
-  int X,            // x-coordinate of reference point
-  int Y,            // y-coordinate of reference point
-  UINT fuOptions,   // text-output options
-  CONST RECT* lprc, // optional dimensions
-  LPCSTR lpString, // string
-  UINT cbCount,     // number of characters in string
-  CONST INT* lpDx   // array of spacing values
+	HDC hdc,          // handle to DC
+	int X,            // x-coordinate of reference point
+	int Y,            // y-coordinate of reference point
+	UINT fuOptions,   // text-output options
+	CONST RECT* lprc, // optional dimensions
+	LPCSTR lpString, // string
+	UINT cbCount,     // number of characters in string
+	CONST INT* lpDx   // array of spacing values
 )
 {
 	BOOL result;
@@ -284,14 +289,14 @@ BOOL WINAPI ExtTextOutA_new(
 
 /* MAKE_EXPORT ExtTextOutW_new=ExtTextOutW */
 BOOL WINAPI ExtTextOutW_new(
-  HDC hdc,          // handle to DC
-  int X,            // x-coordinate of reference point
-  int Y,            // y-coordinate of reference point
-  UINT fuOptions,   // text-output options
-  CONST RECT* lprc, // optional dimensions
-  LPCWSTR lpString, // string
-  UINT cbCount,     // number of characters in string
-  CONST INT* lpDx   // array of spacing values
+	HDC hdc,          // handle to DC
+	int X,            // x-coordinate of reference point
+	int Y,            // y-coordinate of reference point
+	UINT fuOptions,   // text-output options
+	CONST RECT* lprc, // optional dimensions
+	LPCWSTR lpString, // string
+	UINT cbCount,     // number of characters in string
+	CONST INT* lpDx   // array of spacing values
 )
 {
 	BOOL result;
@@ -328,11 +333,15 @@ BOOL WINAPI ExtTextOutW_new(
 		savemapmode = dcobj->mapmode;
 		dcobj->mapmode = MM_ANISOTROPIC;
 	}
+	ReleaseWin16Lock();
 	result = ExtTextOutW(hdc,X,Y,fuOptions,lprc,lpString,cbCount,lpDx);
 	if ( savemapmode )
+	{
+		GrabWin16Lock();
+		dcobj = GetDCObj( hdc );
 		dcobj->mapmode = savemapmode;
-	ReleaseWin16Lock();
-
+		ReleaseWin16Lock();
+	}
 	if ( buffer && cbCount>128 )
 		HeapFree(GetProcessHeap(),0,buffer);
 	return result;
@@ -346,10 +355,10 @@ BOOL WINAPI PolyTextOutA_new( HDC hdc, const POLYTEXTA *pptxt, INT cStrings )
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}	
-    for (; cStrings>0; cStrings--, pptxt++)
-        if (!ExtTextOutA_new (hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
-            return FALSE;
-    return TRUE;
+	for (; cStrings>0; cStrings--, pptxt++)
+		if (!ExtTextOutA_new (hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
+			return FALSE;
+	return TRUE;
 }
 
 /* MAKE_EXPORT PolyTextOutW_new=PolyTextOutW */
@@ -360,8 +369,8 @@ BOOL WINAPI PolyTextOutW_new( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-    for (; cStrings>0; cStrings--, pptxt++)
-        if (!ExtTextOutW_new (hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
-            return FALSE;
-    return TRUE;
+	for (; cStrings>0; cStrings--, pptxt++)
+		if (!ExtTextOutW_new (hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
+			return FALSE;
+	return TRUE;
 }

@@ -74,33 +74,33 @@ __asm__(".text\n\t"
 		".globl _TryEnterCrst@4\n\t"
 		".def _TryEnterCrst@4; .scl 2; .type 32; .endef\n"
 		"_TryEnterCrst@4:\n\t"
-        "movl 4(%esp),%edx\n\t"
-        "xorl %eax,%eax\n\t"
-        "incl %eax\n\t"
-        "xorl %ecx,%ecx\n\t"
-        "cmpxchgl %ecx,0x10(%edx)\n\t" /* if (OP1==eax) { OP1=OP2; ZF=1; } else { eax=OP1; ZF=0 } */
-        "movl %fs:0x18, %ecx\n\t"
-        "addl _offset,%ecx\n\t"
-        "movl (%ecx),%ecx\n\t" /* ecx will contain TDBX now */
-        "cmpl $1,%eax\n\t"
-        "jnz .L1\n\t"
-        /* critical section was unowned => successful lock */
-        "movl %ecx,8(%edx)\n\t"
-        "incl 4(%edx)\n\t"
-        "ret $4\n\t"
+		"movl 4(%esp),%edx\n\t"
+		"xorl %eax,%eax\n\t"
+		"incl %eax\n\t"
+		"xorl %ecx,%ecx\n\t"
+		"cmpxchgl %ecx,0x10(%edx)\n\t" /* if (OP1==eax) { OP1=OP2; ZF=1; } else { eax=OP1; ZF=0 } */
+		"movl %fs:0x18, %ecx\n\t"
+		"addl _offset,%ecx\n\t"
+		"movl (%ecx),%ecx\n\t" /* ecx will contain TDBX now */
+		"cmpl $1,%eax\n\t"
+		"jnz .L1\n\t"
+		/* critical section was unowned => successful lock */
+		"movl %ecx,8(%edx)\n\t"
+		"incl 4(%edx)\n\t"
+		"ret $4\n\t"
 ".L1: \n\t"
-        "cmpl %ecx,8(%edx)\n\t"
-        "jnz .L2\n\t"
-        /* critical section owned by this thread */
-        "decl 0x10(%edx)\n\t"
-        "incl 4(%edx)\n\t"
-        "xorl %eax,%eax\n\t"
-        "incl %eax\n\t"
-        "ret $4\n\t"
+		"cmpl %ecx,8(%edx)\n\t"
+		"jnz .L2\n\t"
+		/* critical section owned by this thread */
+		"decl 0x10(%edx)\n\t"
+		"incl 4(%edx)\n\t"
+		"xorl %eax,%eax\n\t"
+		"incl %eax\n\t"
+		"ret $4\n\t"
 ".L2: \n\t"
-        /* critical section owned by other thread - do nothing */
-        "xorl %eax,%eax\n\t"
-        "ret $4\n\t"
+		/* critical section owned by other thread - do nothing */
+		"xorl %eax,%eax\n\t"
+		"ret $4\n\t"
 		);
 
 #else

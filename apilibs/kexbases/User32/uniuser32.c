@@ -26,8 +26,8 @@
 /* MAKE_EXPORT DrawCaptionTempW_new=DrawCaptionTempW */
 BOOL WINAPI DrawCaptionTempW_new(HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont, HICON hIcon, LPCWSTR strW, UINT uFlags)
 {
-    if (!(uFlags & DC_TEXT) || !strW)
-        return DrawCaptionTempA_pfn(hwnd, hdc, rect, hFont, hIcon, (LPCSTR)strW, uFlags);
+	if (!(uFlags & DC_TEXT) || !strW)
+		return DrawCaptionTempA_pfn(hwnd, hdc, rect, hFont, hIcon, (LPCSTR)strW, uFlags);
 	else
 	{
 		ALLOC_WtoA(str);

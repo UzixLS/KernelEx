@@ -28,74 +28,74 @@ extern "C" {
 
 typedef enum tagWTS_INFO_CLASS
 {
-    WTSInitialProgram,
-    WTSApplicationName,
-    WTSWorkingDirectory,
-    WTSOEMId,
-    WTSSessionId,
-    WTSUserName,
-    WTSWinStationName,
-    WTSDomainName,
-    WTSConnectState,
-    WTSClientBuildNumber,
-    WTSClientName,
-    WTSClientDirectory,
-    WTSClientProductId,
-    WTSClientHardwareId,
-    WTSClientAddress,
-    WTSClientDisplay,
-    WTSClientProtocolType,
+	WTSInitialProgram,
+	WTSApplicationName,
+	WTSWorkingDirectory,
+	WTSOEMId,
+	WTSSessionId,
+	WTSUserName,
+	WTSWinStationName,
+	WTSDomainName,
+	WTSConnectState,
+	WTSClientBuildNumber,
+	WTSClientName,
+	WTSClientDirectory,
+	WTSClientProductId,
+	WTSClientHardwareId,
+	WTSClientAddress,
+	WTSClientDisplay,
+	WTSClientProtocolType,
 } WTS_INFO_CLASS;
 
 typedef enum _WTS_CONNECTSTATE_CLASS
 {
-    WTSActive,
-    WTSConnected,
-    WTSConnectQuery,
-    WTSShadow,
-    WTSDisconnected,
-    WTSIdle,
-    WTSListen,
-    WTSReset,
-    WTSDown,
-    WTSInit
+	WTSActive,
+	WTSConnected,
+	WTSConnectQuery,
+	WTSShadow,
+	WTSDisconnected,
+	WTSIdle,
+	WTSListen,
+	WTSReset,
+	WTSDown,
+	WTSInit
 } WTS_CONNECTSTATE_CLASS;
 
 typedef enum _WTS_CONFIG_CLASS
 {
-    WTSUserConfigInitialProgram,
-    WTSUserConfigWorkingDirectory,
-    WTSUserConfigInheritInitialProgram,
-    WTSUserConfigAllowLogonTerminalServer,
-    WTSUserConfigTimeoutSettingsConnections,
-    WTSUserConfigTimeoutSettingsDisconnections,
-    WTSUserConfigTimeoutSettingsIdle,
-    WTSUserConfigDeviceClientDrives,
-    WTSUserConfigDeviceClientPrinters,
-    WTSUserConfigDeviceClientDefaultPrinter,
-    WTSUserConfigBrokenTimeoutSettings,
-    WTSUserConfigModemCallbackSettings,
-    WTSUserConfigModemCallbackPhoneNumber,
-    WTSUserConfigShadowSettings,
-    WTSUserConfigTerminalServerProfilePath,
-    WTSUserConfigTerminalServerHomeDirectory,
-    WTSUserConfigfTerminalServerRemoteHomeDir
+	WTSUserConfigInitialProgram,
+	WTSUserConfigWorkingDirectory,
+	WTSUserConfigInheritInitialProgram,
+	WTSUserConfigAllowLogonTerminalServer,
+	WTSUserConfigTimeoutSettingsConnections,
+	WTSUserConfigTimeoutSettingsDisconnections,
+	WTSUserConfigTimeoutSettingsIdle,
+	WTSUserConfigDeviceClientDrives,
+	WTSUserConfigDeviceClientPrinters,
+	WTSUserConfigDeviceClientDefaultPrinter,
+	WTSUserConfigBrokenTimeoutSettings,
+	WTSUserConfigModemCallbackSettings,
+	WTSUserConfigModemCallbackPhoneNumber,
+	WTSUserConfigShadowSettings,
+	WTSUserConfigTerminalServerProfilePath,
+	WTSUserConfigTerminalServerHomeDirectory,
+	WTSUserConfigfTerminalServerRemoteHomeDir
 } WTS_CONFIG_CLASS;
 
 typedef struct _WTS_PROCESS_INFOA
 {
-    DWORD SessionId;
-    DWORD ProcessId;
-    LPSTR pProcessName;
-    PSID pUserSid;
+	DWORD SessionId;
+	DWORD ProcessId;
+	LPSTR pProcessName;
+	PSID pUserSid;
 } WTS_PROCESS_INFOA, *PWTS_PROCESS_INFOA;
 
 typedef struct _WTS_PROCESS_INFOW
 {
-    DWORD SessionId;
-    DWORD ProcessId;
-    LPWSTR pProcessName;
-    PSID pUserSid;
+	DWORD SessionId;
+	DWORD ProcessId;
+	LPWSTR pProcessName;
+	PSID pUserSid;
 } WTS_PROCESS_INFOW, *PWTS_PROCESS_INFOW;
 
 DECL_WINELIB_TYPE_AW(WTS_PROCESS_INFO)
@@ -103,16 +103,16 @@ DECL_WINELIB_TYPE_AW(PWTS_PROCESS_INFO)
 
 typedef struct _WTS_SESSION_INFOA
 {
-    DWORD SessionId;
-    LPSTR pWinStationName;
-    WTS_CONNECTSTATE_CLASS State;
+	DWORD SessionId;
+	LPSTR pWinStationName;
+	WTS_CONNECTSTATE_CLASS State;
 } WTS_SESSION_INFOA, *PWTS_SESSION_INFOA;
 
 typedef struct _WTS_SESSION_INFOW
 {
-    DWORD SessionId;
-    LPWSTR pWinStationName;
-    WTS_CONNECTSTATE_CLASS State;
+	DWORD SessionId;
+	LPWSTR pWinStationName;
+	WTS_CONNECTSTATE_CLASS State;
 } WTS_SESSION_INFOW, *PWTS_SESSION_INFOW;
 
 DECL_WINELIB_TYPE_AW(WTS_SESSION_INFO)
@@ -120,12 +120,12 @@ DECL_WINELIB_TYPE_AW(PWTS_SESSION_INFO)
 
 typedef struct _WTS_SERVER_INFOA
 {
-    LPSTR pServerName;
+	LPSTR pServerName;
 } WTS_SERVER_INFOA, *PWTS_SERVER_INFOA;
 
 typedef struct _WTS_SERVER_INFOW
 {
-    LPWSTR pServerName;
+	LPWSTR pServerName;
 } WTS_SERVER_INFOW, *PWTS_SERVER_INFOW;
 
 DECL_WINELIB_TYPE_AW(WTS_SERVER_INFO)

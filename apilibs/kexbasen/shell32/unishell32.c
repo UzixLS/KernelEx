@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008, Xeno86
+ *  Copyright (C) 2008, 2010 Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -20,8 +20,34 @@
  */
 
 #include "unifwd.h"
+#include "common.h"
+#include <shellapi.h>
+#include <shlwapi.h>
 
-FORWARD_TO_UNICOWS(DragQueryFileW);
+/* MAKE_EXPORT DragQueryFileW_new=DragQueryFileW */
+UINT WINAPI DragQueryFileW_new(HDROP hDrop, UINT iFile, LPWSTR lpszFileW, UINT cch)
+{
+	UINT ret;
+	ALLOC_A(lpszFile, cch * 2);
+
+	ret = DragQueryFileA(hDrop, iFile, lpszFileA, cch);
+
+	if (ret && lpszFileA && iFile != 0xffffffff)
+	{
+		DWORD lasterr = GetLastError();
+
+		ret = AtoW(lpszFile, cch);
+		if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+			ret = cch;
+
+		if (ret) ret--;
+
+		SetLastError(lasterr);
+	}
+
+	return ret;
+}
+
 FORWARD_TO_UNICOWS(ExtractIconExW);
 FORWARD_TO_UNICOWS(ExtractIconW);
 FORWARD_TO_UNICOWS(FindExecutableW);

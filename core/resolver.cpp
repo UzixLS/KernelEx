@@ -879,7 +879,8 @@ int resolver_init()
 	if (!dseg)
 	{
 		DBGPRINTF(("Signature not found\n"));
-		ShowError(IDS_NOTREADY);
+		if (!rerun_setup())
+			ShowError(IDS_NOTREADY);
 		return 0;
 	}
 	else
@@ -889,7 +890,8 @@ int resolver_init()
 	{
 		DBGPRINTF(("Wrong stub version, expected: %d, got: %d\n", 
 				KEX_STUB_VER, dseg->version));
-		ShowError(IDS_STUBMISMATCH, KEX_STUB_VER, dseg->version);
+		if (!rerun_setup())
+			ShowError(IDS_STUBMISMATCH, KEX_STUB_VER, dseg->version);
 		return 0;
 	}
 
@@ -898,8 +900,6 @@ int resolver_init()
 
 	system_path_len = GetSystemDirectory(system_path, sizeof(system_path));
 	RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\KernelEx\\KnownDLLs", &known_dlls_key);
-
-	SettingsDB::instance.flush_all();
 
 	return 1;
 }

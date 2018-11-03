@@ -22,45 +22,18 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include "k32ord.h"
 #include "thuni_thunk.h"
 #include "thuni_layer.h"
 #include "thuni_macro.h"
 
-static GCQ_API GetCurrentThreadQueue;
-static HTOP_API HWNDtoPWND;
-
-static LPCRITICAL_SECTION pWin16Mutex;
 static CRITICAL_SECTION wndproc_cs;
 
-static HMODULE g_hUser32;
-
-#define SetWinCreateEvent(proc) SetWinEventHook(EVENT_OBJECT_CREATE, EVENT_OBJECT_CREATE, g_hUser32, \
-				(WINEVENTPROC)(proc), GetCurrentProcessId(), GetCurrentThreadId(), WINEVENT_INCONTEXT)
-
 BOOL InitUniThunkLayer()
-{
-	g_hUser32 = GetModuleHandleA("user32");
-	/* Returns current thread hQueue 32-bit pointer */
-	GetCurrentThreadQueue = (GCQ_API) RELTOABS( (DWORD)GetMessageExtraInfo + 7 );
-	/* IsWindow returns PWND */
-	HWNDtoPWND = (HTOP_API)IsWindow;
-	
-	_GetpWin16Lock( &pWin16Mutex );
+{		
 	InitializeCriticalSection( &wndproc_cs );
 	MakeCriticalSectionGlobal( &wndproc_cs );
 
-	return TRUE;
-}
-
-void GrabWin16Lock()
-{
-	_EnterSysLevel(pWin16Mutex);
-}
-
-void ReleaseWin16Lock()
-{
-	_LeaveSysLevel(pWin16Mutex);
+	return InitUniThunkLayerStuff();
 }
 
 static WNDPROC WINAPI _GetWindowProc32(PWND pwnd)

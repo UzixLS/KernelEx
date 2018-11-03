@@ -29,77 +29,8 @@
 ATOM WINAPI AddAtomW_new(LPCWSTR strW)
 {
 	ALLOC_WtoA(str);
-    return AddAtomA(strA);
+	return AddAtomA(strA);
 }
-
-/* something seems to be wrong with this and I don't know what
-INT WINAPI CompareStringW_new(LCID lcid, DWORD style,
-                          LPCWSTR str1, INT len1, LPCWSTR str2, INT len2)
-{
-    CHAR buf1A[BUFSIZE];
-    CHAR buf2A[BUFSIZE];
-    LPSTR str1A, str2A;
-    INT len1A, len2A, ret;
-    UINT locale_cp = CP_ACP;
-    int lasterr;
-    
-    DBGMSGW((L"CompareStringW(0x%1!x!,0x%2!x!,%3!s!,%4!d!,%5!s!,%6!d!)\n",lcid,style,str1,len1,str2,len2));
-    
-    lasterr = GetLastError();    
-    if (lcid == LANG_INVARIANT) lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
-
-    if (!str1 || !str2)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-
-    if (!(style & LOCALE_USE_CP_ACP))
-		if (!GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
-							(CHAR *)&locale_cp, sizeof(locale_cp)/sizeof(CHAR))) locale_cp = 0;
-
-	str1A = buf1A;
-	if (len1 != 0)
-	{
-		len1A = WideCharToMultiByte(locale_cp, 0, str1, len1, buf1A, BUFSIZE, NULL, NULL);
-		if (!len1A)
-		{
-			len1A = WideCharToMultiByte(locale_cp, 0, str1, len1, NULL, 0, NULL, NULL);
-			str1A = HeapAlloc(GetProcessHeap(), 0, len1A);
-			if (!str1A)
-			{
-				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-				return 0;
-			}
-			WideCharToMultiByte(locale_cp, 0, str1, len1, str1A, len1A, NULL, NULL);
-		}
-    }
-    str2A = buf2A;
-    if (len2 != 0)
-    {
-		len2A = WideCharToMultiByte(locale_cp, 0, str2, len2, buf2A, BUFSIZE, NULL, NULL);
-		if (!len2A)
-		{
-			len2A = WideCharToMultiByte(locale_cp, 0, str2, len2, NULL, 0, NULL, NULL);
-			str2A = HeapAlloc(GetProcessHeap(), 0, len2A);
-			if (!str2A)
-			{
-				if (str1A != buf1A) HeapFree(GetProcessHeap(), 0, str1A);
-				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-				return 0;
-			}
-			WideCharToMultiByte(locale_cp, 0, str2, len2, str2A, len2A, NULL, NULL);
-		}
-    }
-    SetLastError(lasterr);
-
-    ret = CompareStringA(lcid, style, str1A, len1A, str2A, len2A);
-
-    if (str1A != buf1A) HeapFree(GetProcessHeap(), 0, str1A);
-    if (str2A != buf2A) HeapFree(GetProcessHeap(), 0, str2A);
-    return ret;
-}
-*/
 
 //MAKE_EXPORT CopyFileExW_new=CopyFileExW
 BOOL WINAPI CopyFileExW_new(LPCWSTR lpExistingFileNameW, LPCWSTR lpNewFileNameW, LPPROGRESS_ROUTINE lpProgressRoutine, LPVOID lpData, LPBOOL pbCancel, DWORD dwCopyFlags)
@@ -167,8 +98,8 @@ BOOL WINAPI DeleteFileW_new(LPCWSTR lpFileNameW)
 //MAKE_EXPORT FindAtomW_new=FindAtomW
 ATOM WINAPI FindAtomW_new(LPCWSTR strW)
 {
-    ALLOC_WtoA(str);
-    return FindAtomA(strA);
+	ALLOC_WtoA(str);
+	return FindAtomA(strA);
 }
 
 //MAKE_EXPORT FindFirstChangeNotificationW_new=FindFirstChangeNotificationW
@@ -245,7 +176,7 @@ HRSRC WINAPI FindResourceExW_new(HMODULE hModule, LPCWSTR typeW, LPCWSTR nameW, 
 //MAKE_EXPORT FindResourceW_new=FindResourceW
 HRSRC WINAPI FindResourceW_new(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
-    return FindResourceExW_new(hModule, type, name, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
+	return FindResourceExW_new(hModule, type, name, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
 }
 
 //MAKE_EXPORT FreeEnvironmentStringsW_new=FreeEnvironmentStringsW
@@ -259,11 +190,11 @@ UINT WINAPI GetAtomNameW_new(ATOM atom, LPWSTR bufferW, int size)
 {
 	UINT ret;
 	ALLOC_A(buffer, size * acp_mcs);
-    ret = GetAtomNameA(atom, bufferA, size * acp_mcs);
-    if (ret)
+	ret = GetAtomNameA(atom, bufferA, size * acp_mcs);
+	if (ret)
 		ret = ABUFtoW(buffer, ret + 1, size);
 	if (ret) ret--;
-    return ret;
+	return ret;
 }
 
 //MAKE_EXPORT GetCurrentDirectoryW_new=GetCurrentDirectoryW
@@ -569,15 +500,15 @@ UINT WINAPI GetWindowsDirectoryW_new(LPWSTR lpBufferW, UINT uSize)
 //MAKE_EXPORT GlobalAddAtomW_new=GlobalAddAtomW
 ATOM WINAPI GlobalAddAtomW_new(LPCWSTR strW)
 {
-    ALLOC_WtoA(str);
-    return GlobalAddAtomA(strA);
+	ALLOC_WtoA(str);
+	return GlobalAddAtomA(strA);
 }
 
 //MAKE_EXPORT GlobalFindAtomW_new=GlobalFindAtomW
 ATOM WINAPI GlobalFindAtomW_new(LPCWSTR strW)
 {
-    ALLOC_WtoA(str);
-    return GlobalFindAtomA(strA);
+	ALLOC_WtoA(str);
+	return GlobalFindAtomA(strA);
 }
 
 //MAKE_EXPORT GlobalGetAtomNameW_new=GlobalGetAtomNameW
@@ -585,11 +516,11 @@ UINT WINAPI GlobalGetAtomNameW_new(ATOM atom, LPWSTR bufferW, int size)
 {
 	UINT ret;
 	ALLOC_A(buffer, size * acp_mcs);
-    ret = GlobalGetAtomNameA(atom, bufferA, size * acp_mcs);
-    if (ret)
+	ret = GlobalGetAtomNameA(atom, bufferA, size * acp_mcs);
+	if (ret)
 		ret = ABUFtoW(buffer, ret + 1, size);
 	if (ret) ret--;
-    return ret;
+	return ret;
 }
 
 //MAKE_EXPORT LoadLibraryW_new=LoadLibraryW
@@ -613,27 +544,27 @@ BOOL WINAPI Module32FirstW_new(HANDLE hSnapshot, LPMODULEENTRY32W lpmeW)
 {
 	BOOL ret;
 	char szModuleA[MAX_MODULE_NAME32 + 1];
-    char szExePathA[MAX_PATH];
+	char szExePathA[MAX_PATH];
 	WCHAR* szModuleW = lpmeW->szModule;
 	WCHAR* szExePathW = lpmeW->szExePath;
 	
 	if (lpmeW->dwSize < sizeof(MODULEENTRY32W))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    
-    lpmeW->dwSize = sizeof(MODULEENTRY32);
-    
-    if ((ret = Module32First(hSnapshot, (LPMODULEENTRY32)lpmeW)) != FALSE)
-    {
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	
+	lpmeW->dwSize = sizeof(MODULEENTRY32);
+	
+	if ((ret = Module32First(hSnapshot, (LPMODULEENTRY32)lpmeW)) != FALSE)
+	{
 		strcpy(szModuleA, ((LPMODULEENTRY32)lpmeW)->szModule);
 		strcpy(szExePathA, ((LPMODULEENTRY32)lpmeW)->szExePath);
 		AtoW(szModule, sizeof(lpmeW->szModule) / sizeof(WCHAR));
 		AtoW(szExePath, sizeof(lpmeW->szExePath) / sizeof(WCHAR));
-    }
-    lpmeW->dwSize = sizeof(MODULEENTRY32W);
-    return ret;
+	}
+	lpmeW->dwSize = sizeof(MODULEENTRY32W);
+	return ret;
 }
 
 //MAKE_EXPORT Module32NextW_new=Module32NextW
@@ -641,27 +572,27 @@ BOOL WINAPI Module32NextW_new(HANDLE hSnapshot, LPMODULEENTRY32W lpmeW)
 {
 	BOOL ret;
 	char szModuleA[MAX_MODULE_NAME32 + 1];
-    char szExePathA[MAX_PATH];
+	char szExePathA[MAX_PATH];
 	WCHAR* szModuleW = lpmeW->szModule;
 	WCHAR* szExePathW = lpmeW->szExePath;
 	
 	if (lpmeW->dwSize < sizeof(MODULEENTRY32W))
-    {
-        SetLastError(ERROR_INVALID_DATA);
-        return FALSE;
-    }
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return FALSE;
+	}
 	
 	lpmeW->dwSize = sizeof(MODULEENTRY32);
 	
 	if ((ret = Module32Next(hSnapshot, (LPMODULEENTRY32)lpmeW)) != FALSE)
-    {
+	{
 		strcpy(szModuleA, ((LPMODULEENTRY32)lpmeW)->szModule);
 		strcpy(szExePathA, ((LPMODULEENTRY32)lpmeW)->szExePath);
 		AtoW(szModule, sizeof(lpmeW->szModule) / sizeof(WCHAR));
 		AtoW(szExePath, sizeof(lpmeW->szExePath) / sizeof(WCHAR));
-    }
-    lpmeW->dwSize = sizeof(MODULEENTRY32W);
-    return ret;
+	}
+	lpmeW->dwSize = sizeof(MODULEENTRY32W);
+	return ret;
 }
 
 //MAKE_EXPORT MoveFileExW_new=MoveFileExW
@@ -790,8 +721,8 @@ DWORD WINAPI SearchPathW_new(LPCWSTR lpPathW, LPCWSTR lpFileNameW, LPCWSTR lpExt
 //MAKE_EXPORT SetConsoleTitleW_new=SetConsoleTitleW
 BOOL WINAPI SetConsoleTitleW_new(LPCWSTR strW)
 {
-    ALLOC_WtoA(str);
-    return SetConsoleTitleA(strA);
+	ALLOC_WtoA(str);
+	return SetConsoleTitleA(strA);
 }
 
 //MAKE_EXPORT SetCurrentDirectoryW_new=SetCurrentDirectoryW

@@ -23,11 +23,11 @@
 
 /* MAKE_EXPORT TraceMessage_new=TraceMessage */
 ULONG CDECL TraceMessage_new(
-    ULONG64      LoggerHandle,
-    ULONG        MessageFlags,
-    LPGUID       MessageGuid,
-    USHORT       MessageNumber,
-    ...
+	ULONG64      LoggerHandle,
+	ULONG        MessageFlags,
+	LPGUID       MessageGuid,
+	USHORT       MessageNumber,
+	...
 )
 {
 	return ERROR_SUCCESS;

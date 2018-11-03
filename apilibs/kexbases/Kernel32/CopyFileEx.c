@@ -24,6 +24,6 @@
 /* MAKE_EXPORT CopyFileExA_new=CopyFileExA */
 BOOL WINAPI CopyFileExA_new(LPCSTR lpExistingFileNameA, LPCSTR lpNewFileNameA, LPPROGRESS_ROUTINE lpProgressRoutine, LPVOID lpData, LPBOOL pbCancel, DWORD dwCopyFlags)
 {
-    return CopyFileA(lpExistingFileNameA, lpNewFileNameA, 
+	return CopyFileA(lpExistingFileNameA, lpNewFileNameA, 
 			(dwCopyFlags & COPY_FILE_FAIL_IF_EXISTS) != 0);
 }

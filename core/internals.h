@@ -44,6 +44,7 @@ extern sstring kernelex_dir;
 extern sstring own_path;
 
 void ShowError(UINT id, ...);
+bool rerun_setup();
 bool isWinMe();
 
 typedef MODREF* (__stdcall *MRFromHLib_t)(HMODULE);

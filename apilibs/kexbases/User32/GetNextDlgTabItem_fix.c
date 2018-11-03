@@ -21,23 +21,23 @@
 
 #include <windows.h>
 
-/*	Here we have fix for retarded situation.
- *	9x stucks trying to get next control in dialog to tab
- *	when there is only one control on dialog, and it has tab-able
+/* Here we have fix for retarded situation.
+ * 9x stucks trying to get next control in dialog to tab
+ * when there is only one control on dialog, and it has tab-able
  *  child windows (WS_EX_CONTROLPARENT), and if it's disabled or hidden,
- *	user.exe crashes with stack overflow, silently or soundly.
- *	More proper fix would be to scan whole dialog and enable/show at least
- *	one such window, since GetNextDlgTabItem also happens internally.
- *	However, likely it won't be this function and our case works for
- *	Winamp ML.
+ * user.exe crashes with stack overflow, silently or soundly.
+ * More proper fix would be to scan whole dialog and enable/show at least
+ * one such window, since GetNextDlgTabItem also happens internally.
+ * However, likely it won't be this function and our case works for
+ * Winamp ML.
  */
 
 
 /* MAKE_EXPORT GetNextDlgTabItem_fix=GetNextDlgTabItem */
 HWND WINAPI GetNextDlgTabItem_fix(
-  HWND hDlg,       // handle to dialog box
-  HWND hCtl,       // handle to known control
-  BOOL bPrevious   // direction flag
+	HWND hDlg,       // handle to dialog box
+	HWND hCtl,       // handle to known control
+	BOOL bPrevious   // direction flag
 )
 {
 	HWND hTestCtl = hCtl;

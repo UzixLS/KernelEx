@@ -34,9 +34,10 @@
 #include "winmm/_winmm_apilist.h"
 #include "ws2_32/_ws2_32_apilist.h"
 #include "ole32/_ole32_apilist.h"
+#include "cryptui/_cryptui_apilist.h"
 //#include "/__apilist.h"
 
-static apilib_api_table api_table[13];
+static apilib_api_table api_table[14];
 
 static void fill_apitable()
 {
@@ -52,6 +53,7 @@ static void fill_apitable()
 	api_table[9] = apitable_winmm;
 	api_table[10] = apitable_ws2_32;
 	api_table[11] = apitable_ole32;
+	api_table[12] = apitable_cryptui;
 	//last entry is null terminator
 }
 

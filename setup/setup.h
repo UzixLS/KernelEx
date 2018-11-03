@@ -24,62 +24,29 @@
 
 #include "sstring.hpp"
 
+void ShowError(UINT id, ...);
+
 class Setup
 {
 public:
 	Setup(char* _backup_file);
 	int get_signature_ver();
 	void install();
+	void set_reboot_flag();
+	void register_verify();
+	void reboot();
 
-protected:
 private:
 	sstring backup_file;
-	DWORD _GetOrdinal;
-	DWORD _ExportFromOrdinal;
-	DWORD _ExportFromName;
-	DWORD _IsKnownDLL;
-	DWORD _FLoadTreeNotify;
-	DWORD _SubsysCheckPerform;
 	HMODULE h_kernel32;
-	PEmanip pemem;
-	PEmanip pefile;
-	DWORD GetOrdinal_call1;
-	DWORD GetOrdinal_call2;
-	DWORD gpa_ExportFromOrdinal_call;
-	DWORD gpa_ExportFromName_call;
-	DWORD EFN_EFO_call;
-	DWORD IsKnownDLL_call;
-	DWORD FLoadTreeNotify_call1;
-	DWORD FLoadTreeNotify_call2;
-	DWORD SubsysCheck_jmp;
 	int version;
 	bool is_winme;
 	bool upgrade;
 
 	bool detect_old_version();
 	void detect_downgrade();
-	int find_pattern(DWORD offset, int size, const short* pattern, int pat_len, DWORD* found_loc);
-	void set_pattern(DWORD loc, const short* new_pattern, int pat_len);
-	void prepare_subsystem_check();
-	void find_resource_check1();
-	void find_resource_check2();
-	void disable_named_and_rcdata_resources_mirroring();
-	void mod_imte_alloc();
-	void mod_mr_alloc();
-	void mod_pdb_alloc();
-	void find_ExportFromX();
-	void find_IsKnownDLL();
-	void find_FLoadTreeNotify1();
-	void find_FLoadTreeNotify2();
 	void kill_process(const char* name);
-	DWORD decode_call(DWORD addr, int len = 0);
-	DWORD decode_jmp(DWORD addr, int len = 0);
-	bool is_call_ref(DWORD loc, DWORD target);
-	void set_call_ref(DWORD loc, DWORD target);
-	void set_jmp_ref(DWORD loc, DWORD target);
-	bool is_fixupc(DWORD addr);
 	sstring get_temp_file_name();
-	void ShowError(UINT id, ...);
 };
 
 #endif

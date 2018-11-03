@@ -149,17 +149,13 @@ DWORD WINAPI GetObjectType_fix( HGDIOBJ hgdiobj )
 	return result;
 }
 
-__declspec(naked)
+#pragma warning (disable:4035) //xeno approves
 static inline
 WORD GetCurrentTDB() 
 {
-	__asm
-	{
-		mov ax, fs:[0Ch]
-		movzx eax, ax
-		ret
-	}
+	__asm mov ax, fs:[0Ch]
 }
+#pragma warning (default:4035)
 
 /************************************************************************
   The purpose of GdiObjects is to simulate NT GDI object rules, which
@@ -268,12 +264,12 @@ HGDIOBJ WINAPI SelectObject_fix( HDC hdc, HGDIOBJ hgdiobj )
 
 /* MAKE_EXPORT CreateDIBSection_fix=CreateDIBSection */
 HBITMAP WINAPI CreateDIBSection_fix(
-  HDC hdc,                 // handle to DC
-  BITMAPINFO *pbmi,  // bitmap data
-  UINT iUsage,             // data type indicator
-  VOID **ppvBits,          // bit values
-  HANDLE hSection,         // handle to file mapping object
-  DWORD dwOffset           // offset to bitmap bit values
+	HDC hdc,                 // handle to DC
+	BITMAPINFO *pbmi,        // bitmap data
+	UINT iUsage,             // data type indicator
+	VOID **ppvBits,          // bit values
+	HANDLE hSection,         // handle to file mapping object
+	DWORD dwOffset           // offset to bitmap bit values
 )
 {
 	if (pbmi && pbmi->bmiHeader.biSize == sizeof(BITMAPINFO)) //9x does not forgive

@@ -30,7 +30,7 @@
  *	SHCreateDirectoryEx is in ME shell but no security anyway.
  */
 
-static inline SHCreateDirectoryA(HWND hwnd, LPCSTR pszPath)
+static inline int SHCreateDirectoryA(HWND hwnd, LPCSTR pszPath)
 {
 	return SHCreateDirectory(hwnd, (LPCWSTR)pszPath);
 }

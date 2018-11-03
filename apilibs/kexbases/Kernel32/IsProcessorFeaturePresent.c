@@ -66,30 +66,32 @@ static void do_cpuid(unsigned int _eax, unsigned int *p)
 
 void get_cpuinfo()
 {
-    unsigned int regs[4], regs2[4];
+	unsigned int regs[4], regs2[4];
 
-    do_cpuid(0x00000000, regs);  /* get standard cpuid level and vendor name */
-    if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
-    {
-        do_cpuid(0x00000001, regs2); /* get cpu features */
-        PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
-        PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
-        PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
-        PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
-        PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 25)) >> 25;
-        PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 26)) >> 26;
-        PF[PF_SSE3_INSTRUCTIONS_AVAILABLE] = (regs2[2] & 1);
+	do_cpuid(0x00000000, regs);  /* get standard cpuid level and vendor name */
+	if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
+	{
+		do_cpuid(0x00000001, regs2); /* get cpu features */
+		PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
+		PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
+		PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
+		PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+		PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 25)) >> 25;
+		PF[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 26)) >> 26;
+		PF[PF_SSE3_INSTRUCTIONS_AVAILABLE] = (regs2[2] & 1);
 
-        if (regs[1] == AUTH &&
-            regs[3] == ENTI &&
-            regs[2] == CAMD) {
-            do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
-            if (regs[0]>=0x80000001) {
-                do_cpuid(0x80000001, regs2);  /* get vendor features */
-                PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31)) >> 31;
-            }
-        }
-    }
+		if (regs[1] == AUTH &&
+			regs[3] == ENTI &&
+			regs[2] == CAMD)
+		{
+			do_cpuid(0x80000000, regs);  /* get vendor cpuid level */
+			if (regs[0]>=0x80000001)
+			{
+				do_cpuid(0x80000001, regs2);  /* get vendor features */
+				PF[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] & (1 << 31)) >> 31;
+			}
+		}
+	}
 }
 
 /* MAKE_EXPORT IsProcessorFeaturePresent_new=IsProcessorFeaturePresent */

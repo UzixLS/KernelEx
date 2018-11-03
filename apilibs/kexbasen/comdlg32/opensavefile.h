@@ -104,7 +104,7 @@ static int strlenWW(LPWSTR strWW)
 
 //misc
 #define StrAllocA(size) (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,size)
-#define StrFree(ptr) HeapFree(GetProcessHeap(),0,ptr)
+#define StrFree(ptr) if (ptr) HeapFree(GetProcessHeap(),0,ptr)
 
 BOOL WINAPI GetSaveFileNameA_fix(LPOPENFILENAMEA lpofn);
 BOOL WINAPI GetOpenFileNameA_fix(LPOPENFILENAMEA lpofn);

@@ -44,24 +44,25 @@ int WINAPI CommonUnimpStub(void);
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    switch (fdwReason) {
-        case DLL_PROCESS_ATTACH:
-        {
+	switch (fdwReason)
+	{
+		case DLL_PROCESS_ATTACH:
+		{
 			OSVERSIONINFO osv;
 			osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 			GetVersionEx(&osv);
 			if (osv.dwMajorVersion < 5)
 				return FALSE;
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        }
-        case DLL_PROCESS_DETACH:
-        {
-            break;
-        }
-    }
+			DisableThreadLibraryCalls(hinstDLL);
+			break;
+		}
+		case DLL_PROCESS_DETACH:
+		{
+			break;
+		}
+	}
 
-    return TRUE;
+	return TRUE;
 }
 
 UNIMPL_FUNC(PdhGetDllVersion, 1);

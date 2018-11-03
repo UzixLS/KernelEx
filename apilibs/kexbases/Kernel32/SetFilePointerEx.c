@@ -29,12 +29,12 @@
 BOOL WINAPI SetFilePointerEx_new(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
 {
 	DWORD lasterr = GetLastError();
-    if ((liDistanceToMove.LowPart = SetFilePointer(hFile, liDistanceToMove.LowPart, &liDistanceToMove.HighPart, dwMoveMethod)) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    if (lpNewFilePointer) *lpNewFilePointer = liDistanceToMove;
-    SetLastError(lasterr);
-    return TRUE;
+	if ((liDistanceToMove.LowPart = SetFilePointer(hFile, liDistanceToMove.LowPart, &liDistanceToMove.HighPart, dwMoveMethod)) == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	if (lpNewFilePointer) *lpNewFilePointer = liDistanceToMove;
+	SetLastError(lasterr);
+	return TRUE;
 }

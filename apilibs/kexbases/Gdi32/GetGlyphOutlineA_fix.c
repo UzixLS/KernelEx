@@ -23,13 +23,13 @@
 
 /* MAKE_EXPORT GetGlyphOutlineA_fix=GetGlyphOutlineA */
 DWORD WINAPI GetGlyphOutlineA_fix(
-  HDC hdc,             // handle to DC
-  UINT uChar,          // character to query
-  UINT uFormat,        // data format
-  LPGLYPHMETRICS lpgm, // glyph metrics
-  DWORD cbBuffer,      // size of data buffer
-  LPVOID lpvBuffer,    // data buffer
-  CONST MAT2 *lpmat2   // transformation matrix
+	HDC hdc,             // handle to DC
+	UINT uChar,          // character to query
+	UINT uFormat,        // data format
+	LPGLYPHMETRICS lpgm, // glyph metrics
+	DWORD cbBuffer,      // size of data buffer
+	LPVOID lpvBuffer,    // data buffer
+	CONST MAT2 *lpmat2   // transformation matrix
 )
 {
 	//last parameter must point to writeable memory

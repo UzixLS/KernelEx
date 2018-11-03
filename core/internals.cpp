@@ -72,6 +72,24 @@ void ShowError(UINT id, ...)
 	MessageBox(NULL, out, "KernelEx Core", MB_OK | MB_ICONERROR);
 }
 
+bool rerun_setup()
+{
+	char cmd[MAX_PATH];
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	strcpy(cmd, "\"");
+	strcat(cmd, kernelex_dir);
+	strcat(cmd, "setupkex.exe\" /R");
+	
+	GetStartupInfo(&si);
+	if (!CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		return false;
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+	return true;
+}
+
 DWORD* find_unique_pattern(void* start, int size, const short* pattern, int pat_len, const char* pat_name)
 {
 	unsigned char* pos = (unsigned char*) start;

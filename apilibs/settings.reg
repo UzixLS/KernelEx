@@ -43,6 +43,11 @@ REGEDIT4
 ;-Office 2007
 "*\\OFFICE12\\MSO.DLL"="NT2K"
 "*\\OFFICE12\\WORDCONV.EXE"="NT2K"
+;-Google Earth setup
+"%TEMP%\\GTAPI.DLL"="NT2K"
+;-Windows Installer
+"%WINDIR%\\SYSTEM\\MSI.DLL"="DCFG1"
+"%WINDIR%\\SYSTEM\\MSIEXEC.EXE"="DCFG1"
 
 [HKEY_LOCAL_MACHINE\Software\KernelEx\AppSettings\Flags]
 ;DISABLE KERNELEX FOR:

@@ -44,6 +44,8 @@ BOOL WINAPI WriteFile_fix(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesTo
 UINT WINAPI GetTempFileNameA_fix(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPTSTR lpTempFileName);
 BOOL WINAPI GetDiskFreeSpaceA_fix(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
 BOOL WINAPI GetDiskFreeSpaceExA_fix(LPCSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailable, PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+HANDLE WINAPI FindFirstFileExA_new(LPCSTR lpFileNameA, FINDEX_INFO_LEVELS fInfoLevelId, LPWIN32_FIND_DATAA lpFindFileDataA, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
+HANDLE WINAPI FindFirstFileExW_new(LPWSTR lpFileNameW, FINDEX_INFO_LEVELS fInfoLevelId, LPWIN32_FIND_DATAW lpFindFileDataW, FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags);
 HWND WINAPI GetConsoleWindow_new();
 BOOL WINAPI GetFileSizeEx_new(HANDLE hFile, PLARGE_INTEGER lpFileSize);
 BOOL WINAPI GetModuleHandleExA_new(DWORD dwFlags, LPCSTR lpModuleName, HMODULE* phModule);
@@ -85,7 +87,6 @@ STUB CreateHardLinkW_stub;
 STUB IsValidLanguageGroup_stub;
 STUB ReplaceFileA_stub;
 STUB ReplaceFileW_stub;
-STUB FindFirstFileExW_stub;
 STUB HeapSetInformation_stub;
 STUB GetProcessIoCounters_stub;
 STUB RtlCaptureStackBackTrace_stub;

@@ -137,6 +137,10 @@ SOURCE=.\Kernel32\FileApis_fix.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\FindFirstFileEx.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\GetConsoleWindow.c
 # End Source File
 # Begin Source File
@@ -317,10 +321,6 @@ SOURCE=.\User32\GetNextDlgTabItem_fix.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\User32\hwnd9x.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\User32\IsHungAppWindow.c
 # End Source File
 # Begin Source File
@@ -377,6 +377,10 @@ SOURCE=.\User32\thuni_proc.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\User32\thuni_stuff.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\User32\thuni_thunk.c
 # End Source File
 # Begin Source File
@@ -406,6 +410,10 @@ SOURCE=.\Gdi32\_gdi32_apilist.h
 # Begin Source File
 
 SOURCE=.\Gdi32\_gdi32_stubs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Gdi32\EnumFont.c
 # End Source File
 # Begin Source File
 
@@ -665,6 +673,10 @@ SOURCE=.\main.c
 # Begin Source File
 
 SOURCE=..\..\common\common.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\hwnd9x.h
 # End Source File
 # Begin Source File
 

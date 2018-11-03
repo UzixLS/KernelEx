@@ -27,10 +27,10 @@ BOOL WINAPI GlobalMemoryStatusEx_new(LPMEMORYSTATUSEX lpmemex)
 	MEMORYSTATUS mem;
 
 	if (lpmemex->dwLength != sizeof(*lpmemex))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	mem.dwLength = sizeof(mem);
 	GlobalMemoryStatus(&mem);

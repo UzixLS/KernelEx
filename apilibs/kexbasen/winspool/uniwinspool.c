@@ -42,58 +42,60 @@ static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1), sizeof(PRINTER_INFO
  */
 static LPDEVMODEW DEVMODEdupAtoW(const DEVMODEA *dmA)
 {
-    LPDEVMODEW dmW;
-    WORD size;
+	LPDEVMODEW dmW;
+	WORD size;
 
-    if (!dmA) return NULL;
-    size = dmA->dmSize + CCHDEVICENAME +
-                        ((dmA->dmSize > FIELD_OFFSET(DEVMODEA, dmFormName)) ? CCHFORMNAME : 0);
+	if (!dmA) return NULL;
+	size = dmA->dmSize + CCHDEVICENAME +
+						((dmA->dmSize > FIELD_OFFSET(DEVMODEA, dmFormName)) ? CCHFORMNAME : 0);
 
-    dmW = (LPDEVMODEW) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmA->dmDriverExtra);
-    if (!dmW) return NULL;
+	dmW = (LPDEVMODEW) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + dmA->dmDriverExtra);
+	if (!dmW) return NULL;
 
-    MultiByteToWideChar(CP_ACP, 0, (LPSTR)dmA->dmDeviceName, -1,
+	MultiByteToWideChar(CP_ACP, 0, (LPSTR)dmA->dmDeviceName, -1,
 			dmW->dmDeviceName, CCHDEVICENAME);
 
-    if (FIELD_OFFSET(DEVMODEA, dmFormName) >= dmA->dmSize) {
-        memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
-               dmA->dmSize - FIELD_OFFSET(DEVMODEA, dmSpecVersion));
-    }
-    else
-    {
-        memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
-               FIELD_OFFSET(DEVMODEA, dmFormName) - FIELD_OFFSET(DEVMODEA, dmSpecVersion));
+	if (FIELD_OFFSET(DEVMODEA, dmFormName) >= dmA->dmSize) {
+		memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
+				dmA->dmSize - FIELD_OFFSET(DEVMODEA, dmSpecVersion));
+	}
+	else
+	{
+		memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion,
+				FIELD_OFFSET(DEVMODEA, dmFormName) - FIELD_OFFSET(DEVMODEA, dmSpecVersion));
 		MultiByteToWideChar(CP_ACP, 0, (LPSTR)dmA->dmFormName, -1,
 				dmW->dmFormName, CCHFORMNAME);
 
-        memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - FIELD_OFFSET(DEVMODEA, dmLogPixels));
-    }
+		memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - FIELD_OFFSET(DEVMODEA, dmLogPixels));
+	}
 
-    dmW->dmSize = size;
-    memcpy((char *)dmW + dmW->dmSize, (const char *)dmA + dmA->dmSize, dmA->dmDriverExtra);
-    return dmW;
+	dmW->dmSize = size;
+	memcpy((char *)dmW + dmW->dmSize, (const char *)dmA + dmA->dmSize, dmA->dmDriverExtra);
+	return dmW;
 }
 
 static void convert_printerinfo_WtoA(LPBYTE outW, LPBYTE pPrintersA,
                                        DWORD level, DWORD outlen, DWORD numentries)
 {
-    DWORD id = 0;
-    LPWSTR ptr;
-    INT len;
+	DWORD id = 0;
+	LPWSTR ptr;
+	INT len;
 
-    len = pi_sizeof[level] * numentries;
-    ptr = (LPWSTR) (outW + len);
+	len = pi_sizeof[level] * numentries;
+	ptr = (LPWSTR) (outW + len);
 	/* first structures */
-    outlen -= len;
+	outlen -= len;
 	/* then text in unicode (we count in wchars from now on) */
 	outlen /= 2;
 
-    /* copy the numbers of all PRINTER_INFO_* first */
-    memcpy(outW, pPrintersA, len);
+	/* copy the numbers of all PRINTER_INFO_* first */
+	memcpy(outW, pPrintersA, len);
 
-    while (id < numentries) {
-        switch (level) {
-            case 1:
+	while (id < numentries)
+	{
+		switch (level)
+		{
+			case 1:
 			{
 				PRINTER_INFO_1W * piW = (PRINTER_INFO_1W *) outW;
 				PRINTER_INFO_1A * piA = (PRINTER_INFO_1A *) pPrintersA;
@@ -122,7 +124,7 @@ static void convert_printerinfo_WtoA(LPBYTE outW, LPBYTE pPrintersA,
 				break;
 			}
 
-            case 2:
+			case 2:
 			{
 				PRINTER_INFO_2W * piW = (PRINTER_INFO_2W *) outW;
 				PRINTER_INFO_2A * piA = (PRINTER_INFO_2A *) pPrintersA;
@@ -228,7 +230,7 @@ static void convert_printerinfo_WtoA(LPBYTE outW, LPBYTE pPrintersA,
 				break;
 			}
 
-            case 4:
+			case 4:
 			{
 				PRINTER_INFO_4W * piW = (PRINTER_INFO_4W *) outW;
 				PRINTER_INFO_4A * piA = (PRINTER_INFO_4A *) pPrintersA;
@@ -250,7 +252,7 @@ static void convert_printerinfo_WtoA(LPBYTE outW, LPBYTE pPrintersA,
 				break;
 			}
 
-            case 5:
+			case 5:
 			{
 				PRINTER_INFO_5W * piW = (PRINTER_INFO_5W *) outW;
 				PRINTER_INFO_5A * piA = (PRINTER_INFO_5A *) pPrintersA;
@@ -271,11 +273,11 @@ static void convert_printerinfo_WtoA(LPBYTE outW, LPBYTE pPrintersA,
 				}
 				break;
 			}
-        }
-        pPrintersA += pi_sizeof[level];
-        outW += pi_sizeof[level];
-        id++;
-    }
+		}
+		pPrintersA += pi_sizeof[level];
+		outW += pi_sizeof[level];
+		id++;
+	}
 }
 
 //AddForm - not supported

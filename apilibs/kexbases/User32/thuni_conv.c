@@ -26,47 +26,6 @@
 #include "thuni_macro.h"
 #include "thuni_thunk.h"
 
-
-__declspec(naked)
-LRESULT WINAPI CallWindowProc_stdcall( WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-__asm {
-	push ebp
-	mov ebp, esp
-	push edi
-	push esi
-	push ebx
-	sub esp, 12
-	push [ebp+24]
-	push [ebp+20]
-	push [ebp+16]
-	push [ebp+12]
-	mov eax, [ebp+8]
-	call eax
-	lea esp, [ebp-12]
-	pop ebx
-	pop esi
-	pop edi
-	leave
-	ret 20
-	}	
-}
-
-int GetCPFromLocale(LCID Locale)
-{
-	int cp;	
-	Locale = LOWORD(Locale);
-	if (GetLocaleInfoA(Locale,LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,(LPSTR)&cp,sizeof(int)))
-		return cp;
-	else
-		return CP_ACP;
-}
-
-static UINT GetCurrentKeyboardCP()
-{
-	return GetCPFromLocale((LCID)GetKeyboardLayout(0));
-}
-
 WPARAM wparam_AtoW( HWND hwnd, UINT message, WPARAM wParam, BOOL messDBCS )
 {
 	WPARAM newwParam = wParam;
@@ -441,4 +400,3 @@ LRESULT WINAPI CallProcUnicodeWithAnsi( WNDPROC callback, HWND hwnd, UINT msg, W
 	}
 	return CallWindowProc_stdcall(callback,hwnd,msg,wParam,lParam);	
 }
-

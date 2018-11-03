@@ -38,6 +38,7 @@ BEGIN
     IDS_FAILOPENBACKUP      "ERROR: Failed to open backup file %s.\nPossible causes: previous version not uninstalled correctly or file has been deleted.\nRestore %s manually from install media."
     IDS_WINVER              "Incompatible Windows version"
     IDS_DOWNGRADE           "Can't downgrade. Please uninstall currently installed version of KernelEx before continuing."
+    IDS_REBOOT              "KernelEx has to restart this computer in order to complete setup.\nDo you wish to do this now?"
 END
 
 #endif    // Neutral resources

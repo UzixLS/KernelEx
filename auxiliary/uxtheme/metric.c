@@ -36,14 +36,14 @@
  */
 BOOL WINAPI GetThemeSysBool(HTHEME hTheme, int iBoolID)
 {
-    SetLastError(0);
-    if(iBoolID == TMT_FLATMENUS) {
-        return FALSE;
-    }
-    else {
-        SetLastError(STG_E_INVALIDPARAMETER);
-    }
-    return FALSE;
+	SetLastError(0);
+	if(iBoolID == TMT_FLATMENUS) {
+		return FALSE;
+	}
+	else {
+		SetLastError(STG_E_INVALIDPARAMETER);
+	}
+	return FALSE;
 }
 
 /***********************************************************************
@@ -52,8 +52,8 @@ BOOL WINAPI GetThemeSysBool(HTHEME hTheme, int iBoolID)
  */
 COLORREF WINAPI GetThemeSysColor(HTHEME hTheme, int iColorID)
 {
-    SetLastError(0);
-    return GetSysColor(iColorID - TMT_FIRSTCOLOR);
+	SetLastError(0);
+	return GetSysColor(iColorID - TMT_FIRSTCOLOR);
 }
 
 /***********************************************************************
@@ -62,7 +62,7 @@ COLORREF WINAPI GetThemeSysColor(HTHEME hTheme, int iColorID)
  */
 HBRUSH WINAPI GetThemeSysColorBrush(HTHEME hTheme, int iColorID)
 {
-    return CreateSolidBrush(GetThemeSysColor(hTheme, iColorID));
+	return CreateSolidBrush(GetThemeSysColor(hTheme, iColorID));
 }
 
 /***********************************************************************
@@ -71,29 +71,29 @@ HBRUSH WINAPI GetThemeSysColorBrush(HTHEME hTheme, int iColorID)
  */
 HRESULT WINAPI GetThemeSysFont(HTHEME hTheme, int iFontID, LOGFONTW *plf)
 {
-    HRESULT hr = S_OK;
+	HRESULT hr = S_OK;
 
-    if(iFontID == TMT_ICONTITLEFONT) {
-        if(!SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), &plf, 0))
-            return HRESULT_FROM_WIN32(GetLastError());
-    }
-    else {
-        NONCLIENTMETRICSW ncm;
-        LOGFONTW *font = NULL;
-        ncm.cbSize = sizeof(NONCLIENTMETRICSW);
-        if(!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0))
-            return HRESULT_FROM_WIN32(GetLastError());
-        switch(iFontID) {
-            case TMT_CAPTIONFONT: font = &ncm.lfCaptionFont; break;
-            case TMT_SMALLCAPTIONFONT: font = &ncm.lfSmCaptionFont; break;
-            case TMT_MENUFONT: font = &ncm.lfMenuFont; break;
-            case TMT_STATUSFONT: font = &ncm.lfStatusFont; break;
-            case TMT_MSGBOXFONT: font = &ncm.lfMessageFont; break;
-        }
-        if(font) *plf = *font;
-        else     hr = STG_E_INVALIDPARAMETER;
-    }
-    return hr;
+	if(iFontID == TMT_ICONTITLEFONT) {
+		if(!SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(LOGFONTW), &plf, 0))
+			return HRESULT_FROM_WIN32(GetLastError());
+	}
+	else {
+		NONCLIENTMETRICSW ncm;
+		LOGFONTW *font = NULL;
+		ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+		if(!SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0))
+			return HRESULT_FROM_WIN32(GetLastError());
+		switch(iFontID) {
+			case TMT_CAPTIONFONT: font = &ncm.lfCaptionFont; break;
+			case TMT_SMALLCAPTIONFONT: font = &ncm.lfSmCaptionFont; break;
+			case TMT_MENUFONT: font = &ncm.lfMenuFont; break;
+			case TMT_STATUSFONT: font = &ncm.lfStatusFont; break;
+			case TMT_MSGBOXFONT: font = &ncm.lfMessageFont; break;
+		}
+		if(font) *plf = *font;
+		else     hr = STG_E_INVALIDPARAMETER;
+	}
+	return hr;
 }
 
 /***********************************************************************
@@ -102,7 +102,7 @@ HRESULT WINAPI GetThemeSysFont(HTHEME hTheme, int iFontID, LOGFONTW *plf)
  */
 HRESULT WINAPI GetThemeSysInt(HTHEME hTheme, int iIntID, int *piValue)
 {
-    return E_HANDLE;
+	return E_HANDLE;
 }
 
 /***********************************************************************
@@ -111,7 +111,7 @@ HRESULT WINAPI GetThemeSysInt(HTHEME hTheme, int iIntID, int *piValue)
  */
 int WINAPI GetThemeSysSize(HTHEME hTheme, int iSizeID)
 {
-    return GetSystemMetrics(iSizeID);
+	return GetSystemMetrics(iSizeID);
 }
 
 /***********************************************************************
@@ -121,5 +121,5 @@ int WINAPI GetThemeSysSize(HTHEME hTheme, int iSizeID)
 HRESULT WINAPI GetThemeSysString(HTHEME hTheme, int iStringID,
                                  LPWSTR pszStringBuff, int cchMaxStringChars)
 {
-    return E_HANDLE;
+	return E_HANDLE;
 }

@@ -12,6 +12,7 @@
 #define IDS_FAILOPENBACKUP              8
 #define IDS_WINVER                      9
 #define IDS_DOWNGRADE                   10
+#define IDS_REBOOT                      11
 
 // Next default values for new objects
 // 

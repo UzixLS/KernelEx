@@ -24,11 +24,11 @@
 /* MAKE_EXPORT AllowSetForegroundWindow_98=AllowSetForegroundWindow */
 BOOL WINAPI AllowSetForegroundWindow_98(DWORD procid)
 {
-    return TRUE;
+	return TRUE;
 }
 
 /* MAKE_EXPORT LockSetForegroundWindow_98=LockSetForegroundWindow */
 BOOL WINAPI LockSetForegroundWindow_98(UINT lockcode)
 {
-    return TRUE;
+	return TRUE;
 }

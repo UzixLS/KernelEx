@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2009-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -74,16 +74,25 @@ FileFinder::~FileFinder()
 
 void FileFinder::search_for(const string& fn)
 {
+	search_for(&fn, 1);
+}
+
+void FileFinder::search_for(const string fns[], int num)
+{
 	WIN32_FIND_DATA find_data;
 	files.clear();
 	pos = 0;
-	HANDLE h = FindFirstFile(fn.c_str(), &find_data);
-	if (h == INVALID_HANDLE_VALUE)
-		return;
-	do 
-		files.push_back(find_data.cFileName);
-	while (FindNextFile(h, &find_data));
-	CloseHandle(h);
+	for (int i = 0 ; i < num ; i++)
+	{
+		const string& fn = fns[i];
+		HANDLE h = FindFirstFile(fn.c_str(), &find_data);
+		if (h == INVALID_HANDLE_VALUE)
+			continue;
+		do 
+			files.push_back(find_data.cFileName);
+		while (FindNextFile(h, &find_data));
+		FindClose(h);
+	}
 	stable_sort(files.begin(), files.end());
 }
 	
@@ -503,7 +512,8 @@ bool is_uptodate_dir(const string& path)
 	FileFinder ff;
 	struct _stat st;
 
-	ff.search_for(path + "*.c");
+	string patterns[] = { path + "*.c", path + "*.cpp" };
+	ff.search_for(patterns, sizeof(patterns)/sizeof(patterns[0]));
 	while (!(file = ff.get_next_file()).empty())
 	{
 		_stat((path + file).c_str(), &st);
@@ -557,7 +567,8 @@ void work()
 			continue;
 		}
 		
-		ff.search_for(path + "*.c");
+		string patterns[] = { path + "*.c", path + "*.cpp" };
+		ff.search_for(patterns, sizeof(patterns)/sizeof(patterns[0]));
 
 		//read declarations
 		while (!(file = ff.get_next_file()).empty())

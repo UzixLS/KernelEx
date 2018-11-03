@@ -48,13 +48,15 @@
 #define TPS_EXECUTEIO 0x00000001
 #define TPS_LONGEXECTIME 0x00000008
 
-typedef BOOL (WINAPI* SHQueueUserWorkItem_API) (LPTHREAD_START_ROUTINE pfnCallback,
-                     LPVOID pContext,
-                     LONG lPriority,
-                     PDWORD dwTag,
-                     PDWORD * pdwId,
-                     LPCSTR pszModule,
-                     DWORD dwFlags);
+typedef BOOL (WINAPI* SHQueueUserWorkItem_API) (
+		LPTHREAD_START_ROUTINE pfnCallback,
+		LPVOID pContext,
+		LONG lPriority,
+		PDWORD dwTag,
+		PDWORD * pdwId,
+		LPCSTR pszModule,
+		DWORD dwFlags
+);
 
 static SHQueueUserWorkItem_API SHQueueUserWorkItem;
 
@@ -89,12 +91,12 @@ BOOL WINAPI QueueUserWorkItem_new( LPTHREAD_START_ROUTINE Function, PVOID Contex
 
 typedef struct
 {
-    HANDLE Object;
-    HANDLE TimerObject;
-    WAITORTIMERCALLBACK Callback;
-    PVOID Context;
-    ULONG Milliseconds;
-    ULONG Flags;
+	HANDLE Object;
+	HANDLE TimerObject;
+	WAITORTIMERCALLBACK Callback;
+	PVOID Context;
+	ULONG Milliseconds;
+	ULONG Flags;
 	PVOID waitThread;
 	LONG State;
 	LONG CallbacksPending;
@@ -471,12 +473,12 @@ BOOL WINAPI UnregisterWait_new(HANDLE WaitHandle)
 
 typedef struct
 {
-    HANDLE TimerObject;
-    WAITORTIMERCALLBACK Callback;
-    PVOID Parameter;
-    ULONG DueTime;
+	HANDLE TimerObject;
+	WAITORTIMERCALLBACK Callback;
+	PVOID Parameter;
+	ULONG DueTime;
 	DWORD Period;
-    ULONG Flags;
+	ULONG Flags;
 	PVOID TimerQueue;
 	LONG State;
 	LONG CallbacksPending;

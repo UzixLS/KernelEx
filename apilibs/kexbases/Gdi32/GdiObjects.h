@@ -56,11 +56,11 @@ typedef struct
 {
 	WORD bDoesntExist;
 	DWORD dwOldSSSP;
-    WORD pLocalHeap;
-    WORD pAtomTable;
-    WORD pStackTop;
-    WORD pStackMin;
-    WORD pStackBottom;
+	WORD pLocalHeap;
+	WORD pAtomTable;
+	WORD pStackTop;
+	WORD pStackMin;
+	WORD pStackBottom;
 } INSTANCE16, *PINSTANCE16;
 
 typedef struct

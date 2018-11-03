@@ -32,15 +32,15 @@
 
 /* MAKE_EXPORT WideCharToMultiByte_new=WideCharToMultiByte */
 int WINAPI WideCharToMultiByte_new(
-    UINT CodePage,
-    DWORD dwFlags,
-    LPCWSTR lpWideCharStr,
-    int cchWideChar,
-    LPSTR lpMultiByteStr,
-    int cchMultiByte,
-    LPCSTR lpDefaultChar,
-    LPBOOL lpUsedDefaultChar
-   )
+	UINT CodePage,
+	DWORD dwFlags,
+	LPCWSTR lpWideCharStr,
+	int cchWideChar,
+	LPSTR lpMultiByteStr,
+	int cchMultiByte,
+	LPCSTR lpDefaultChar,
+	LPBOOL lpUsedDefaultChar
+	)
 {
 	if (CodePage == CP_THREAD_ACP)
 		CodePage = CP_ACP;
@@ -52,13 +52,13 @@ int WINAPI WideCharToMultiByte_new(
 
 /* MAKE_EXPORT MultiByteToWideChar_new=MultiByteToWideChar */
 int WINAPI MultiByteToWideChar_new(
-    UINT CodePage,
-    DWORD dwFlags,
-    LPCSTR lpMultiByteStr,
-    int cchMultiByte,
-    LPWSTR lpWideCharStr,
-    int cchWideChar
-   )
+	UINT CodePage,
+	DWORD dwFlags,
+	LPCSTR lpMultiByteStr,
+	int cchMultiByte,
+	LPWSTR lpWideCharStr,
+	int cchWideChar
+	)
 {
 	if (CodePage == CP_THREAD_ACP)
 		CodePage = CP_ACP;

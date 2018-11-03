@@ -22,15 +22,24 @@
 #include <windows.h>
 
 /* MAKE_EXPORT LockFileEx_new=LockFileEx */
-BOOL WINAPI LockFileEx_new(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped)
+BOOL WINAPI LockFileEx_new(
+	HANDLE hFile,
+	DWORD dwFlags,
+	DWORD dwReserved,
+	DWORD nNumberOfBytesToLockLow,
+	DWORD nNumberOfBytesToLockHigh,
+	LPOVERLAPPED lpOverlapped
+)
 {
-	/* FIXME: flags LOCKFILE_FAIL_IMMEDIATELY and LOCKFILE_EXCLUSIVE_LOCK not supported (always set), 
-	          Event signalling not supported
+	/* 
+	 * FIXME: flags LOCKFILE_FAIL_IMMEDIATELY and LOCKFILE_EXCLUSIVE_LOCK not supported (always set), 
+	 * Event signalling not supported
 	 */
 	if (dwReserved)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-	return LockFile(hFile, lpOverlapped->Offset, lpOverlapped->OffsetHigh, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	return LockFile(hFile, lpOverlapped->Offset, lpOverlapped->OffsetHigh, 
+			nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
 }

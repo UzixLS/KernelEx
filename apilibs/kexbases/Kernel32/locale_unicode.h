@@ -62,37 +62,37 @@ typedef  unsigned long ULONG_PTR;
 /* code page info common to SBCS and DBCS */
 struct cp_info
 {
-    unsigned int          codepage;          /* codepage id */
-    unsigned int          char_size;         /* char size (1 or 2 bytes) */
-    WCHAR                 def_char;          /* default char value (can be double-byte) */
-    WCHAR                 def_unicode_char;  /* default Unicode char value */
-    const char           *name;              /* code page name */
+	unsigned int          codepage;          /* codepage id */
+	unsigned int          char_size;         /* char size (1 or 2 bytes) */
+	WCHAR                 def_char;          /* default char value (can be double-byte) */
+	WCHAR                 def_unicode_char;  /* default Unicode char value */
+	const char           *name;              /* code page name */
 };
 
 struct sbcs_table
 {
-    struct cp_info        info;
-    const WCHAR          *cp2uni;            /* code page -> Unicode map */
-    const WCHAR          *cp2uni_glyphs;     /* code page -> Unicode map with glyph chars */
-    const unsigned char  *uni2cp_low;        /* Unicode -> code page map */
-    const unsigned short *uni2cp_high;
+	struct cp_info        info;
+	const WCHAR          *cp2uni;            /* code page -> Unicode map */
+	const WCHAR          *cp2uni_glyphs;     /* code page -> Unicode map with glyph chars */
+	const unsigned char  *uni2cp_low;        /* Unicode -> code page map */
+	const unsigned short *uni2cp_high;
 };
 
 struct dbcs_table
 {
-    struct cp_info        info;
-    const WCHAR          *cp2uni;            /* code page -> Unicode map */
-    const unsigned char  *cp2uni_leadbytes;
-    const unsigned short *uni2cp_low;        /* Unicode -> code page map */
-    const unsigned short *uni2cp_high;
-    unsigned char         lead_bytes[12];    /* lead bytes ranges */
+	struct cp_info        info;
+	const WCHAR          *cp2uni;            /* code page -> Unicode map */
+	const unsigned char  *cp2uni_leadbytes;
+	const unsigned short *uni2cp_low;        /* Unicode -> code page map */
+	const unsigned short *uni2cp_high;
+	unsigned char         lead_bytes[12];    /* lead bytes ranges */
 };
 
 union cptable
 {
-    struct cp_info    info;
-    struct sbcs_table sbcs;
-    struct dbcs_table dbcs;
+	struct cp_info    info;
+	struct sbcs_table sbcs;
+	struct dbcs_table dbcs;
 };
 
 extern const union cptable *wine_cp_get_table( unsigned int codepage );
@@ -127,21 +127,21 @@ extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list vali
 WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch );
 WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {
-    return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
+	return (table->info.char_size == 2) && (table->dbcs.cp2uni_leadbytes[ch]);
 }
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch );
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_lower[];
-    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+	extern WINE_UNICODE_API const WCHAR wine_casemap_lower[];
+	return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch );
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const WCHAR wine_casemap_upper[];
-    return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
+	extern WINE_UNICODE_API const WCHAR wine_casemap_upper[];
+	return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */
@@ -149,74 +149,74 @@ WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch );
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
 {
-    extern WINE_UNICODE_API const unsigned short wine_wctype_table[];
-    return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
+	extern WINE_UNICODE_API const unsigned short wine_wctype_table[];
+	return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
 }
 
 WINE_UNICODE_INLINE int iscntrlW( WCHAR wc );
 WINE_UNICODE_INLINE int iscntrlW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_CNTRL;
+	return get_char_typeW(wc) & C1_CNTRL;
 }
 
 WINE_UNICODE_INLINE int ispunctW( WCHAR wc );
 WINE_UNICODE_INLINE int ispunctW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_PUNCT;
+	return get_char_typeW(wc) & C1_PUNCT;
 }
 
 WINE_UNICODE_INLINE int isspaceW( WCHAR wc );
 WINE_UNICODE_INLINE int isspaceW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_SPACE;
+	return get_char_typeW(wc) & C1_SPACE;
 }
 
 WINE_UNICODE_INLINE int isdigitW( WCHAR wc );
 WINE_UNICODE_INLINE int isdigitW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_DIGIT;
+	return get_char_typeW(wc) & C1_DIGIT;
 }
 
 WINE_UNICODE_INLINE int isxdigitW( WCHAR wc );
 WINE_UNICODE_INLINE int isxdigitW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_XDIGIT;
+	return get_char_typeW(wc) & C1_XDIGIT;
 }
 
 WINE_UNICODE_INLINE int islowerW( WCHAR wc );
 WINE_UNICODE_INLINE int islowerW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_LOWER;
+	return get_char_typeW(wc) & C1_LOWER;
 }
 
 WINE_UNICODE_INLINE int isupperW( WCHAR wc );
 WINE_UNICODE_INLINE int isupperW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_UPPER;
+	return get_char_typeW(wc) & C1_UPPER;
 }
 
 WINE_UNICODE_INLINE int isalnumW( WCHAR wc );
 WINE_UNICODE_INLINE int isalnumW( WCHAR wc )
 {
-    return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+	return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 WINE_UNICODE_INLINE int isalphaW( WCHAR wc );
 WINE_UNICODE_INLINE int isalphaW( WCHAR wc )
 {
-    return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
+	return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
 }
 
 WINE_UNICODE_INLINE int isgraphW( WCHAR wc );
 WINE_UNICODE_INLINE int isgraphW( WCHAR wc )
 {
-    return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
+	return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 WINE_UNICODE_INLINE int isprintW( WCHAR wc );
 WINE_UNICODE_INLINE int isprintW( WCHAR wc )
 {
-    return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
+	return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 /* some useful string manipulation routines */
@@ -224,17 +224,17 @@ WINE_UNICODE_INLINE int isprintW( WCHAR wc )
 WINE_UNICODE_INLINE unsigned int strlenW( const WCHAR *str );
 WINE_UNICODE_INLINE unsigned int strlenW( const WCHAR *str )
 {
-    const WCHAR *s = str;
-    while (*s) s++;
-    return s - str;
+	const WCHAR *s = str;
+	while (*s) s++;
+	return s - str;
 }
 
 WINE_UNICODE_INLINE WCHAR *strcpyW( WCHAR *dst, const WCHAR *src );
 WINE_UNICODE_INLINE WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
 {
-    WCHAR *p = dst;
-    while ((*p++ = *src++));
-    return dst;
+	WCHAR *p = dst;
+	while ((*p++ = *src++));
+	return dst;
 }
 
 /* strncpy doesn't do what you think, don't use it */
@@ -243,106 +243,106 @@ WINE_UNICODE_INLINE WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
 WINE_UNICODE_INLINE int strcmpW( const WCHAR *str1, const WCHAR *str2 );
 WINE_UNICODE_INLINE int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
+	while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+	return *str1 - *str2;
 }
 
 WINE_UNICODE_INLINE int strncmpW( const WCHAR *str1, const WCHAR *str2, int n );
 WINE_UNICODE_INLINE int strncmpW( const WCHAR *str1, const WCHAR *str2, int n )
 {
-    if (n <= 0) return 0;
-    while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
-    return *str1 - *str2;
+	if (n <= 0) return 0;
+	while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+	return *str1 - *str2;
 }
 
 WINE_UNICODE_INLINE WCHAR *strcatW( WCHAR *dst, const WCHAR *src );
 WINE_UNICODE_INLINE WCHAR *strcatW( WCHAR *dst, const WCHAR *src )
 {
-    strcpyW( dst + strlenW(dst), src );
-    return dst;
+	strcpyW( dst + strlenW(dst), src );
+	return dst;
 }
 
 WINE_UNICODE_INLINE WCHAR *strchrW( const WCHAR *str, WCHAR ch );
 WINE_UNICODE_INLINE WCHAR *strchrW( const WCHAR *str, WCHAR ch )
 {
-    do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
-    return NULL;
+	do { if (*str == ch) return (WCHAR *)(ULONG_PTR)str; } while (*str++);
+	return NULL;
 }
 
 WINE_UNICODE_INLINE WCHAR *strrchrW( const WCHAR *str, WCHAR ch );
 WINE_UNICODE_INLINE WCHAR *strrchrW( const WCHAR *str, WCHAR ch )
 {
-    WCHAR *ret = NULL;
-    do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
-    return ret;
+	WCHAR *ret = NULL;
+	do { if (*str == ch) ret = (WCHAR *)(ULONG_PTR)str; } while (*str++);
+	return ret;
 }
 
 WINE_UNICODE_INLINE WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept );
 WINE_UNICODE_INLINE WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept )
 {
-    for ( ; *str; str++) if (strchrW( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
-    return NULL;
+	for ( ; *str; str++) if (strchrW( accept, *str )) return (WCHAR *)(ULONG_PTR)str;
+	return NULL;
 }
 
 WINE_UNICODE_INLINE size_t strspnW( const WCHAR *str, const WCHAR *accept );
 WINE_UNICODE_INLINE size_t strspnW( const WCHAR *str, const WCHAR *accept )
 {
-    const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (!strchrW( accept, *ptr )) break;
-    return ptr - str;
+	const WCHAR *ptr;
+	for (ptr = str; *ptr; ptr++) if (!strchrW( accept, *ptr )) break;
+	return ptr - str;
 }
 
 WINE_UNICODE_INLINE size_t strcspnW( const WCHAR *str, const WCHAR *reject );
 WINE_UNICODE_INLINE size_t strcspnW( const WCHAR *str, const WCHAR *reject )
 {
-    const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (strchrW( reject, *ptr )) break;
-    return ptr - str;
+	const WCHAR *ptr;
+	for (ptr = str; *ptr; ptr++) if (strchrW( reject, *ptr )) break;
+	return ptr - str;
 }
 
 WINE_UNICODE_INLINE WCHAR *strlwrW( WCHAR *str );
 WINE_UNICODE_INLINE WCHAR *strlwrW( WCHAR *str )
 {
-    WCHAR *ret = str;
-    while ((*str = tolowerW(*str))) str++;
-    return ret;
+	WCHAR *ret = str;
+	while ((*str = tolowerW(*str))) str++;
+	return ret;
 }
 
 WINE_UNICODE_INLINE WCHAR *struprW( WCHAR *str );
 WINE_UNICODE_INLINE WCHAR *struprW( WCHAR *str )
 {
-    WCHAR *ret = str;
-    while ((*str = toupperW(*str))) str++;
-    return ret;
+	WCHAR *ret = str;
+	while ((*str = toupperW(*str))) str++;
+	return ret;
 }
 
 WINE_UNICODE_INLINE WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n );
 WINE_UNICODE_INLINE WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 {
-    const WCHAR *end;
-    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)(ULONG_PTR)ptr;
-    return NULL;
+	const WCHAR *end;
+	for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)(ULONG_PTR)ptr;
+	return NULL;
 }
 
 WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n );
 WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
 {
-    const WCHAR *end;
-    WCHAR *ret = NULL;
-    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = (WCHAR *)(ULONG_PTR)ptr;
-    return ret;
+	const WCHAR *end;
+	WCHAR *ret = NULL;
+	for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = (WCHAR *)(ULONG_PTR)ptr;
+	return ret;
 }
 
 /*WINE_UNICODE_INLINE long int atolW( const WCHAR *str );
 WINE_UNICODE_INLINE long int atolW( const WCHAR *str )
 {
-    return strtolW( str, (WCHAR **)0, 10 );
+	return strtolW( str, (WCHAR **)0, 10 );
 }
 
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str );
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str )
 {
-    return (int)atolW( str );
+	return (int)atolW( str );
 }*/
 
 #undef WINE_UNICODE_INLINE

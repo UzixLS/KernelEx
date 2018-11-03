@@ -48,15 +48,15 @@ FONTUID GetHDCFontUID(HDC hdc)
 
 /* MAKE_EXPORT GetGlyphIndicesW_new=GetGlyphIndicesW */
 int WINAPI GetGlyphIndicesW_new(
-  HDC hdc,       // handle to DC
-  LPWSTR lpstr, // string to convert
-  int c,         // number of characters in string
-  LPWORD pgi,    // array of glyph indices
-  DWORD fl       // glyph options
+	HDC hdc,       // handle to DC
+	LPWSTR lpstr,  // string to convert
+	int c,         // number of characters in string
+	LPWORD pgi,    // array of glyph indices
+	DWORD fl       // glyph options
 )
 {
 	HRESULT result;
-	if (!hdc || !pgi || (UINT)lpstr<0xFFFFu || !c) return GDI_ERROR;
+	if (!hdc || !pgi || (UINT)lpstr<0xFFFFu || c<=0) return GDI_ERROR;
 	ScriptCache::instance.Lock();
 	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
@@ -110,41 +110,39 @@ static int WINAPI GdiGetCodePage( HDC hdc )
 
 /* MAKE_EXPORT GetGlyphIndicesA_new=GetGlyphIndicesA */
 int WINAPI GetGlyphIndicesA_new(
-  HDC hdc,       // handle to DC
-  LPCSTR lpstr, // string to convert
-  int c,         // number of characters in string
-  LPWORD pgi,    // array of glyph indices
-  DWORD fl       // glyph options
+	HDC hdc,       // handle to DC
+	LPCSTR lpstr,  // string to convert
+	int c,         // number of characters in string
+	LPWORD pgi,    // array of glyph indices
+	DWORD fl       // glyph options
 )
 {
-	int result;
 	LPWSTR lpstrwide;
 	if (!hdc || !pgi || (UINT)lpstr<0xFFFF || c<=0) return GDI_ERROR;	
 	lpstrwide = (LPWSTR)alloca(c*sizeof(WCHAR));
-	if (MultiByteToWideChar(GdiGetCodePage(hdc),0,lpstr,c,lpstrwide,c))
-		result = GetGlyphIndicesW_new(hdc,lpstrwide,c,pgi,fl);
-	else
-		result = GDI_ERROR;
-	return result;
+	c = MultiByteToWideChar(GdiGetCodePage(hdc),0,lpstr,c,lpstrwide,c);
+	if (!c)
+		return GDI_ERROR;
+
+	return GetGlyphIndicesW_new(hdc,lpstrwide,c,pgi,fl);
 }
 
 /* MAKE_EXPORT GetTextExtentExPointI_new=GetTextExtentExPointI */
 BOOL WINAPI GetTextExtentExPointI_new(
-  HDC hdc,         // handle to DC
-  LPWORD pgiIn,    // array of glyph indices
-  int cgi,         // number of glyphs in array
-  int nMaxExtent,  // maximum width of formatted string
-  LPINT lpnFit,    // maximum number of characters
-  LPINT alpDx,     // array of partial string widths
-  LPSIZE lpSize    // string dimensions
+	HDC hdc,         // handle to DC
+	LPWORD pgiIn,    // array of glyph indices
+	int cgi,         // number of glyphs in array
+	int nMaxExtent,  // maximum width of formatted string
+	LPINT lpnFit,    // maximum number of characters
+	LPINT alpDx,     // array of partial string widths
+	LPSIZE lpSize    // string dimensions
 )
 {
-	ABC abc;
-	WORD* glyph = pgiIn;
-	int* dxs = alpDx;
 	int i;
 	int sum = 0;	
-	int glyphwidth;
+	int glyphwidth;	
+	int charextra = GetTextCharacterExtra(hdc);
+	ABC abc;
 	BOOL unfit = FALSE;
 	
 	if ( !hdc || !pgiIn || cgi<=0 || !lpSize)
@@ -152,25 +150,30 @@ BOOL WINAPI GetTextExtentExPointI_new(
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-
+	
 	ScriptCache::instance.Lock();
 	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 
-	//in UberKern, ScriptPlace was used. However, it's too costly...
-	//so let's compute the info ourselves
+	if (lpnFit) *lpnFit = cgi;
 	for (i = 0; i < cgi; i++)
 	{
-		if ( ScriptGetGlyphABCWidth(hdc,&cache,*glyph,&abc) != S_OK ) break;
-		glyphwidth = abc.abcA + abc.abcB + abc.abcC;
-		sum += glyphwidth;		
+		if ( ScriptGetGlyphABCWidth(hdc,&cache,*pgiIn,&abc) != S_OK ) break;
+		glyphwidth = abc.abcA + abc.abcB + abc.abcC + charextra;
+		sum += glyphwidth;
 		if ( !unfit )
 		{
 			unfit = ( sum > nMaxExtent );
-			if (alpDx) {*dxs = sum; dxs++;}
-			if (unfit && lpnFit) *lpnFit = i+1; //test test!
+			if (unfit)
+			{
+				if ( lpnFit ) *lpnFit = i;
+			}
+			else
+			{
+				if ( alpDx ) *alpDx++ = sum;
+			}			
 		}
-		glyph++;
+		pgiIn++;
 	}
 	lpSize->cx = sum;	
 
@@ -183,22 +186,22 @@ BOOL WINAPI GetTextExtentExPointI_new(
 
 /* MAKE_EXPORT GetTextExtentPointI_new=GetTextExtentPointI */
 BOOL WINAPI GetTextExtentPointI_new(
-  HDC hdc,           // handle to DC
-  LPWORD pgiIn,      // glyph indices
-  int cgi,           // number of indices in array
-  LPSIZE lpSize      // string size  
+	HDC hdc,       // handle to DC
+	LPWORD pgiIn,  // glyph indices
+	int cgi,       // number of indices in array
+	LPSIZE lpSize  // string size  
 )
 {
-	return GetTextExtentExPointI_new(hdc,pgiIn,cgi,32768,0,0,lpSize);
+	return GetTextExtentExPointI_new(hdc,pgiIn,cgi,0,0,0,lpSize);
 }
 
 /* MAKE_EXPORT GetCharWidthI_new=GetCharWidthI */
 BOOL WINAPI GetCharWidthI_new(
-  HDC hdc,         // handle to DC
-  UINT giFirst,    // first glyph index in range
-  UINT cgi,        // number of glyph indices in range
-  WORD* pgi,      // array of glyph indices
-  INT* lpBuffer   // buffer for widths
+	HDC hdc,       // handle to DC
+	UINT giFirst,  // first glyph index in range
+	UINT cgi,      // number of glyph indices in range
+	WORD* pgi,     // array of glyph indices
+	INT* lpBuffer  // buffer for widths
 )
 {
 	ABC abc;
@@ -243,11 +246,11 @@ BOOL WINAPI GetCharWidthI_new(
 
 /* MAKE_EXPORT GetCharABCWidthsI_new=GetCharABCWidthsI */
 BOOL WINAPI GetCharABCWidthsI_new(
-  HDC hdc,         // handle to DC
-  UINT giFirst,    // first glyph index in range
-  UINT cgi,        // count of glyph indices in range
-  LPWORD pgi,      // array of glyph indices
-  LPABC lpabc      // array of character widths
+	HDC hdc,       // handle to DC
+	UINT giFirst,  // first glyph index in range
+	UINT cgi,      // count of glyph indices in range
+	LPWORD pgi,    // array of glyph indices
+	LPABC lpabc    // array of character widths
 )
 {
 	WORD glyph;	
@@ -283,15 +286,42 @@ BOOL WINAPI GetCharABCWidthsI_new(
 	return TRUE;
 }
 
+/* MAKE_EXPORT GetCharABCWidthsW_new=GetCharABCWidthsW */
+BOOL WINAPI GetCharABCWidthsW_new(
+	HDC hdc,         // handle to DC
+	UINT uFirstChar, // first character in range
+	UINT uLastChar,  // last character in range
+	LPABC lpabc      // array of character widths
+)
+{
+	if ( !hdc || !lpabc || uFirstChar>uLastChar )
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	UINT c = uLastChar-uFirstChar+1;
+	LPWORD glyphs = (LPWORD)alloca(c*sizeof(WORD)); 
+	LPWSTR chrW = (LPWSTR)alloca(c*sizeof(WCHAR));
+	LPWSTR strW = chrW;
+	for (int i = uFirstChar; i<=uLastChar; i++)
+	{
+		*chrW=(WCHAR)i;
+		chrW++;
+	}
+	if ( GetGlyphIndicesW_new(hdc,strW,c,glyphs,0) == GDI_ERROR )
+		return FALSE;
+	return GetCharABCWidthsI_new(hdc,0,c,glyphs,lpabc);
+}
+
 /* MAKE_EXPORT GetGlyphOutlineW_new=GetGlyphOutlineW */
 DWORD WINAPI GetGlyphOutlineW_new(
-  HDC hdc,             // handle to DC
-  UINT uChar,          // character to query
-  UINT uFormat,        // data format
-  LPGLYPHMETRICS lpgm, // glyph metrics
-  DWORD cbBuffer,      // size of data buffer
-  LPVOID lpvBuffer,    // data buffer
-  CONST MAT2 *lpmat2   // transformation matrix
+	HDC hdc,             // handle to DC
+	UINT uChar,          // character to query
+	UINT uFormat,        // data format
+	LPGLYPHMETRICS lpgm, // glyph metrics
+	DWORD cbBuffer,      // size of data buffer
+	LPVOID lpvBuffer,    // data buffer
+	CONST MAT2 *lpmat2   // transformation matrix
 )
 {
 	UINT glyph = 0;
@@ -327,7 +357,7 @@ DWORD WINAPI GetGlyphOutlineW_new(
 					lpgm->gmBlackBoxY = sz.cy;
 					lpgm->gmptGlyphOrigin.x = 0;
 					lpgm->gmptGlyphOrigin.y = sz.cy;
-					lpgm->gmCellIncX = sz.cx;
+					lpgm->gmCellIncX = (short) sz.cx;
 					lpgm->gmCellIncY = 0;
 					ret = 1;
 				}

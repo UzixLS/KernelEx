@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include "debug.h"
+#include "SettingsDB.h"
 #include "internals.h"
 #include "resolver.h"
 #include "apiconfmgr.h"
@@ -174,6 +175,9 @@ __error:
 	DBGPRINTF(("Default api configuration is: %s\n", default_apiconf->get_name()));
 	DBGPRINTF(("API extensions are by default: %s\n", 
 			disable_extensions ? "disabled" : "enabled"));
+
+	SettingsDB::instance.flush_all();
+
 	return true;
 }
 

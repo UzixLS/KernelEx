@@ -24,5 +24,5 @@
 /* MAKE_EXPORT RegDisablePredefinedCache_new=RegDisablePredefinedCache */
 BOOL WINAPI RegDisablePredefinedCache_new()
 {
-    return ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }

@@ -24,7 +24,7 @@
 
 #define KEX_SIGNATURE "KrnlEx"
 /* Update this whenever patching functions are changed. */
-#define KEX_STUB_VER 9
+#define KEX_STUB_VER 10
 
 #define JTAB_SIZE 8
 #define JTAB_EFO_DYN 0

@@ -38,7 +38,7 @@ BOOL init_user32()
 	GetMouseMovePoints_pfn = (GetMouseMovePoints_t)kexGetProcAddress(hUser32, "GetMouseMovePoints");
 	
 	return IsHungThread_pfn && DrawCaptionTempA_pfn && GetMouseMovePoints_pfn
-			&& InitUniThunkLayer() && SetParent_fix_init();
+			&& InitUniThunkLayer();
 }
 
 /* APIs which don't require Unicode implementations in thuni model

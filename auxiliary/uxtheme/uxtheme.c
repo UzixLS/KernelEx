@@ -32,7 +32,7 @@
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, BOOL bLoadStatic)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
+	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
 		if (!bLoadStatic)
 		{
@@ -44,7 +44,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, BOOL bLoadStatic)
 		}
 		DisableThreadLibraryCalls(hinstDLL);
 	}
-    return TRUE;
+	return TRUE;
 }
 
 UNIMPL_FUNC(CloseThemeData, 1, _E_NOTIMPL);

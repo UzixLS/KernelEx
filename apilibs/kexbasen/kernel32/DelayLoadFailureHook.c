@@ -39,8 +39,8 @@ typedef FARPROC (WINAPI* DLFH) (DWORD, PSHLWAPI_DELAYLOAD);
 
 /* MAKE_EXPORT DelayLoadFailureHook_new=DelayLoadFailureHook */
 FARPROC WINAPI DelayLoadFailureHook_new(
-    LPSTR pszDllName,
-    LPSTR pszProcName
+	LPSTR pszDllName,
+	LPSTR pszProcName
 )
 {
 	SHLWAPI_DELAYLOAD param;

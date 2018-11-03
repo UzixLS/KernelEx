@@ -48,6 +48,7 @@ public:
 	FileFinder(const string& fn);
 	~FileFinder();
 	void search_for(const string& fn);
+	void search_for(const string fns[], int num);
 	string get_next_file();
 
 private:
