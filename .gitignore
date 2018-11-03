@@ -1,0 +1,13 @@
+Debug/
+Release/
+obj/
+Release_*/
+.timestamp
+*.exe
+*.dll
+*.lib
+*.exp
+*.plg
+*.opt
+*.vbw
+*.ncb
