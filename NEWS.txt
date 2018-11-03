@@ -1,3 +1,22 @@
+KernelEx v4.5 Beta 2 by Xeno86
+2010-02-14
+
+What's new:
+----------------------------------
+* Implemented Uniscribe font caching (improves Firefox 3 performance).
+* New thread pool implementation (fixes IE6 problems).
+* Fixed rare font related Firefox 3 crash.
+* Implemted timer queue APIs.
+* Implemented SHParseDisplayName and restricted to XP+ configs to fix Firefox mailto issues.
+* Fixed premature kexCOM unloading crashing Photoshop 5 and other buggy apps.
+* Updated jemalloc to version from FF3.6.
+* Fixed jemalloc sensitiveness to invalid pointers. Fixes vmwareuser, cvtaplog crashing.
+* Implemented EnumPrintersW (Foxit 3.1 Unicode printing support).
+* Fixed Opera 10.50 Beta Acid3 crash.
+* Other small fixes / stubs.
+
+#################################################
+
 KernelEx v4.5 Beta 1 by Xeno86
 2010-01-18
 

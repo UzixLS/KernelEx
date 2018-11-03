@@ -31,24 +31,6 @@ static HMODULE hShell32;
 static LPFNGETCLASSOBJECT SHGetClassObject;
 
 
-/* Hall of shame */
-static const char* blacklist[] = {
-	"COOLTYPE.DLL", /* Adobe Acrobat Reader 5.0.5, Adobe Photoshop 7.0 */
-	NULL,
-};
-
-
-static bool is_blacklisted()
-{
-	for (int i = 0 ; blacklist[i] ; i++)
-	{
-		if (GetModuleHandle(blacklist[i]))
-			return true;
-	}
-	return false;
-}
-
-
 static bool is_shell32_v5()
 {
 	DLLGETVERSIONPROC DllGetVersion;
@@ -146,12 +128,25 @@ STDAPI DllGetClassObject(const CLSID& clsid, const IID& iid, void** ppv)
 }
 
 
+HMODULE GetCurrentModule()
+{
+	MEMORY_BASIC_INFORMATION mbi;
+	static int dummy;
+	VirtualQuery(&dummy, &mbi, sizeof(mbi));
+	return (HMODULE)mbi.AllocationBase;
+}
+
+
 BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
-		if (is_blacklisted())
-			return FALSE;
+		char szPath[MAX_PATH];
+
+		/* LoadLibrary(self) trick to prevent premature unload in buggy programs
+		 * such as Adobe Photoshop, Acrobat Reader,... */
+		GetModuleFileName(GetCurrentModule(), szPath, sizeof(szPath));
+		LoadLibrary(szPath);
 
 		g_hModule = hModule;
 		DisableThreadLibraryCalls(hModule);

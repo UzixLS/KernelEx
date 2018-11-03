@@ -223,9 +223,9 @@ LRESULT WINAPI CallProcAnsiWithUnicode( WNDPROC callback, HWND hwnd, UINT msg, W
 			{
 				LPSTR textA;
 				int len = CallWindowProcA( callback, hwnd, msg == LB_GETTEXT ? LB_GETTEXTLEN : CB_GETLBTEXTLEN, wParam, 0 );				
-				ABUFFER_ALLOC(textA,len);
+				ABUFFER_ALLOC(textA,len); //note that len does not include null
 				LRESULT ret = CallWindowProcA( callback, hwnd, msg, wParam,(LPARAM)textA );
-				ABUFFER_toW(textA,lParam,len);
+				ABUFFER_toW(textA,lParam,len+1);
 				BUFFER_FREE(textA);
 				return ret;
 			}			

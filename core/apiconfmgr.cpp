@@ -416,12 +416,12 @@ bool ApiConfigurationManager::parse_overrides(ApiConfiguration* apiconf)
 
 void ApiConfigurationManager::dump_configurations()
 {
-	dbgprintf("Dumping all api configurations (count = %d) ...\n\n", apiconf_cnt);
+	printf("Dumping all api configurations (count = %d) ...\n\n", apiconf_cnt);
 	for (int i = 0 ; i < apiconf_cnt ; i++)
 	{
 		apiconf_ptrs[i]->dump();
 	}
-	dbgprintf("End dump\n\n");
+	printf("End dump\n\n");
 }
 
 #endif

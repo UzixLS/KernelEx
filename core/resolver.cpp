@@ -713,18 +713,18 @@ void dump_imtes(void)
 	IMTE** pmteModTable = *ppmteModTable;
 	int total = 0;
 	
-	dbgprintf("Dumping IMTEs...\n");
+	printf("Dumping IMTEs...\n");
 	for (WORD i = 0 ; i < imteMax ; i++)
 	{
 		IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
 		if (imte)
 		{
-			dbgprintf("%s\n", imte->pszFileName);
+			printf("%s\n", imte->pszFileName);
 
 			for (MODREF* mr = imte->pMR ; mr != NULL ; mr = mr->pNextMteMR)
 			{
 				MODREF_KEX kmr(mr);
-				dbgprintf("\t%02x %-7s %-12s\n", 
+				printf("\t%02x %-7s %-12s\n", 
 					kmr.as.flags,
 					kmr.as.conf ? kmr.as.conf->get_name() : "none",
 					pmteModTable[mr->ppdb->pExeMODREF->mteIndex]->pszModName);
@@ -733,7 +733,7 @@ void dump_imtes(void)
 			total++;
 		}
 	}
-	dbgprintf("\nEnd dump total %d IMTEs\n\n", total);
+	printf("\nEnd dump total %d IMTEs\n\n", total);
 }
 
 #endif

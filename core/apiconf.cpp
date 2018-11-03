@@ -542,20 +542,20 @@ bool ApiConfiguration::is_initialized()
 
 void ApiConfiguration::dump()
 {
-	dbgprintf("ApiConfiguration %s\n", get_name());
+	printf("ApiConfiguration %s\n", get_name());
 	for (int i = 0 ; i < api_tables_count ; i++)
 	{
-		dbgprintf("Covered module #%d: %s\n", i, overridden_module_names[i]);
-		dbgprintf("Named apis (count = %d)\n", api_tables[i].named_apis_count);
+		printf("Covered module #%d: %s\n", i, overridden_module_names[i]);
+		printf("Named apis (count = %d)\n", api_tables[i].named_apis_count);
 		for (int j = 0 ; j < api_tables[i].named_apis_count ; j++)
-			dbgprintf("\t%-32s %08x\n", api_tables[i].named_apis[j].api_name, 
+			printf("\t%-32s %08x\n", api_tables[i].named_apis[j].api_name, 
 					api_tables[i].named_apis[j].address);
-		dbgprintf("Unnamed apis (count = %d)\n", api_tables[i].unnamed_apis_count);
+		printf("Unnamed apis (count = %d)\n", api_tables[i].unnamed_apis_count);
 		for (int j = 0 ; j < api_tables[i].unnamed_apis_count ; j++)
-			dbgprintf("\t%-5d                            %08x\n", j, api_tables[i].unnamed_apis[j]);
-		dbgprintf("\n");
+			printf("\t%-5d                            %08x\n", j, api_tables[i].unnamed_apis[j]);
+		printf("\n");
 	}
-	dbgprintf("\n");
+	printf("\n");
 }
 
 #endif

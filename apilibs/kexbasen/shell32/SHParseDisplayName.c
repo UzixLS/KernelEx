@@ -1,7 +1,7 @@
 /*
  *  KernelEx
+ *  Copyright (C) 2010, Tihiy
  *
- *  Copyright (C) 2009, Xeno86
  *  This file is part of KernelEx source code.
  *
  *  KernelEx is free software; you can redistribute it and/or modify
@@ -19,16 +19,22 @@
  *
  */
 
-#include <windows.h>
+#include <shlobj.h>
+#include <shlwapi.h>
 
-/* MAKE_EXPORT AddFontResourceExA_new=AddFontResourceExA */
-INT WINAPI AddFontResourceExA_new(LPCSTR str, DWORD fl, PVOID pdv)
+/* MAKE_EXPORT SHParseDisplayName_new=SHParseDisplayName */
+HRESULT WINAPI SHParseDisplayName_new(PCWSTR pszName, IBindCtx *pbc, LPITEMIDLIST *ppidl, SFGAOF sfgaoIn, SFGAOF *psfgaoOut)
 {
-	return AddFontResourceA(str);
-}
-
-/* MAKE_EXPORT RemoveFontResourceExA_new=RemoveFontResourceExA */
-BOOL WINAPI RemoveFontResourceExA_new(LPCSTR str, DWORD fl, PVOID pdv)
-{
-	return RemoveFontResourceA(str);
+	IShellFolder *psf;
+	HRESULT ret = SHGetDesktopFolder(&psf);
+	if (SUCCEEDED(ret))
+	{
+		ULONG attrs = sfgaoIn;
+		LPOLESTR pszNameCopyW = StrDupW(pszName);
+		ret = psf->ParseDisplayName(NULL,pbc,pszNameCopyW,NULL,ppidl,&attrs);
+		if (psfgaoOut) *psfgaoOut = attrs;
+		psf->Release();
+		LocalFree(pszNameCopyW);
+	}
+	return ret;
 }

@@ -44,6 +44,7 @@ void SettingsDB::clear()
 {
 	EnterCriticalSection(&cs);
 	db.clear();
+	db_wild.clear();
 	appsetting as;
 	as.flags = LDR_KEX_DISABLE;
 	db.insert(pair<sstring,appsetting>(own_path, as));
@@ -263,19 +264,19 @@ void SettingsDB::dump_db()
 {
 	map<sstring, appsetting>::const_iterator it;
 	
-	dbgprintf("User settings:\n");
+	printf("User settings:\n");
 	for (it = db.begin() ; it != db.end() ; it++)
 	{
 		ApiConfiguration* conf = it->second.conf;
-		dbgprintf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
+		printf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
 				conf ? conf->get_name() : "unknown", it->second.flags);
 	}
 
-	dbgprintf("\nPredefined settings:\n");
+	printf("\nPredefined settings:\n");
 	for (it = db_wild.begin() ; it != db_wild.end() ; it++)
 	{
 		ApiConfiguration* conf = it->second.conf;
-		dbgprintf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
+		printf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
 				conf ? conf->get_name() : "unknown", it->second.flags);
 	}
 }

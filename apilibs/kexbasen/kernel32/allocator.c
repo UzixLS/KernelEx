@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2009-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -43,6 +43,8 @@
 /*              M A C R O S   A N D   W R A P P E R S                   */
 /************************************************************************/
 
+#include <stdlib.h>
+
 #define	malloc(a)	je_malloc(a)
 #define	valloc(a)	je_valloc(a)
 #define	calloc(a, b)	je_calloc(a, b)
@@ -77,11 +79,6 @@ BOOL init_jemalloc()
 	if (malloc_init_hard())
 		return FALSE;
 	return TRUE;
-}
-
-void uninit_jemalloc()
-{
-	malloc_print_stats();
 }
 
 /************************************************************************/
@@ -193,8 +190,15 @@ BOOL WINAPI HeapFree_new(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
 {
 	if (hHeap == JM_HEAP_NORM || hHeap == JM_HEAP_EXCP)
 	{
-		free(lpMem);
-		return TRUE;
+		if (lpMem && idalloc(lpMem))
+		{
+			return TRUE;
+		}
+		else
+		{
+			SetLastError(ERROR_INVALID_PARAMETER);
+			return FALSE;
+		}
 	}
 	else 
 		return HeapFree(hHeap, dwFlags, lpMem);
@@ -206,6 +210,8 @@ DWORD WINAPI HeapSize_new(HANDLE hHeap, DWORD dwFlags, LPCVOID lpMem)
 	if (hHeap == JM_HEAP_NORM || hHeap == JM_HEAP_EXCP)
 	{
 		size_t usable = malloc_usable_size(lpMem);
+		if (usable == 0)
+			return (DWORD) -1;
 		int fs = footer_size_for_usable_size(usable);
 
 		return read_footer(lpMem, usable, fs);
@@ -221,7 +227,14 @@ LPVOID WINAPI HeapReAlloc_new(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, DWORD d
 	{
 		LPVOID ret;
 		int fs = footer_size(dwBytes);
-		size_t usable = malloc_usable_size(lpMem);
+		size_t usable = lpMem ? malloc_usable_size(lpMem) : 0;
+
+		if (lpMem && usable == 0)
+		{
+			if (hHeap == JM_HEAP_EXCP || (dwFlags & HEAP_GENERATE_EXCEPTIONS))
+				RaiseException(STATUS_ACCESS_VIOLATION, 0, 0, NULL);
+			return NULL;
+		}
 
 		if (dwFlags & HEAP_REALLOC_IN_PLACE_ONLY)
 		{

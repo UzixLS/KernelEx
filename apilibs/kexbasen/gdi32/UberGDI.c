@@ -1,13 +1,13 @@
 /*
  *  KernelEx
  *
+ *  Copyright (C) 2008, 2010, Tihiy
+ *  This file is part of KernelEx source code.
+ *
  *  Copyright 1993 Alexandre Julliard
  *            1997 Alex Korobka
  *  Copyright 2002,2003 Shachar Shemesh 
  *  Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla) 
- *
- *  Copyright (C) 2008, Tihiy
- *  This file is part of KernelEx source code.
  *
  *  KernelEx is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published
@@ -28,6 +28,17 @@
 #include <windows.h>
 #include "common.h"
 #include <usp10.h>
+#include "ScriptCache.h"
+
+
+#ifdef __cplusplus
+extern "C"
+#endif
+__declspec(dllexport)
+void DeleteUSPFontCache(HFONT hFont)
+{
+	ScriptCache::instance.ResetCache(hFont);
+}
 
 /* MAKE_EXPORT GetGlyphIndicesW_new=GetGlyphIndicesW */
 int WINAPI GetGlyphIndicesW_new(
@@ -39,10 +50,16 @@ int WINAPI GetGlyphIndicesW_new(
 )
 {
 	HRESULT result;
-	SCRIPT_CACHE cache = 0;
 	if (!hdc || !pgi || (UINT)lpstr<0xFFFFu || !c) return GDI_ERROR;
+	ScriptCache::instance.Lock();
+	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 	result = ScriptGetCMap(hdc,&cache,lpstr,c,0,pgi);
-	if ( !( result == S_OK || result == S_FALSE ) ) return GDI_ERROR;
+	if ( !( result == S_OK || result == S_FALSE ) ) 
+	{
+		ScriptCache::instance.Unlock();
+		return GDI_ERROR;
+	}
 	if ( fl && result == S_FALSE)
 	{		
 		WORD* checkglyph = pgi;
@@ -56,7 +73,8 @@ int WINAPI GetGlyphIndicesW_new(
 			checkglyph++;
 		}
 	}
-	ScriptFreeCache(&cache);
+	ScriptCache::instance.SetCache(hFont,cache); \
+	ScriptCache::instance.Unlock();
 	return c;
 }
 
@@ -115,7 +133,6 @@ BOOL WINAPI GetTextExtentExPointI_new(
   LPSIZE lpSize    // string dimensions
 )
 {
-	SCRIPT_CACHE cache = 0;
 	ABC abc;
 	WORD* glyph = pgiIn;
 	int* dxs = alpDx;
@@ -129,6 +146,11 @@ BOOL WINAPI GetTextExtentExPointI_new(
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
+
+	ScriptCache::instance.Lock();
+	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
+
 	//in UberKern, ScriptPlace was used. However, it's too costly...
 	//so let's compute the info ourselves
 	for (i = 0; i < cgi; i++)
@@ -145,8 +167,11 @@ BOOL WINAPI GetTextExtentExPointI_new(
 		glyph++;
 	}
 	lpSize->cx = sum;	
+
 	ScriptCacheGetHeight(hdc,&cache,&lpSize->cy);
-	ScriptFreeCache(&cache);
+	ScriptCache::instance.SetCache(hFont,cache);
+	ScriptCache::instance.Unlock();
+
 	return TRUE;
 }
 
@@ -170,7 +195,6 @@ BOOL WINAPI GetCharWidthI_new(
   INT* lpBuffer   // buffer for widths
 )
 {
-	SCRIPT_CACHE cache = 0;
 	ABC abc;
 	WORD glyph;
 	
@@ -179,6 +203,11 @@ BOOL WINAPI GetCharWidthI_new(
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
+
+	ScriptCache::instance.Lock();
+	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
+
 	if ( !pgi ) //cgi glyphs starting giFirst
 	{
 		for ( glyph = giFirst; glyph < giFirst+cgi; glyph++)
@@ -198,7 +227,9 @@ BOOL WINAPI GetCharWidthI_new(
 			lpBuffer++;
 		}		
 	}
-	ScriptFreeCache(&cache);
+
+	ScriptCache::instance.SetCache(hFont,cache); \
+	ScriptCache::instance.Unlock();
 	return TRUE;
 }
 
@@ -213,14 +244,17 @@ BOOL WINAPI GetCharABCWidthsI_new(
   LPABC lpabc      // array of character widths
 )
 {
-	SCRIPT_CACHE cache = 0;
-	WORD glyph;
-	
+	WORD glyph;	
 	if ( !hdc || !lpabc || cgi<=0)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
+
+	ScriptCache::instance.Lock();
+	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
+
 	if ( !pgi ) //cgi glyphs starting giFirst
 	{
 		for ( glyph = giFirst; glyph < giFirst+cgi; glyph++)
@@ -238,7 +272,8 @@ BOOL WINAPI GetCharABCWidthsI_new(
 			lpabc++;
 		}		
 	}
-	ScriptFreeCache(&cache);
+	ScriptCache::instance.SetCache(hFont,cache); \
+	ScriptCache::instance.Unlock();
 	return TRUE;
 }
 

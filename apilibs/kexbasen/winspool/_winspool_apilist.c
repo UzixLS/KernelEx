@@ -47,6 +47,7 @@ static const apilib_named_api winspool_named_apis[] =
 	DECL_API("DeletePrinterDriverW", DeletePrinterDriverW_fwd),
 	DECL_API("DeviceCapabilitiesW", DeviceCapabilitiesW_fwd),
 	DECL_API("DocumentPropertiesW", DocumentPropertiesW_fwd),
+	DECL_API("EnumPrintersW", EnumPrintersW_new),
 	DECL_API("GetDefaultPrinterA", GetDefaultPrinterA),
 	DECL_API("GetDefaultPrinterW", GetDefaultPrinterW),
 	DECL_API("GetPrintProcessorDirectoryW", GetPrintProcessorDirectoryW_fwd),

@@ -28,6 +28,7 @@
 static BOOL blockkexgdiobj;
 static WORD g_GDILH_addr;
 static DWORD g_GdiBase;
+static int script_cache_psidx;
 
 #define REBASEGDI(x) ((PVOID)( g_GdiBase + LOWORD((DWORD)(x)) ))
 #define REBASEGDIHIGH(x) ( g_GdiBase + (DWORD)(x) ) 
@@ -40,6 +41,7 @@ BOOL InitGDIObjects(void)
 	g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
 	g_GDILH_addr = ((PINSTANCE16)g_GdiBase)->pLocalHeap;
 	blockkexgdiobj = (BOOL)GetProcAddress(GetModuleHandle("rp10.dll"),"blockkexgdiobj");
+	script_cache_psidx = kexPsAllocIndex();
 	return (BOOL)g_GdiBase;
 }
 
@@ -159,6 +161,18 @@ BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 	DWORD violated = 0;
 	if ( obj->wOwner ) //not system objects
 	{
+		if (obj->wType == GDI_TYPE_FONT)
+		{
+			typedef void (*DeleteUSPFontCache_fn)(HFONT hFont);
+			DeleteUSPFontCache_fn DeleteUSPFontCache = (DeleteUSPFontCache_fn) kexPsGetValue(script_cache_psidx);
+			if (!DeleteUSPFontCache)
+			{
+				DeleteUSPFontCache = (DeleteUSPFontCache_fn)GetProcAddress(LoadLibrary("KEXBASEN.DLL"), "DeleteUSPFontCache");
+				kexPsSetValue(script_cache_psidx, DeleteUSPFontCache);
+			}
+			if (DeleteUSPFontCache)
+				DeleteUSPFontCache((HFONT)hObject);			
+		}
 		if (obj->wType == GDI_TYPE_FONT && ((PFONTOBJ16)obj)->wSelCount >= SEL_FONT_ONCE )
 		{
 			DBGPRINTF(("somebody is trying to delete selected font %p\n",hObject));

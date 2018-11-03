@@ -22,6 +22,7 @@
 #ifndef _SHELL32_APILIST_H
 #define _SHELL32_APILIST_H
 
+#include <shlobj.h>
 #include "kexcoresdk.h"
 
 BOOL init_shell32();
@@ -34,6 +35,7 @@ HRESULT WINAPI SHGetFolderPathW_new(HWND hwndOwner, int nFolder, HANDLE hToken, 
 HRESULT WINAPI SHGetSpecialFolderLocation_fix(HWND hwndOwner, int nFolder, LPVOID *_ppidl);
 BOOL WINAPI SHGetSpecialFolderPathA_fix(HWND hwndOwner, LPSTR lpszPath, int nFolder, BOOL fCreate);
 BOOL WINAPI SHGetSpecialFolderPathW_fix(HWND hwndOwner, LPWSTR lpszPath, int nFolder, BOOL fCreate);
+HRESULT WINAPI SHParseDisplayName_new(PCWSTR pszName, IBindCtx *pbc, LPITEMIDLIST *ppidl, SFGAOF sfgaoIn, SFGAOF *psfgaoOut);
 FWDPROC DragQueryFileW_fwd;
 FWDPROC ExtractIconExW_fwd;
 FWDPROC ExtractIconW_fwd;

@@ -128,12 +128,12 @@ BOOL WINAPI WriteFile_fix(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesTo
 UINT WINAPI GetTempFileNameA_fix(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPTSTR lpTempFileName)
 {
 	static int g_tempprefix = 0;
+	char temppref[2];
 
 	if (!lpPathName) 
 		lpPathName = "\\";
 	if (!lpPrefixString)
 	{
-		char temppref[2];
 		g_tempprefix++;
 		g_tempprefix %= 5;
 		temppref[0] = '0' + g_tempprefix;

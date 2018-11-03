@@ -365,7 +365,7 @@ SOURCE=.\Gdi32\_gdi32_stubs.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Gdi32\FontResourceExA.c
+SOURCE=.\Gdi32\FontResourceEx.c
 # End Source File
 # Begin Source File
 

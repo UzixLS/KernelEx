@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2009-2010, Xeno86
  *  Copyright (C) 2009, Tihiy
  *
  *  This file is part of KernelEx source code.
@@ -107,11 +107,19 @@ static int CALLBACK EnumFontFamExConv(const LOGFONTA *plfA,
 	tmW->ntmTm.tmBreakChar = tmA->ntmTm.tmBreakChar;
 #endif
 
-	tmW->ntmTm.ntmFlags = tmA->ntmTm.ntmFlags;
-	tmW->ntmTm.ntmSizeEM = tmA->ntmTm.ntmSizeEM;
-	tmW->ntmTm.ntmCellHeight = tmA->ntmTm.ntmCellHeight;
-	tmW->ntmTm.ntmAvgWidth = tmA->ntmTm.ntmAvgWidth;
-	memcpy(&tmW->ntmFontSig, &tmA->ntmFontSig, sizeof(FONTSIGNATURE));
+	if (FontType == TRUETYPE_FONTTYPE)
+	{
+		tmW->ntmTm.ntmFlags = tmA->ntmTm.ntmFlags;
+		tmW->ntmTm.ntmSizeEM = tmA->ntmTm.ntmSizeEM;
+		tmW->ntmTm.ntmCellHeight = tmA->ntmTm.ntmCellHeight;
+		tmW->ntmTm.ntmAvgWidth = tmA->ntmTm.ntmAvgWidth;
+		memset(&tmW->ntmFontSig, 0, sizeof(FONTSIGNATURE));
+	}
+	else
+	{
+		memset(&tmW->ntmTm.ntmFlags, 0, sizeof(NEWTEXTMETRICEXW) 
+				- FIELD_OFFSET(NEWTEXTMETRICEXW, ntmTm.ntmFlags));
+	}
 
 	return pef->EnumProcW((LOGFONTW*) &elfeW, (TEXTMETRICW*) &ntmeW, FontType, pef->lParam);
 }

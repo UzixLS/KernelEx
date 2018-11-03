@@ -70,6 +70,9 @@ bool kill_all_referents()
 	}
 
 	CloseHandle(h);
+
+	//let the processes die before proceeding
+	Sleep(1000);
 	return true;
 }
 

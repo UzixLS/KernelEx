@@ -25,5 +25,3 @@ UNIMPL_FUNC(SetDCBrushColor, 2);
 UNIMPL_FUNC(SetDCPenColor, 2);
 UNIMPL_FUNC(GetDCBrushColor, 1);
 UNIMPL_FUNC(GetDCPenColor, 1);
-UNIMPL_FUNC(AddFontMemResourceEx, 4);
-UNIMPL_FUNC(RemoveFontMemResourceEx, 1);

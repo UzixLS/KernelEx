@@ -62,7 +62,9 @@
 	} \
 	else \
 		buffer = (LPSTR)alloca( buffer##size ); \
-	*buffer='\0';
+	buffer[0]='\0'; \
+	buffer[len]='\0'; \
+	buffer[buffer##size-1]='\0';
 
 #define WBUFFER_ALLOC(buffer,len) \
 	int buffer##size = ((len+1) * sizeof(WCHAR)); \
@@ -74,7 +76,8 @@
 	} \
 	else \
 		buffer = (LPWSTR)alloca( buffer##size ); \
-	*buffer='\0';
+	buffer[0]='\0'; \
+	buffer[len]='\0';
 
 #define ABUFFER_toW(bufferA,bufferW,lenW) MultiByteToWideChar(CP_ACP, 0, bufferA, -1, (LPWSTR)bufferW, lenW);
 #define WBUFFER_toA(bufferW,bufferA,lenA) WideCharToMultiByte(CP_ACP, 0, bufferW, -1, (LPSTR)bufferA, lenA, NULL, NULL);

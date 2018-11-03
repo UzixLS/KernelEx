@@ -205,6 +205,7 @@
 #ifndef MOZ_MEMORY_WINCE
 #include <io.h>
 #else
+#include <cmnintrin.h>
 #include <crtdefs.h>
 #define SIZE_MAX UINT_MAX
 #endif
@@ -212,6 +213,7 @@
 
 #pragma warning( disable: 4267 4996 4146 )
 
+#define	bool BOOL
 #define	false FALSE
 #define	true TRUE
 #define	inline __inline
@@ -225,7 +227,7 @@ static unsigned long tlsIndex = 0xffffffff;
 #endif 
 
 #define	__thread
-#ifdef MOZ_MEMORY_WINDOWS
+#if defined(MOZ_MEMORY_WINCE) || defined(MOZ_MEMORY_WINDOWS)
 #define	_pthread_self() GetCurrentThreadId()
 #else
 #define	_pthread_self() __threadid()
@@ -275,38 +277,17 @@ getenv(const char *name)
 
 	return (NULL);
 }
-#else
 
-static void abort() { 
-	DebugBreak();  
-        exit(-3); 
-}
+#else /* WIN CE */
 
-static int errno = 0;
 #define ENOMEM          12
 #define EINVAL          22
 
-static char *
-getenv(const char *name)
-{
-	return (NULL);
-}
-
-static int
+static __forceinline int
 ffs(int x)
 {
-        int ret;
 
-        if (x == 0)
-                return 0;
-        ret = 2;
-        if ((x & 0x0000ffff) == 0) { ret += 16; x >>= 16;}
-        if ((x & 0x000000ff) == 0) { ret += 8;  x >>= 8;}
-        if ((x & 0x0000000f) == 0) { ret += 4;  x >>= 4;}
-        if ((x & 0x00000003) == 0) { ret += 2;  x >>= 2;}
-        ret -= (x & 1);
-
-        return (ret);
+	return 32 - _CountLeadingZeros((-x) & x);
 }
 #endif
 
@@ -380,8 +361,8 @@ __FBSDID("$FreeBSD: head/lib/libc/stdlib/malloc.c 180599 2008-07-18 19:35:44Z ja
 #endif
 #include <sched.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -414,14 +395,12 @@ static const bool __isthreaded = true;
 #define JEMALLOC_USES_MAP_ALIGN	 /* Required on Solaris 10. Might improve performance elsewhere. */
 #endif
 
-#if defined(MOZ_MEMORY_WINCE)
-#define JEMALLOC_USES_MAP_ALIGN	 /* Required for Windows CE */
+#if defined(MOZ_MEMORY_WINCE) && !defined(MOZ_MEMORY_WINCE6)
+#define JEMALLOC_USES_MAP_ALIGN	 /* Required for Windows CE < 6 */
 #endif
 
 #define __DECONST(type, var) ((type)(uintptr_t)(const void *)(var))
 
-#include "qr.h"
-#include "ql.h"
 #ifdef MOZ_MEMORY_WINDOWS
    /* MSVC++ does not support C99 variable-length arrays. */
 #  define RB_NO_C99_VARARRAYS
@@ -517,25 +496,13 @@ static const bool __isthreaded = true;
  * Size and alignment of memory chunks that are allocated by the OS's virtual
  * memory system.
  */
-#ifdef MOZ_MEMORY_WINCE
+#if defined(MOZ_MEMORY_WINCE) && !defined(MOZ_MEMORY_WINCE6)
 #define	CHUNK_2POW_DEFAULT	21
 #else
 #define	CHUNK_2POW_DEFAULT	20
 #endif
 /* Maximum number of dirty pages per arena. */
 #define	DIRTY_MAX_DEFAULT	(1U << 10)
-
-/* Default reserve chunks. */
-#define	RESERVE_MIN_2POW_DEFAULT	1
-/*
- * Default range (in chunks) between reserve_min and reserve_max, in addition
- * to the mandatory one chunk per arena.
- */
-#ifdef MALLOC_PAGEFILE
-#  define RESERVE_RANGE_2POW_DEFAULT	5
-#else
-#  define RESERVE_RANGE_2POW_DEFAULT	0
-#endif
 
 /*
  * Maximum size of L1 cache line.  This is used to avoid cache line aliasing,
@@ -717,6 +684,9 @@ struct arena_stats_s {
 	uint64_t	ndecommit;
 	uint64_t	ncommit;
 	uint64_t	decommitted;
+
+	/* Current number of committed pages. */
+	size_t		committed;
 #endif
 
 	/* Per-size-category statistics. */
@@ -798,30 +768,6 @@ struct malloc_rtree_s {
 	unsigned		level2bits[1]; /* Dynamically sized. */
 };
 #endif
-
-/******************************************************************************/
-/*
- * Reserve data structures.
- */
-
-/* Callback registration. */
-typedef struct reserve_reg_s reserve_reg_t;
-struct reserve_reg_s {
-	/* Linkage for list of all registered callbacks. */
-	ql_elm(reserve_reg_t)	link;
-
-	/* Callback function pointer. */
-	reserve_cb_t		*cb;
-
-	/* Opaque application data pointer. */
-	void			*ctx;
-
-	/*
-	 * Sequence number of condition notification most recently sent to this
-	 * callback.
-	 */
-	uint64_t		seq;
-};
 
 /******************************************************************************/
 /*
@@ -972,10 +918,8 @@ struct arena_bin_s {
 };
 
 struct arena_s {
-#ifdef MALLOC_DEBUG
 	uint32_t		magic;
 #  define ARENA_MAGIC 0x947d3d24
-#endif
 
 	/* All operations on this arena require that lock be locked. */
 #ifdef MOZ_MEMORY
@@ -987,12 +931,6 @@ struct arena_s {
 #ifdef MALLOC_STATS
 	arena_stats_t		stats;
 #endif
-
-	/*
-	 * Chunk allocation sequence number, used to detect races with other
-	 * threads during chunk allocation, and then discard unnecessary chunks.
-	 */
-	uint64_t		chunk_seq;
 
 	/* Tree of dirty-page-containing chunks this arena manages. */
 	arena_chunk_tree_t	chunks_dirty;
@@ -1111,42 +1049,9 @@ static uint64_t		huge_ndalloc;
 static size_t		huge_allocated;
 #endif
 
-/****************/
-/*
- * Memory reserve.
- */
-
 #ifdef MALLOC_PAGEFILE
 static char		pagefile_templ[PATH_MAX];
 #endif
-
-/* Protects reserve-related data structures. */
-static malloc_mutex_t	reserve_mtx;
-
-/*
- * Bounds on acceptable reserve size, and current reserve size.  Reserve
- * depletion may cause (reserve_cur < reserve_min).
- */
-static size_t		reserve_min;
-static size_t		reserve_cur;
-static size_t		reserve_max;
-
-/* List of registered callbacks. */
-static ql_head(reserve_reg_t) reserve_regs;
-
-/*
- * Condition notification sequence number, used to determine whether all
- * registered callbacks have been notified of the most current condition.
- */
-static uint64_t		reserve_seq;
-
-/*
- * Trees of chunks currently in the memory reserve.  Depending on function,
- * different tree orderings are needed, which is why there are two trees with
- * the same contents.
- */
-static extent_tree_t	reserve_chunks_szad;
-static extent_tree_t	reserve_chunks_ad;
 
 /****************************/
 /*
@@ -1165,10 +1070,12 @@ static void		*base_next_decommitted;
 #endif
 static void		*base_past_addr; /* Addr immediately past base_pages. */
 static extent_node_t	*base_nodes;
-static reserve_reg_t	*base_reserve_regs;
 static malloc_mutex_t	base_mtx;
 #ifdef MALLOC_STATS
 static size_t		base_mapped;
+#  ifdef MALLOC_DECOMMIT
+static size_t		base_committed;
+#  endif
 #endif
 
 /********/
@@ -1182,7 +1089,6 @@ static size_t		base_mapped;
  */
 static arena_t		**arenas;
 static unsigned		narenas;
-static unsigned		narenas_2pow;
 #ifndef NO_TLS
 #  ifdef MALLOC_BALANCE
 static unsigned		narenas_2pow;
@@ -1236,8 +1142,6 @@ static bool	opt_print_stats = false;
 static size_t	opt_quantum_2pow = QUANTUM_2POW_MIN;
 static size_t	opt_small_max_2pow = SMALL_MAX_2POW_DEFAULT;
 static size_t	opt_chunk_2pow = CHUNK_2POW_DEFAULT;
-static int	opt_reserve_min_lshift = 0;
-static int	opt_reserve_range_lshift = 0;
 #ifdef MALLOC_PAGEFILE
 static bool	opt_pagefile = false;
 #endif
@@ -1297,8 +1201,6 @@ static void	*base_alloc(size_t size);
 static void	*base_calloc(size_t number, size_t size);
 static extent_node_t *base_node_alloc(void);
 static void	base_node_dealloc(extent_node_t *node);
-static reserve_reg_t *base_reserve_reg_alloc(void);
-static void	base_reserve_reg_dealloc(reserve_reg_t *reg);
 #ifdef MALLOC_STATS
 static void	stats_print(arena_t *arena);
 #endif
@@ -1309,9 +1211,7 @@ static void	*chunk_alloc_mmap(size_t size, bool pagefile);
 static int	pagefile_init(size_t size);
 static void	pagefile_close(int pfd);
 #endif
-static void	*chunk_recycle_reserve(size_t size, bool zero);
 static void	*chunk_alloc(size_t size, bool zero, bool pagefile);
-static extent_node_t *chunk_dealloc_reserve(void *chunk, size_t size);
 static void	chunk_dealloc_mmap(void *chunk, size_t size);
 static void	chunk_dealloc(void *chunk, size_t size);
 #ifndef NO_TLS
@@ -1352,16 +1252,12 @@ static arena_t	*arenas_extend(unsigned ind);
 static void	*huge_malloc(size_t size, bool zero);
 static void	*huge_palloc(size_t alignment, size_t size);
 static void	*huge_ralloc(void *ptr, size_t size, size_t oldsize);
-static void	huge_dalloc(void *ptr);
+static bool	huge_dalloc(void *ptr);
 static void	malloc_print_stats(void);
 #ifndef MOZ_MEMORY_WINDOWS
 static
 #endif
 bool		malloc_init_hard(void);
-static void	reserve_shrink(void);
-static uint64_t	reserve_notify(reserve_cnd_t cnd, size_t size, uint64_t seq);
-static uint64_t	reserve_crit(size_t size, const char *fname, uint64_t seq);
-static void	reserve_fail(size_t size, const char *fname);
 
 void		_malloc_prefork(void);
 void		_malloc_postfork(void);
@@ -1873,6 +1769,9 @@ base_pages_alloc_mmap(size_t minsize)
 #endif
 #ifdef MALLOC_STATS
 	base_mapped += csize;
+#  ifdef MALLOC_DECOMMIT
+	base_committed += pminsize;
+#  endif
 #endif
 
 	ret = false;
@@ -1923,6 +1822,10 @@ base_alloc(size_t size)
 		pages_commit(base_next_decommitted, (uintptr_t)pbase_next_addr -
 		    (uintptr_t)base_next_decommitted);
 		base_next_decommitted = pbase_next_addr;
+#  ifdef MALLOC_STATS
+		base_committed += (uintptr_t)pbase_next_addr -
+		    (uintptr_t)base_next_decommitted;
+#  endif
 	}
 #endif
 	malloc_mutex_unlock(&base_mtx);
@@ -1980,38 +1883,6 @@ base_node_dealloc(extent_node_t *node)
 	malloc_mutex_unlock(&base_mtx);
 }
 
-static reserve_reg_t *
-base_reserve_reg_alloc(void)
-{
-	reserve_reg_t *ret;
-
-	malloc_mutex_lock(&base_mtx);
-	if (base_reserve_regs != NULL) {
-		ret = base_reserve_regs;
-		base_reserve_regs = *(reserve_reg_t **)ret;
-		VALGRIND_FREELIKE_BLOCK(ret, 0);
-		VALGRIND_MALLOCLIKE_BLOCK(ret, sizeof(reserve_reg_t), 0, false);
-		malloc_mutex_unlock(&base_mtx);
-	} else {
-		malloc_mutex_unlock(&base_mtx);
-		ret = (reserve_reg_t *)base_alloc(sizeof(reserve_reg_t));
-	}
-
-	return (ret);
-}
-
-static void
-base_reserve_reg_dealloc(reserve_reg_t *reg)
-{
-
-	malloc_mutex_lock(&base_mtx);
-	VALGRIND_FREELIKE_BLOCK(reg, 0);
-	VALGRIND_MALLOCLIKE_BLOCK(reg, sizeof(reserve_reg_t *), 0, false);
-	*(reserve_reg_t **)reg = base_reserve_regs;
-	base_reserve_regs = reg;
-	malloc_mutex_unlock(&base_mtx);
-}
-
 /******************************************************************************/
 
 #ifdef MALLOC_STATS
@@ -2020,7 +1891,7 @@ stats_print(arena_t *arena)
 {
 	unsigned i, gap_start;
 
-#ifdef xxMOZ_MEMORY_WINDOWS
+#ifdef MOZ_MEMORY_WINDOWS
 	malloc_printf("dirty: %Iu page%s dirty, %I64u sweep%s,"
 	    " %I64u madvise%s, %I64u page%s purged\n",
 	    arena->ndirty, arena->ndirty == 1 ? "" : "s",
@@ -2096,7 +1967,7 @@ stats_print(arena_t *arena)
 				gap_start = UINT_MAX;
 			}
 			malloc_printf(
-#if defined(xxMOZ_MEMORY_WINDOWS)
+#if defined(MOZ_MEMORY_WINDOWS)
 			    "%13u %1s %4u %4u %3u %9I64u %9I64u"
 			    " %9I64u %7u %7u\n",
 #else
@@ -2226,14 +2097,14 @@ static void *
 pages_map(void *addr, size_t size, int pfd)
 {
 	void *ret = NULL;
-#if defined(MOZ_MEMORY_WINCE)
+#if defined(MOZ_MEMORY_WINCE) && !defined(MOZ_MEMORY_WINCE6)
 	void *va_ret;
 	assert(addr == NULL);
 	va_ret = VirtualAlloc(addr, size, MEM_RESERVE, PAGE_NOACCESS);
 	if (va_ret)
 		ret = VirtualAlloc(va_ret, size, MEM_COMMIT, PAGE_READWRITE);
 	assert(va_ret == ret);
-#elif defined(MOZ_MEMORY_WINDOWS)
+#else
 	ret = VirtualAlloc(addr, size, MEM_COMMIT | MEM_RESERVE,
 	    PAGE_READWRITE);
 #endif
@@ -2244,7 +2115,7 @@ static void
 pages_unmap(void *addr, size_t size)
 {
 	if (VirtualFree(addr, 0, MEM_RELEASE) == 0) {
-#ifdef MOZ_MEMORY_WINCE
+#if defined(MOZ_MEMORY_WINCE) && !defined(MOZ_MEMORY_WINCE6)
 		if (GetLastError() == ERROR_INVALID_PARAMETER) {
 			MEMORY_BASIC_INFORMATION info;
 			VirtualQuery(addr, &info, sizeof(info));
@@ -2656,114 +2527,12 @@ pagefile_close(int pfd)
 #endif
 
 static void *
-chunk_recycle_reserve(size_t size, bool zero)
-{
-	extent_node_t *node, key;
-
-#ifdef MALLOC_DECOMMIT
-	if (size != chunksize)
-		return (NULL);
-#endif
-
-	key.addr = NULL;
-	key.size = size;
-	malloc_mutex_lock(&reserve_mtx);
-	node = extent_tree_szad_nsearch(&reserve_chunks_szad, &key);
-	if (node != NULL) {
-		void *ret = node->addr;
-
-		/* Remove node from the tree. */
-		extent_tree_szad_remove(&reserve_chunks_szad, node);
-#ifndef MALLOC_DECOMMIT
-		if (node->size == size) {
-#else
-			assert(node->size == size);
-#endif
-			extent_tree_ad_remove(&reserve_chunks_ad, node);
-			base_node_dealloc(node);
-#ifndef MALLOC_DECOMMIT
-		} else {
-			/*
-			 * Insert the remainder of node's address range as a
-			 * smaller chunk.  Its position within reserve_chunks_ad
-			 * does not change.
-			 */
-			assert(node->size > size);
-			node->addr = (void *)((uintptr_t)node->addr + size);
-			node->size -= size;
-			extent_tree_szad_insert(&reserve_chunks_szad, node);
-		}
-#endif
-		reserve_cur -= size;
-		/*
-		 * Try to replenish the reserve if this allocation depleted it.
-		 */
-#ifndef MALLOC_DECOMMIT
-		if (reserve_cur < reserve_min) {
-			size_t diff = reserve_min - reserve_cur;
-#else
-		while (reserve_cur < reserve_min) {
-#  define diff chunksize
-#endif
-			void *chunk;
-
-			malloc_mutex_unlock(&reserve_mtx);
-			chunk = chunk_alloc_mmap(diff, true);
-			malloc_mutex_lock(&reserve_mtx);
-			if (chunk == NULL) {
-				uint64_t seq = 0;
-
-				do {
-					seq = reserve_notify(RESERVE_CND_LOW,
-					    size, seq);
-					if (seq == 0)
-						goto MALLOC_OUT;
-				} while (reserve_cur < reserve_min);
-			} else {
-				extent_node_t *node;
-
-				node = chunk_dealloc_reserve(chunk, diff);
-				if (node == NULL) {
-					uint64_t seq = 0;
-
-					pages_unmap(chunk, diff);
-					do {
-						seq = reserve_notify(
-						    RESERVE_CND_LOW, size, seq);
-						if (seq == 0)
-							goto MALLOC_OUT;
-					} while (reserve_cur < reserve_min);
-				}
-			}
-		}
-MALLOC_OUT:
-		malloc_mutex_unlock(&reserve_mtx);
-
-#ifdef MALLOC_DECOMMIT
-		pages_commit(ret, size);
-#  undef diff
-#else
-		if (zero)
-			memset(ret, 0, size);
-#endif
-		return (ret);
-	}
-	malloc_mutex_unlock(&reserve_mtx);
-
-	return (NULL);
-}
-
-static void *
 chunk_alloc(size_t size, bool zero, bool pagefile)
 {
 	void *ret;
 
 	assert(size != 0);
 	assert((size & chunksize_mask) == 0);
-
-	ret = chunk_recycle_reserve(size, zero);
-	if (ret != NULL)
-		goto RETURN;
 
 	ret = chunk_alloc_mmap(size, pagefile);
 	if (ret != NULL) {
@@ -2793,77 +2562,6 @@ RETURN:
 	return (ret);
 }
 
-static extent_node_t *
-chunk_dealloc_reserve(void *chunk, size_t size)
-{
-	extent_node_t *node;
-
-#ifdef MALLOC_DECOMMIT
-	if (size != chunksize)
-		return (NULL);
-#else
-	extent_node_t *prev, key;
-
-	key.addr = (void *)((uintptr_t)chunk + size);
-	node = extent_tree_ad_nsearch(&reserve_chunks_ad, &key);
-	/* Try to coalesce forward. */
-	if (node != NULL && node->addr == key.addr) {
-		/*
-		 * Coalesce chunk with the following address range.  This does
-		 * not change the position within reserve_chunks_ad, so only
-		 * remove/insert from/into reserve_chunks_szad.
-		 */
-		extent_tree_szad_remove(&reserve_chunks_szad, node);
-		node->addr = chunk;
-		node->size += size;
-		extent_tree_szad_insert(&reserve_chunks_szad, node);
-	} else {
-#endif
-		/* Coalescing forward failed, so insert a new node. */
-		node = base_node_alloc();
-		if (node == NULL)
-			return (NULL);
-		node->addr = chunk;
-		node->size = size;
-		extent_tree_ad_insert(&reserve_chunks_ad, node);
-		extent_tree_szad_insert(&reserve_chunks_szad, node);
-#ifndef MALLOC_DECOMMIT
-	}
-
-	/* Try to coalesce backward. */
-	prev = extent_tree_ad_prev(&reserve_chunks_ad, node);
-	if (prev != NULL && (void *)((uintptr_t)prev->addr + prev->size) ==
-	    chunk) {
-		/*
-		 * Coalesce chunk with the previous address range.  This does
-		 * not change the position within reserve_chunks_ad, so only
-		 * remove/insert node from/into reserve_chunks_szad.
-		 */
-		extent_tree_szad_remove(&reserve_chunks_szad, prev);
-		extent_tree_ad_remove(&reserve_chunks_ad, prev);
-
-		extent_tree_szad_remove(&reserve_chunks_szad, node);
-		node->addr = prev->addr;
-		node->size += prev->size;
-		extent_tree_szad_insert(&reserve_chunks_szad, node);
-
-		base_node_dealloc(prev);
-	}
-#endif
-
-#ifdef MALLOC_DECOMMIT
-	pages_decommit(chunk, size);
-#else
-	madvise(chunk, size, MADV_FREE);
-#endif
-
-	reserve_cur += size;
-	if (reserve_cur > reserve_max)
-		reserve_shrink();
-
-	return (node);
-}
-
 static void
 chunk_dealloc_mmap(void *chunk, size_t size)
 {
@@ -2874,7 +2572,6 @@ chunk_dealloc_mmap(void *chunk, size_t size)
 static void
 chunk_dealloc(void *chunk, size_t size)
 {
-	extent_node_t *node;
 
 	assert(chunk != NULL);
 	assert(CHUNK_ADDR2BASE(chunk) == chunk);
@@ -2888,12 +2585,7 @@ chunk_dealloc(void *chunk, size_t size)
 	malloc_rtree_set(chunk_rtree, (uintptr_t)chunk, NULL);
 #endif
 
-	/* Try to merge chunk into the reserve. */
-	malloc_mutex_lock(&reserve_mtx);
-	node = chunk_dealloc_reserve(chunk, size);
-	malloc_mutex_unlock(&reserve_mtx);
-	if (node == NULL)
-		chunk_dealloc_mmap(chunk, size);
+	chunk_dealloc_mmap(chunk, size);
 }
 
 /*
@@ -3315,6 +3007,7 @@ arena_run_split(arena_t *arena, arena_run_t *run, size_t size, bool large,
 			    << pagesize_2pow)), (j << pagesize_2pow));
 #  ifdef MALLOC_STATS
 			arena->stats.ncommit++;
+			arena->stats.committed += j;
 #  endif
 		} else /* No need to zero since commit zeros. */
 #endif
@@ -3416,6 +3109,7 @@ arena_chunk_init(arena_t *arena, arena_chunk_t *chunk)
 #  ifdef MALLOC_STATS
 	arena->stats.ndecommit++;
 	arena->stats.decommitted += (chunk_npages - arena_chunk_header_npages);
+	arena->stats.committed += arena_chunk_header_npages;
 #  endif
 #endif
 
@@ -3433,19 +3127,24 @@ arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk)
 			arena_chunk_tree_dirty_remove(
 			    &chunk->arena->chunks_dirty, arena->spare);
 			arena->ndirty -= arena->spare->ndirty;
+#if (defined(MALLOC_STATS) && defined(MALLOC_DECOMMIT))
+			arena->stats.committed -= arena->spare->ndirty;
+#endif
 		}
 		VALGRIND_FREELIKE_BLOCK(arena->spare, 0);
 		chunk_dealloc((void *)arena->spare, chunksize);
 #ifdef MALLOC_STATS
 		arena->stats.mapped -= chunksize;
+#  ifdef MALLOC_DECOMMIT
+		arena->stats.committed -= arena_chunk_header_npages;
+#  endif
 #endif
 	}
 
 	/*
-	 * Remove run from runs_avail, regardless of whether this chunk
-	 * will be cached, so that the arena does not use it.  Dirty page
-	 * flushing only uses the chunks_dirty tree, so leaving this chunk in
-	 * the chunks_* trees is sufficient for that purpose.
+	 * Remove run from runs_avail, so that the arena does not use it.
+	 * Dirty page flushing only uses the chunks_dirty tree, so leaving this
+	 * chunk in the chunks_* trees is sufficient for that purpose.
 	 */
 	arena_avail_tree_remove(&arena->runs_avail,
 	    &chunk->map[arena_chunk_header_npages]);
@@ -3470,7 +3169,8 @@ arena_run_alloc(arena_t *arena, arena_bin_t *bin, size_t size, bool large,
 		key.bits = size | CHUNK_MAP_KEY;
 		mapelm = arena_avail_tree_nsearch(&arena->runs_avail, &key);
 		if (mapelm != NULL) {
-			arena_chunk_t *run_chunk = (arena_chunk_t*)CHUNK_ADDR2BASE(mapelm);
+			arena_chunk_t *run_chunk =
+			    (arena_chunk_t*)CHUNK_ADDR2BASE(mapelm);
 			size_t pageind = ((uintptr_t)mapelm -
 			    (uintptr_t)run_chunk->map) /
 			    sizeof(arena_chunk_map_t);
@@ -3501,49 +3201,8 @@ arena_run_alloc(arena_t *arena, arena_bin_t *bin, size_t size, bool large,
 		 * the run.
 		 */
 		if (chunk == NULL) {
-			uint64_t chunk_seq;
-
-			/*
-			 * Record the chunk allocation sequence number in order
-			 * to detect races.
-			 */
-			arena->chunk_seq++;
-			chunk_seq = arena->chunk_seq;
-
-			/*
-			 * Drop the arena lock while allocating a chunk, since
-			 * reserve notifications may cause recursive
-			 * allocation.  Dropping the lock here opens an
-			 * allocataion race, but we recover.
-			 */
-			malloc_mutex_unlock(&arena->lock);
 			chunk = (arena_chunk_t *)chunk_alloc(chunksize, true,
 			    true);
-			malloc_mutex_lock(&arena->lock);
-
-			/*
-			 * Check whether a race allowed a usable run to appear.
-			 */
-			if (bin != NULL && (run = bin->runcur) != NULL &&
-			    run->nfree > 0) {
-				if (chunk != NULL)
-					chunk_dealloc(chunk, chunksize);
-				return (run);
-			}
-
-			/*
-			 * If this thread raced with another such that multiple
-			 * chunks were allocated, make sure that there is still
-			 * inadequate space before using this chunk.
-			 */
-			if (chunk_seq != arena->chunk_seq)
-				continue;
-
-			/*
-			 * Check for an error *after* checking for a race,
-			 * since a race could also cause a transient OOM
-			 * condition.
-			 */
 			if (chunk == NULL)
 				return (NULL);
 		}
@@ -3624,6 +3283,7 @@ arena_purge(arena_t *arena)
 #  ifdef MALLOC_STATS
 				arena->stats.ndecommit++;
 				arena->stats.decommitted += npages;
+				arena->stats.committed -= npages;
 #  endif
 #else
 				madvise((void *)((uintptr_t)chunk + (i <<
@@ -4347,7 +4007,8 @@ arena_salloc(const void *ptr)
 	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
 	pageind = (((uintptr_t)ptr - (uintptr_t)chunk) >> pagesize_2pow);
 	mapbits = chunk->map[pageind].bits;
-	assert((mapbits & CHUNK_MAP_ALLOCATED) != 0);
+	if ((mapbits & CHUNK_MAP_ALLOCATED) == 0)
+		return 0;
 	if ((mapbits & CHUNK_MAP_LARGE) == 0) {
 		arena_run_t *run = (arena_run_t *)(mapbits & ~pagesize_mask);
 		assert(run->magic == ARENA_RUN_MAGIC);
@@ -4414,7 +4075,13 @@ isalloc(const void *ptr)
 	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
 	if (chunk != ptr) {
 		/* Region. */
-		assert(chunk->arena->magic == ARENA_MAGIC);
+		__try {
+			if (chunk->arena->magic != ARENA_MAGIC)
+				return 0;
+		}
+		__except(EXCEPTION_EXECUTE_HANDLER) {
+			return 0;
+		}
 
 		ret = arena_salloc(ptr);
 	} else {
@@ -4427,7 +4094,10 @@ isalloc(const void *ptr)
 		/* Extract from tree of huge allocations. */
 		key.addr = __DECONST(void *, ptr);
 		node = extent_tree_ad_search(&huge_, &key);
-		assert(node != NULL);
+		if (node == NULL) {
+			malloc_mutex_unlock(&huge_mtx);
+			return 0;
+		}
 
 		ret = node->size;
 
@@ -4560,21 +4230,28 @@ arena_dalloc_large(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 	malloc_spin_unlock(&arena->lock);
 }
 
-static inline void
-arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
+static inline bool
+arena_dalloc(arena_chunk_t *chunk, void *ptr)
 {
+	arena_t *arena;
 	size_t pageind;
 	arena_chunk_map_t *mapelm;
 
-	assert(arena != NULL);
-	assert(arena->magic == ARENA_MAGIC);
-	assert(chunk->arena == arena);
+	__try {
+		arena = chunk->arena;
+		if (arena->magic != ARENA_MAGIC)
+			return false;
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER) {
+		return false;
+	}
 	assert(ptr != NULL);
 	assert(CHUNK_ADDR2BASE(ptr) != ptr);
 
 	pageind = (((uintptr_t)ptr - (uintptr_t)chunk) >> pagesize_2pow);
 	mapelm = &chunk->map[pageind];
-	assert((mapelm->bits & CHUNK_MAP_ALLOCATED) != 0);
+	if ((mapelm->bits & CHUNK_MAP_ALLOCATED) == 0)
+		return false;
 	if ((mapelm->bits & CHUNK_MAP_LARGE) == 0) {
 		/* Small allocation. */
 		malloc_spin_lock(&arena->lock);
@@ -4583,9 +4260,10 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 	} else
 		arena_dalloc_large(arena, chunk, ptr);
 	VALGRIND_FREELIKE_BLOCK(ptr, 0);
+	return true;
 }
 
-static inline void
+static inline bool
 idalloc(void *ptr)
 {
 	arena_chunk_t *chunk;
@@ -4594,9 +4272,9 @@ idalloc(void *ptr)
 
 	chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
 	if (chunk != ptr)
-		arena_dalloc(chunk->arena, chunk, ptr);
+		return arena_dalloc(chunk, ptr);
 	else
-		huge_dalloc(ptr);
+		return huge_dalloc(ptr);
 }
 
 static void
@@ -4691,8 +4369,14 @@ arena_ralloc_large(void *ptr, size_t size, size_t oldsize)
 		arena_t *arena;
 
 		chunk = (arena_chunk_t *)CHUNK_ADDR2BASE(ptr);
-		arena = chunk->arena;
-		assert(arena->magic == ARENA_MAGIC);
+		__try {
+			arena = chunk->arena;
+			if (arena->magic != ARENA_MAGIC)
+				return false;
+		}
+		__except(EXCEPTION_EXECUTE_HANDLER) {
+			return false;
+		}
 
 		if (psize < oldsize) {
 #ifdef MALLOC_FILL
@@ -4784,6 +4468,8 @@ iralloc(void *ptr, size_t size)
 	assert(size != 0);
 
 	oldsize = isalloc(ptr);
+	if (oldsize == 0)
+		return (NULL);
 
 #ifndef MALLOC_VALGRIND
 	if (size <= arena_maxclass)
@@ -4822,8 +4508,6 @@ arena_new(arena_t *arena)
 #ifdef MALLOC_STATS
 	memset(&arena->stats, 0, sizeof(arena_stats_t));
 #endif
-
-	arena->chunk_seq = 0;
 
 	/* Initialize chunks. */
 	arena_chunk_tree_dirty_new(&arena->chunks_dirty);
@@ -4886,9 +4570,7 @@ arena_new(arena_t *arena)
 #endif
 	}
 
-#ifdef MALLOC_DEBUG
 	arena->magic = ARENA_MAGIC;
-#endif
 
 	return (false);
 }
@@ -5228,7 +4910,7 @@ huge_ralloc(void *ptr, size_t size, size_t oldsize)
 	return (ret);
 }
 
-static void
+static bool
 huge_dalloc(void *ptr)
 {
 	extent_node_t *node, key;
@@ -5238,7 +4920,10 @@ huge_dalloc(void *ptr)
 	/* Extract from tree of huge allocations. */
 	key.addr = ptr;
 	node = extent_tree_ad_search(&huge_, &key);
-	assert(node != NULL);
+	if (node == NULL) {
+		malloc_mutex_unlock(&huge_mtx);
+		return false;
+	}
 	assert(node->addr == ptr);
 	extent_tree_ad_remove(&huge_, node);
 
@@ -5262,6 +4947,8 @@ huge_dalloc(void *ptr)
 	VALGRIND_FREELIKE_BLOCK(node->addr, 0);
 
 	base_node_dealloc(node);
+
+	return true;
 }
 
 #ifdef MOZ_MEMORY_BSD
@@ -5465,29 +5152,13 @@ malloc_print_stats(void)
 			mapped += base_mapped;
 			malloc_mutex_unlock(&base_mtx);
 
-#ifdef xxMOZ_MEMORY_WINDOWS
+#ifdef MOZ_MEMORY_WINDOWS
 			malloc_printf("Allocated: %lu, mapped: %lu\n",
 			    allocated, mapped);
 #else
 			malloc_printf("Allocated: %zu, mapped: %zu\n",
 			    allocated, mapped);
 #endif
-
-			malloc_mutex_lock(&reserve_mtx);
-			malloc_printf("Reserve:    min          "
-			    "cur          max\n");
-#ifdef xxMOZ_MEMORY_WINDOWS
-			malloc_printf("   %12lu %12lu %12lu\n",
-			    CHUNK_CEILING(reserve_min) >> opt_chunk_2pow,
-			    reserve_cur >> opt_chunk_2pow,
-			    reserve_max >> opt_chunk_2pow);
-#else
-			malloc_printf("   %12zu %12zu %12zu\n",
-			    CHUNK_CEILING(reserve_min) >> opt_chunk_2pow,
-			    reserve_cur >> opt_chunk_2pow,
-			    reserve_max >> opt_chunk_2pow);
-#endif
-			malloc_mutex_unlock(&reserve_mtx);
 
 #ifdef MALLOC_BALANCE
 			malloc_printf("Arena balance reassignments: %llu\n",
@@ -5513,7 +5184,7 @@ malloc_print_stats(void)
 			/* Print chunk stats. */
 			malloc_printf(
 			    "huge: nmalloc      ndalloc    allocated\n");
-#ifdef xxMOZ_MEMORY_WINDOWS
+#ifdef MOZ_MEMORY_WINDOWS
 			malloc_printf(" %12llu %12llu %12lu\n",
 			    huge_nmalloc, huge_ndalloc, huge_allocated);
 #else
@@ -5760,12 +5431,6 @@ MALLOC_OUT:
 					else if ((opt_dirty_max << 1) != 0)
 						opt_dirty_max <<= 1;
 					break;
-				case 'g':
-					opt_reserve_range_lshift--;
-					break;
-				case 'G':
-					opt_reserve_range_lshift++;
-					break;
 #ifdef MALLOC_FILL
 				case 'j':
 					opt_junk = false;
@@ -5818,12 +5483,6 @@ MALLOC_OUT:
 					if (opt_quantum_2pow < pagesize_2pow -
 					    1)
 						opt_quantum_2pow++;
-					break;
-				case 'r':
-					opt_reserve_min_lshift--;
-					break;
-				case 'R':
-					opt_reserve_min_lshift++;
 					break;
 				case 's':
 					if (opt_small_max_2pow >
@@ -5972,9 +5631,11 @@ MALLOC_OUT:
 	/* Initialize base allocation data structures. */
 #ifdef MALLOC_STATS
 	base_mapped = 0;
+#  ifdef MALLOC_DECOMMIT
+	base_committed = 0;
+#  endif
 #endif
 	base_nodes = NULL;
-	base_reserve_regs = NULL;
 	malloc_mutex_init(&base_mtx);
 
 #ifdef MOZ_MEMORY_NARENAS_DEFAULT_ONE
@@ -6101,27 +5762,6 @@ MALLOC_OUT:
 		return (true);
 #endif
 
-	/*
-	 * Configure and initialize the memory reserve.  This needs to happen
-	 * late during initialization, since chunks are allocated.
-	 */
-	malloc_mutex_init(&reserve_mtx);
-	reserve_min = 0;
-	reserve_cur = 0;
-	reserve_max = 0;
-	if (RESERVE_RANGE_2POW_DEFAULT + opt_reserve_range_lshift >= 0) {
-		reserve_max += chunksize << (RESERVE_RANGE_2POW_DEFAULT +
-		    opt_reserve_range_lshift);
-	}
-	ql_new(&reserve_regs);
-	reserve_seq = 0;
-	extent_tree_szad_new(&reserve_chunks_szad);
-	extent_tree_ad_new(&reserve_chunks_ad);
-	if (RESERVE_MIN_2POW_DEFAULT + opt_reserve_min_lshift >= 0) {
-		reserve_min_set(chunksize << (RESERVE_MIN_2POW_DEFAULT +
-		    opt_reserve_min_lshift));
-	}
-
 	malloc_initialized = true;
 #ifndef MOZ_MEMORY_WINDOWS
 	malloc_mutex_unlock(&init_lock);
@@ -6159,7 +5799,7 @@ malloc_shutdown()
 
 /* Mangle standard interfaces on Darwin and Windows CE, 
    in order to avoid linking problems. */
-#if defined(MOZ_MEMORY_DARWIN) || defined(MOZ_MEMORY_WINCE)
+#if defined(MOZ_MEMORY_DARWIN)
 #define	malloc(a)	moz_malloc(a)
 #define	valloc(a)	moz_valloc(a)
 #define	calloc(a, b)	moz_calloc(a, b)
@@ -6494,12 +6134,6 @@ jemalloc_stats(jemalloc_stats_t *stats)
 	stats->chunksize = chunksize;
 	stats->dirty_max = opt_dirty_max;
 
-	malloc_mutex_lock(&reserve_mtx);
-	stats->reserve_min = reserve_min;
-	stats->reserve_max = reserve_max;
-	stats->reserve_cur = reserve_cur;
-	malloc_mutex_unlock(&reserve_mtx);
-
 	/*
 	 * Gather current memory usage statistics.
 	 */
@@ -6521,7 +6155,8 @@ jemalloc_stats(jemalloc_stats_t *stats)
 	malloc_mutex_lock(&base_mtx);
 	stats->mapped += base_mapped;
 #ifdef MALLOC_DECOMMIT
-	stats->committed += base_mapped;
+	assert(base_committed <= base_mapped);
+	stats->committed += base_committed;
 #endif
 	malloc_mutex_unlock(&base_mtx);
 
@@ -6535,17 +6170,8 @@ jemalloc_stats(jemalloc_stats_t *stats)
 			stats->allocated += arena->stats.allocated_small;
 			stats->allocated += arena->stats.allocated_large;
 #ifdef MALLOC_DECOMMIT
-			rb_foreach_begin(arena_chunk_t, link_dirty,
-			    &arena->chunks_dirty, chunk) {
-				size_t j;
-
-				for (j = 0; j < chunk_npages; j++) {
-					if ((chunk->map[j].bits &
-					    CHUNK_MAP_DECOMMITTED) == 0)
-						stats->committed += pagesize;
-				}
-			} rb_foreach_end(arena_chunk_t, link_dirty,
-			    &arena->chunks_dirty, chunk)
+			stats->committed += (arena->stats.committed <<
+			    pagesize_2pow);
 #endif
 			stats->dirty += (arena->ndirty << pagesize_2pow);
 			malloc_spin_unlock(&arena->lock);
@@ -6555,458 +6181,10 @@ jemalloc_stats(jemalloc_stats_t *stats)
 #ifndef MALLOC_DECOMMIT
 	stats->committed = stats->mapped;
 #endif
+	assert(stats->mapped >= stats->committed);
+	assert(stats->committed >= stats->allocated);
 }
 #endif
-
-#ifdef MALLOC_XMALLOC
-void *
-xmalloc(size_t size)
-{
-	void *ret;
-
-	if (malloc_init())
-		reserve_fail(size, "xmalloc");
-
-	if (size == 0) {
-#ifdef MALLOC_SYSV
-		if (opt_sysv == false)
-#endif
-			size = 1;
-#ifdef MALLOC_SYSV
-		else {
-			_malloc_message(_getprogname(),
-			    ": (malloc) Error in xmalloc(): ",
-			    "invalid size 0", "\n");
-			abort();
-		}
-#endif
-	}
-
-	ret = imalloc(size);
-	if (ret == NULL) {
-		uint64_t seq = 0;
-
-		do {
-			seq = reserve_crit(size, "xmalloc", seq);
-			ret = imalloc(size);
-		} while (ret == NULL);
-	}
-
-	UTRACE(0, size, ret);
-	return (ret);
-}
-
-void *
-xcalloc(size_t num, size_t size)
-{
-	void *ret;
-	size_t num_size;
-
-	num_size = num * size;
-	if (malloc_init())
-		reserve_fail(num_size, "xcalloc");
-
-	if (num_size == 0) {
-#ifdef MALLOC_SYSV
-		if ((opt_sysv == false) && ((num == 0) || (size == 0)))
-#endif
-			num_size = 1;
-#ifdef MALLOC_SYSV
-		else {
-			_malloc_message(_getprogname(),
-			    ": (malloc) Error in xcalloc(): ",
-			    "invalid size 0", "\n");
-			abort();
-		}
-#endif
-	/*
-	 * Try to avoid division here.  We know that it isn't possible to
-	 * overflow during multiplication if neither operand uses any of the
-	 * most significant half of the bits in a size_t.
-	 */
-	} else if (((num | size) & (SIZE_T_MAX << (sizeof(size_t) << 2)))
-	    && (num_size / size != num)) {
-		/* size_t overflow. */
-		_malloc_message(_getprogname(),
-		    ": (malloc) Error in xcalloc(): ",
-		    "size overflow", "\n");
-		abort();
-	}
-
-	ret = icalloc(num_size);
-	if (ret == NULL) {
-		uint64_t seq = 0;
-
-		do {
-			seq = reserve_crit(num_size, "xcalloc", seq);
-			ret = icalloc(num_size);
-		} while (ret == NULL);
-	}
-
-	UTRACE(0, num_size, ret);
-	return (ret);
-}
-
-void *
-xrealloc(void *ptr, size_t size)
-{
-	void *ret;
-
-	if (size == 0) {
-#ifdef MALLOC_SYSV
-		if (opt_sysv == false)
-#endif
-			size = 1;
-#ifdef MALLOC_SYSV
-		else {
-			if (ptr != NULL)
-				idalloc(ptr);
-			_malloc_message(_getprogname(),
-			    ": (malloc) Error in xrealloc(): ",
-			    "invalid size 0", "\n");
-			abort();
-		}
-#endif
-	}
-
-	if (ptr != NULL) {
-		assert(malloc_initialized);
-
-		ret = iralloc(ptr, size);
-		if (ret == NULL) {
-			uint64_t seq = 0;
-
-			do {
-				seq = reserve_crit(size, "xrealloc", seq);
-				ret = iralloc(ptr, size);
-			} while (ret == NULL);
-		}
-	} else {
-		if (malloc_init())
-			reserve_fail(size, "xrealloc");
-
-		ret = imalloc(size);
-		if (ret == NULL) {
-			uint64_t seq = 0;
-
-			do {
-				seq = reserve_crit(size, "xrealloc", seq);
-				ret = imalloc(size);
-			} while (ret == NULL);
-		}
-	}
-
-	UTRACE(ptr, size, ret);
-	return (ret);
-}
-
-void *
-xmemalign(size_t alignment, size_t size)
-{
-	void *ret;
-
-	assert(((alignment - 1) & alignment) == 0 && alignment >=
-	    sizeof(void *));
-
-	if (malloc_init())
-		reserve_fail(size, "xmemalign");
-
-	ret = ipalloc(alignment, size);
-	if (ret == NULL) {
-		uint64_t seq = 0;
-
-		do {
-			seq = reserve_crit(size, "xmemalign", seq);
-			ret = ipalloc(alignment, size);
-		} while (ret == NULL);
-	}
-
-	UTRACE(0, size, ret);
-	return (ret);
-}
-#endif
-
-static void
-reserve_shrink(void)
-{
-	extent_node_t *node;
-
-	assert(reserve_cur > reserve_max);
-#ifdef MALLOC_DEBUG
-	{
-		extent_node_t *node;
-		size_t reserve_size;
-
-		reserve_size = 0;
-		rb_foreach_begin(extent_node_t, link_szad, &reserve_chunks_szad,
-		    node) {
-			reserve_size += node->size;
-		} rb_foreach_end(extent_node_t, link_szad, &reserve_chunks_szad,
-		    node)
-		assert(reserve_size == reserve_cur);
-
-		reserve_size = 0;
-		rb_foreach_begin(extent_node_t, link_ad, &reserve_chunks_ad,
-		    node) {
-			reserve_size += node->size;
-		} rb_foreach_end(extent_node_t, link_ad, &reserve_chunks_ad,
-		    node)
-		assert(reserve_size == reserve_cur);
-	}
-#endif
-
-	/* Discard chunks until the the reserve is below the size limit. */
-	rb_foreach_reverse_begin(extent_node_t, link_ad, &reserve_chunks_ad,
-	    node) {
-#ifndef MALLOC_DECOMMIT
-		if (node->size <= reserve_cur - reserve_max) {
-#endif
-			extent_node_t *tnode = extent_tree_ad_prev(
-			    &reserve_chunks_ad, node);
-
-#ifdef MALLOC_DECOMMIT
-			assert(node->size <= reserve_cur - reserve_max);
-#endif
-
-			/* Discard the entire [multi-]chunk. */
-			extent_tree_szad_remove(&reserve_chunks_szad, node);
-			extent_tree_ad_remove(&reserve_chunks_ad, node);
-			reserve_cur -= node->size;
-			pages_unmap(node->addr, node->size);
-#ifdef MALLOC_STATS
-			stats_chunks.curchunks -= (node->size / chunksize);
-#endif
-			base_node_dealloc(node);
-			if (reserve_cur == reserve_max)
-				break;
-
-			rb_foreach_reverse_prev(extent_node_t, link_ad,
-			    extent_ad_comp, &reserve_chunks_ad, tnode);
-#ifndef MALLOC_DECOMMIT
-		} else {
-			/* Discard the end of the multi-chunk. */
-			extent_tree_szad_remove(&reserve_chunks_szad, node);
-			node->size -= reserve_cur - reserve_max;
-			extent_tree_szad_insert(&reserve_chunks_szad, node);
-			pages_unmap((void *)((uintptr_t)node->addr +
-			    node->size), reserve_cur - reserve_max);
-#ifdef MALLOC_STATS
-			stats_chunks.curchunks -= ((reserve_cur - reserve_max) /
-			    chunksize);
-#endif
-			reserve_cur = reserve_max;
-			break;
-		}
-#endif
-		assert(reserve_cur > reserve_max);
-	} rb_foreach_reverse_end(extent_node_t, link_ad, &reserve_chunks_ad,
-	    node)
-}
-
-/* Send a condition notification. */
-static uint64_t
-reserve_notify(reserve_cnd_t cnd, size_t size, uint64_t seq)
-{
-	reserve_reg_t *reg;
-
-	/* seq is used to keep track of distinct condition-causing events. */
-	if (seq == 0) {
-		/* Allocate new sequence number. */
-		reserve_seq++;
-		seq = reserve_seq;
-	}
-
-	/*
-	 * Advance to the next callback registration and send a notification,
-	 * unless one has already been sent for this condition-causing event.
-	 */
-	reg = ql_first(&reserve_regs);
-	if (reg == NULL)
-		return (0);
-	ql_first(&reserve_regs) = ql_next(&reserve_regs, reg, link);
-	if (reg->seq == seq)
-		return (0);
-	reg->seq = seq;
-	malloc_mutex_unlock(&reserve_mtx);
-	reg->cb(reg->ctx, cnd, size);
-	malloc_mutex_lock(&reserve_mtx);
-
-	return (seq);
-}
-
-/* Allocation failure due to OOM.  Try to free some memory via callbacks. */
-static uint64_t
-reserve_crit(size_t size, const char *fname, uint64_t seq)
-{
-
-	/*
-	 * Send one condition notification.  Iteration is handled by the
-	 * caller of this function.
-	 */
-	malloc_mutex_lock(&reserve_mtx);
-	seq = reserve_notify(RESERVE_CND_CRIT, size, seq);
-	malloc_mutex_unlock(&reserve_mtx);
-
-	/* If no notification could be sent, then no further recourse exists. */
-	if (seq == 0)
-		reserve_fail(size, fname);
-
-	return (seq);
-}
-
-/* Permanent allocation failure due to OOM. */
-static void
-reserve_fail(size_t size, const char *fname)
-{
-	uint64_t seq = 0;
-
-	/* Send fail notifications. */
-	malloc_mutex_lock(&reserve_mtx);
-	do {
-		seq = reserve_notify(RESERVE_CND_FAIL, size, seq);
-	} while (seq != 0);
-	malloc_mutex_unlock(&reserve_mtx);
-
-	/* Terminate the application. */
-	_malloc_message(_getprogname(),
-	    ": (malloc) Error in ", fname, "(): out of memory\n");
-	abort();
-}
-
-bool
-reserve_cb_register(reserve_cb_t *cb, void *ctx)
-{
-	reserve_reg_t *reg = base_reserve_reg_alloc();
-	if (reg == NULL)
-		return (true);
-
-	ql_elm_new(reg, link);
-	reg->cb = cb;
-	reg->ctx = ctx;
-	reg->seq = 0;
-
-	malloc_mutex_lock(&reserve_mtx);
-	ql_head_insert(&reserve_regs, reg, link);
-	malloc_mutex_unlock(&reserve_mtx);
-
-	return (false);
-}
-
-bool
-reserve_cb_unregister(reserve_cb_t *cb, void *ctx)
-{
-	reserve_reg_t *reg = NULL;
-
-	malloc_mutex_lock(&reserve_mtx);
-	ql_foreach(reg, &reserve_regs, link) {
-		if (reg->cb == cb && reg->ctx == ctx) {
-			ql_remove(&reserve_regs, reg, link);
-			break;
-		}
-	}
-	malloc_mutex_unlock(&reserve_mtx);
-
-	if (reg != NULL)
-		base_reserve_reg_dealloc(reg);
-		return (false);
-	return (true);
-}
-
-size_t
-reserve_cur_get(void)
-{
-	size_t ret;
-
-	malloc_mutex_lock(&reserve_mtx);
-	ret = reserve_cur;
-	malloc_mutex_unlock(&reserve_mtx);
-
-	return (ret);
-}
-
-size_t
-reserve_min_get(void)
-{
-	size_t ret;
-
-	malloc_mutex_lock(&reserve_mtx);
-	ret = reserve_min;
-	malloc_mutex_unlock(&reserve_mtx);
-
-	return (ret);
-}
-
-bool
-reserve_min_set(size_t min)
-{
-
-	min = CHUNK_CEILING(min);
-
-	malloc_mutex_lock(&reserve_mtx);
-	/* Keep |reserve_max - reserve_min| the same. */
-	if (min < reserve_min) {
-		reserve_max -= reserve_min - min;
-		reserve_min = min;
-	} else {
-		/* Protect against wrap-around. */
-		if (reserve_max + min - reserve_min < reserve_max) {
-			reserve_min = SIZE_T_MAX - (reserve_max - reserve_min)
-			    - chunksize + 1;
-			reserve_max = SIZE_T_MAX - chunksize + 1;
-		} else {
-			reserve_max += min - reserve_min;
-			reserve_min = min;
-		}
-	}
-
-	/* Resize the reserve if necessary. */
-	if (reserve_cur < reserve_min) {
-		size_t size = reserve_min - reserve_cur;
-
-		/* Force the reserve to grow by allocating/deallocating. */
-		malloc_mutex_unlock(&reserve_mtx);
-#ifdef MALLOC_DECOMMIT
-		{
-			void **chunks;
-			size_t i, n;
-
-			n = size >> opt_chunk_2pow;
-			chunks = (void**)imalloc(n * sizeof(void *));
-			if (chunks == NULL)
-				return (true);
-			for (i = 0; i < n; i++) {
-				chunks[i] = huge_malloc(chunksize, false);
-				if (chunks[i] == NULL) {
-					size_t j;
-
-					for (j = 0; j < i; j++) {
-						huge_dalloc(chunks[j]);
-					}
-					idalloc(chunks);
-					return (true);
-				}
-			}
-			for (i = 0; i < n; i++)
-				huge_dalloc(chunks[i]);
-			idalloc(chunks);
-		}
-#else
-		{
-			void *x = huge_malloc(size, false);
-			if (x == NULL) {
-				return (true);
-			}
-			huge_dalloc(x);
-		}
-#endif
-	} else if (reserve_cur > reserve_max) {
-		reserve_shrink();
-		malloc_mutex_unlock(&reserve_mtx);
-	} else
-		malloc_mutex_unlock(&reserve_mtx);
-
-	return (false);
-}
 
 #ifdef MOZ_MEMORY_WINDOWS
 void*
@@ -7106,6 +6284,10 @@ _malloc_postfork(void)
  * End library-private functions.
  */
 /******************************************************************************/
+
+#ifdef HAVE_LIBDL
+#  include <dlfcn.h>
+#endif
 
 #ifdef MOZ_MEMORY_DARWIN
 static malloc_zone_t zone;
@@ -7267,4 +6449,27 @@ jemalloc_darwin_init(void)
 		sizeof(malloc_zone_t *) * (malloc_num_zones - 1));
 	malloc_zones[0] = &zone;
 }
+
+#elif defined(__GLIBC__) && !defined(__UCLIBC__)
+/*
+ * glibc provides the RTLD_DEEPBIND flag for dlopen which can make it possible
+ * to inconsistently reference libc's malloc(3)-compatible functions
+ * (bug 493541).
+ *
+ * These definitions interpose hooks in glibc.  The functions are actually
+ * passed an extra argument for the caller return address, which will be
+ * ignored.
+ */
+void (*__free_hook)(void *ptr) = free;
+void *(*__malloc_hook)(size_t size) = malloc;
+void *(*__realloc_hook)(void *ptr, size_t size) = realloc;
+void *(*__memalign_hook)(size_t alignment, size_t size) = memalign;
+
+#elif defined(RTLD_DEEPBIND)
+/*
+ * XXX On systems that support RTLD_GROUP or DF_1_GROUP, do their
+ * implementations permit similar inconsistencies?  Should STV_SINGLETON
+ * visibility be used for interposition where available?
+ */
+#  error "Interposing malloc is unsafe on this system without libc malloc hooks."
 #endif

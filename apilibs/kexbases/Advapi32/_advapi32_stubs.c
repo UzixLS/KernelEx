@@ -51,3 +51,7 @@ UNIMPL_FUNC(SynchronizeWindows31FilesAndWindowsNTRegistry,4);
 
 UNIMPL_FUNC(EnumServicesStatusExA, 10);
 UNIMPL_FUNC(EnumServicesStatusExW, 10);
+
+UNIMPL_FUNC(CreateProcessWithLogonW, 11);
+UNIMPL_FUNC(InitiateSystemShutdownExA, 6);
+UNIMPL_FUNC(InitiateSystemShutdownExW, 6);

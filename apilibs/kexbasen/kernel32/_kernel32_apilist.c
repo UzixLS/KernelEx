@@ -23,19 +23,18 @@
 #include "kexcoresdk.h"
 #include "_kernel32_apilist.h"
 
+extern BOOL init_threadpool();
 extern BOOL init_jemalloc();
 extern BOOL init_exttls();
-extern void uninit_jemalloc();
 extern void detach_exttls();
 
 BOOL init_kernel32()
 {
-	return init_jemalloc() && init_exttls();
+	return init_jemalloc() && init_exttls() && init_threadpool();
 }
 
 void uninit_kernel32()
 {
-	uninit_jemalloc();
 }
 
 void detach_kernel32()
@@ -49,6 +48,8 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("BuildCommDCBAndTimeoutsW", BuildCommDCBAndTimeoutsW_fwd),
 	DECL_API("BuildCommDCBW", BuildCommDCBW_fwd),
 	DECL_API("CallNamedPipeW", CallNamedPipeW_fwd),
+	DECL_API("CancelTimerQueueTimer", CancelTimerQueueTimer_new),
+	DECL_API("ChangeTimerQueueTimer", ChangeTimerQueueTimer_new),
 	DECL_API("CommConfigDialogW", CommConfigDialogW_fwd),
 	DECL_API("CreateEventW", CreateEventW_fwd),
 	DECL_API("CreateFileMappingW", CreateFileMappingW_fwd),
@@ -56,8 +57,13 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("CreateMutexW", CreateMutexW_fwd),
 	DECL_API("CreateProcessW", CreateProcessW_fwd),
 	DECL_API("CreateSemaphoreW", CreateSemaphoreW_fwd),
+	DECL_API("CreateTimerQueue", CreateTimerQueue_new),
+	DECL_API("CreateTimerQueueTimer", CreateTimerQueueTimer_new),
 	DECL_API("CreateWaitableTimerW", CreateWaitableTimerW_fwd),
 	DECL_API("DelayLoadFailureHook", DelayLoadFailureHook_new),
+	DECL_API("DeleteTimerQueue", DeleteTimerQueue_new),
+	DECL_API("DeleteTimerQueueEx", DeleteTimerQueueEx_new),
+	DECL_API("DeleteTimerQueueTimer", DeleteTimerQueueTimer_new),
 	DECL_API("EnumCalendarInfoExW", EnumCalendarInfoExW_fwd),
 	DECL_API("EnumCalendarInfoW", EnumCalendarInfoW_fwd),
 	DECL_API("EnumDateFormatsExW", EnumDateFormatsExW_fwd),
@@ -118,6 +124,7 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("SetDefaultCommConfigW", SetDefaultCommConfigW_fwd),
 	DECL_API("SetEnvironmentVariableW", SetEnvironmentVariableW_fwd),
 	DECL_API("SetLocaleInfoW", SetLocaleInfoW_fwd),
+	DECL_API("SetTimerQueueTimer", SetTimerQueueTimer_new),
 	DECL_API("SetVolumeLabelW", SetVolumeLabelW_fwd),
 	DECL_API("TlsAlloc", TlsAlloc_new),
 	DECL_API("TlsFree", TlsFree_new),
