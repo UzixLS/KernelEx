@@ -22,12 +22,16 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <malloc.h>
+#include "kexcoresdk.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void* __cdecl recalloc(void* ptr, size_t size);
 
 typedef int __stdcall STUB(void);
 typedef int __stdcall FWDPROC(void);
@@ -36,6 +40,7 @@ extern int acp_mcs;
 BOOL common_init(void);
 int WINAPI CommonUnimpStub(void);
 char* file_fixWprefix(char* in);
+void fatal_error(const char* msg);
 
 #ifdef __cplusplus
 };

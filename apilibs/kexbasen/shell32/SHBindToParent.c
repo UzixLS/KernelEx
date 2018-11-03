@@ -21,21 +21,35 @@
 
 #define CINTERFACE
 #include <shlobj.h>
-#include <shlwapi.h>
 
-/* MAKE_EXPORT SHParseDisplayName_new=SHParseDisplayName */
-HRESULT WINAPI SHParseDisplayName_new(PCWSTR pszName, IBindCtx *pbc, LPITEMIDLIST *ppidl, SFGAOF sfgaoIn, SFGAOF *psfgaoOut)
+/* MAKE_EXPORT SHBindToParent_new=SHBindToParent */
+HRESULT WINAPI SHBindToParent_new(LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast)
 {
-	IShellFolder *psf;
-	HRESULT ret = SHGetDesktopFolder(&psf);
-	if (SUCCEEDED(ret))
+	HRESULT hres;
+	LPITEMIDLIST pidlParent = ILClone(pidl);
+	if (pidlParent)
 	{
-		ULONG attrs = sfgaoIn;
-		LPOLESTR pszNameCopyW = StrDupW(pszName);
-		ret = psf->lpVtbl->ParseDisplayName(psf,NULL,pbc,pszNameCopyW,NULL,ppidl,&attrs);
-		if (psfgaoOut) *psfgaoOut = attrs;
-		psf->lpVtbl->Release(psf);
-		LocalFree(pszNameCopyW);
+		ILRemoveLastID(pidlParent);
+		IShellFolder *psf;
+		hres = SHGetDesktopFolder(&psf);
+		if (SUCCEEDED(hres))
+		{
+			if (pidl->mkid.cb == 0) //empty i.e. desktop
+				hres = psf->lpVtbl->QueryInterface(psf,riid,ppv);
+			else
+				hres = psf->lpVtbl->BindToObject(psf,pidlParent,NULL,riid,ppv);
+			psf->lpVtbl->Release(psf);
+		}	
+		ILFree(pidlParent);
+
+		if (SUCCEEDED(hres) && (*ppv == NULL)) //no interface provided?
+			hres = E_FAIL;			
 	}
-	return ret;
+	else
+		hres = E_OUTOFMEMORY;
+
+	if (ppidlLast)
+		*ppidlLast = ILFindLastID(pidl);
+	
+	return hres;
 }

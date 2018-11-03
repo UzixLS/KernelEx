@@ -35,6 +35,7 @@ static const apilib_named_api shell32_named_apis[] =
 	DECL_API("ExtractIconExW", ExtractIconExW_fwd),
 	DECL_API("ExtractIconW", ExtractIconW_fwd),
 	DECL_API("FindExecutableW", FindExecutableW_fwd),
+	DECL_API("SHBindToParent", SHBindToParent_new),
 	DECL_API("SHBrowseForFolderW", SHBrowseForFolderW_fwd),
 	DECL_API("SHFileOperationW", SHFileOperationW_fwd),
 	DECL_API("SHGetFileInfoW", SHGetFileInfoW_fwd),

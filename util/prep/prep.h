@@ -101,6 +101,9 @@ protected:
 	void parse_forward_to_unicows(const string& line) throw(exception);
 	int find_matching_export(const string& s);
 	void filter_declaration(string& s);
+
+private:
+	bool is_full_decl(const string& s, int beg, int len);
 };
 
 //////////////////////////////////////////////////////////////////////////

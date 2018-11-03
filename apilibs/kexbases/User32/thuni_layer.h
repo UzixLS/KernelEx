@@ -20,7 +20,6 @@ static DWORD GetWindowProcessId( HWND hwnd )
 #define ISDIALOG(pwnd) (pwnd->moreFlags & WF_M_DIALOG)
 
 typedef PMSGQUEUE (WINAPI *GCQ_API) ();
-typedef PWND (WINAPI *HTOP_API) (HWND hwnd);
 
 #define RELTOABS(x) ( (DWORD)(x) + *(DWORD*)(x) + 4 )
 

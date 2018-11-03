@@ -73,7 +73,6 @@ FORWARD_TO_UNICOWS(OpenSemaphoreW);
 FORWARD_TO_UNICOWS(OpenWaitableTimerW);
 FORWARD_TO_UNICOWS(PeekConsoleInputW);
 FORWARD_TO_UNICOWS(QueryDosDeviceW);
-FORWARD_TO_UNICOWS(ReadConsoleInputW);
 FORWARD_TO_UNICOWS(ReadConsoleOutputCharacterW);
 FORWARD_TO_UNICOWS(ReadConsoleOutputW);
 FORWARD_TO_UNICOWS(ReadConsoleW);

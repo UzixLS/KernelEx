@@ -858,3 +858,27 @@ LPWSTR WINAPI lstrcpynW_new(LPWSTR dst, LPCWSTR src, INT n)
 	}
 	return ret;
 }
+
+//MAKE_EXPORT ReadConsoleInputW_new=ReadConsoleInputW
+BOOL WINAPI ReadConsoleInputW_new( HANDLE hConsoleInput, PINPUT_RECORD lpBuffer,
+								   DWORD nLength, LPDWORD lpNumberOfEventsRead)
+{
+	BOOL ret = ReadConsoleInputA(hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
+	if ( ret && lpBuffer && lpNumberOfEventsRead )
+	{
+		DWORD i;
+		for (i=0;i<*lpNumberOfEventsRead;i++)
+		{
+			if (lpBuffer->EventType == KEY_EVENT)
+			{
+				WCHAR uniChar;
+				if ( MultiByteToWideChar(CP_OEMCP,0,&lpBuffer->Event.KeyEvent.uChar.AsciiChar,1,&uniChar,1) )
+					lpBuffer->Event.KeyEvent.uChar.UnicodeChar = uniChar;
+				else //fallback
+					lpBuffer->Event.KeyEvent.uChar.UnicodeChar = lpBuffer->Event.KeyEvent.uChar.AsciiChar;
+			}
+			lpBuffer++;
+		}
+	}
+	return ret;
+}

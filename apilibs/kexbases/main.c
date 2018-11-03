@@ -28,10 +28,11 @@
 #include "comdlg32/_comdlg32_apilist.h"
 #include "shell32/_shell32_apilist.h"
 #include "version/_version_apilist.h"
+#include "comctl32/_comctl32_apilist.h"
 //#include "/__apilist.h"
 
 static LONG inited = 0;
-static apilib_api_table api_table[8];
+static apilib_api_table api_table[9];
 
 static void fill_apitable()
 {
@@ -42,6 +43,7 @@ static void fill_apitable()
 	api_table[4] = apitable_comdlg32;
 	api_table[5] = apitable_shell32;
 	api_table[6] = apitable_version;
+	api_table[7] = apitable_comctl32;
 	//last entry is null terminator
 }
 
@@ -55,7 +57,7 @@ const apilib_api_table* get_api_table()
 
 BOOL init_once()
 {
-	return common_init() && init_kernel32() && init_gdi32() && init_user32() && init_advapi32() && init_comdlg32() && init_shell32() && init_version();
+	return common_init() && init_kernel32() && init_gdi32() && init_user32() && init_advapi32() && init_comdlg32() && init_shell32() && init_version() && init_comctl32();
 }
 
 BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, BOOL load_static)

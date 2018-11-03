@@ -659,8 +659,8 @@ static BOOL WINAPI IsKnownKexDLL(char* name, const char* ext)
 {
 	LONG res;
 	DWORD type;
-	char path[MAX_PATH];
-	DWORD size = sizeof(path);
+	char new_path[MAX_PATH];
+	DWORD size = sizeof(new_path);
 
 	if (ext && strcmp(ext, "DLL") != 0)
 		return FALSE;
@@ -670,12 +670,33 @@ static BOOL WINAPI IsKnownKexDLL(char* name, const char* ext)
 	
 	if (are_extensions_enabled())
 	{
-		//workaround windows bug
-		int pos = strlen(name) - 4;
-		if (pos > 0 && name[pos] == '.')
-		name[pos] = '\0';
+		int len = strlen(name);
 
-		res = RegQueryValueEx(known_dlls_key, name, NULL, &type, (BYTE*) path, &size);
+		//workaround windows bug
+		int pos = len - 4;
+		if (pos > 0 && name[pos] == '.')
+		{
+			name[pos] = '\0';
+			len = pos;
+		}
+
+		char* file = name;
+
+		//find where directory part ends
+		while (len > 0)
+		{
+			len--;
+			if (name[len] == '\\')
+			{
+				file = name + len + 1;
+				break;
+			}
+		}
+
+		if (!len || (len == system_path_len && !strncmp(name, system_path, len)))
+			res = RegQueryValueEx(known_dlls_key, file, NULL, &type, (BYTE*) new_path, &size);
+		else
+			res = ERROR_INVALID_FUNCTION;
 	}
 	else
 		res = ERROR_INVALID_FUNCTION;
@@ -683,7 +704,7 @@ static BOOL WINAPI IsKnownKexDLL(char* name, const char* ext)
 	if (res == ERROR_SUCCESS && type == REG_SZ)
 	{
 		memcpy(name, (const char*) kernelex_dir, kernelex_dir.length());
-		memcpy(name + kernelex_dir.length(), path, size);
+		memcpy(name + kernelex_dir.length(), new_path, size);
 		return TRUE;
 	}
 	else
@@ -725,13 +746,31 @@ static BOOL WINAPI KexResourceCheck(DWORD un0, DWORD un1, DWORD un2, DWORD* pNam
 	return GetOrdinal(un0, un1, un2, pNameOrId, pResult, un3);
 }
 
+/** Retrieves address of kernel32 function exported by ordinal.
+ * @param [in] ord function ordinal number
+ * @return function address or NULL if not found
+ */
+PROC WINAPI GetK32OrdinalAddress(WORD wOrd)
+{
+	IMAGE_DOS_HEADER* dosh = (IMAGE_DOS_HEADER*) h_kernel32;
+	IMAGE_NT_HEADERS* nth = (IMAGE_NT_HEADERS*)((LONG)dosh + dosh->e_lfanew);
+	return OriExportFromOrdinal(nth, wOrd);
+}
+
+/** GetProcAddress variant used to bypass CORE's resolver hook 
+ *  (get real procedure address not overridden one).
+ * @param [in] hModule module handle
+ * @param [in] lpProcName procedure name or ordinal number (high word zeroed)
+ * @return function address or NULL if not found
+ */
 PROC WINAPI iGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
-	IMAGE_DOS_HEADER* dos_hdr;
-	IMAGE_NT_HEADERS* nt_hdr;
+	DBGASSERT(MRFromHLib != NULL);
+	DBGASSERT(ppmteModTable != NULL);
 
-	dos_hdr = (IMAGE_DOS_HEADER*) hModule;
-	nt_hdr = (IMAGE_NT_HEADERS*)((int)dos_hdr + dos_hdr->e_lfanew);
+	MODREF* mr = MRFromHLib(hModule);
+	IMTE* imte = (*ppmteModTable)[mr->mteIndex];
+	IMAGE_NT_HEADERS* nt_hdr = imte->pNTHdr;
 
 	if ((DWORD)lpProcName < 0x10000) 
 		return OriExportFromOrdinal(nt_hdr, LOWORD(lpProcName));

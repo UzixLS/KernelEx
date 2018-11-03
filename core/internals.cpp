@@ -250,7 +250,7 @@ static IMTE*** find_mod_table()
 
 	IMTE*** ret;
 	
-	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) GetK32OrdinalAddress(23), 0x20, pat, pat_len, pat_name);
 	
 	ret = (IMTE***)*res;
 	DBGPRINTF(("%s @ 0x%08x\n", pat_name, ret));
@@ -265,7 +265,7 @@ static MRFromHLib_t find_MRFromHLib()
 
 	MRFromHLib_t ret;
 
-	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) GetK32OrdinalAddress(23), 0x20, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -441,9 +441,9 @@ int internals_init()
 	DBGPRINTF(("internals_init()\n"));
 	h_kernel32 = GetModuleHandle("kernel32");
 	ppmteModTable = find_mod_table();
+	MRFromHLib = find_MRFromHLib();
 	krnl32lock = find_krnl32lock();
 	pppdbCur = find_curPDB();
-	MRFromHLib = find_MRFromHLib();
 	pimteMax = find_pimteMax();
 	TIDtoTDB = find_TIDtoTDB();
 	MRLoadTree = find_MRLoadTree();
@@ -454,7 +454,7 @@ int internals_init()
 	is_winme = (GetVersion() == 0xc0005a04);
 	bool modinit_rslt = ModuleInitializer_init();
 
-	if (!h_kernel32 || !ppmteModTable || !krnl32lock || !pppdbCur || !MRFromHLib
+	if (!h_kernel32 || !ppmteModTable || !MRFromHLib || !krnl32lock || !pppdbCur
 			|| !pimteMax || !TIDtoTDB || !MRLoadTree || !FreeLibTree 
 			|| !FreeLibRemove || !AllocHandle || !instdir_rslt 
 			|| !modinit_rslt)

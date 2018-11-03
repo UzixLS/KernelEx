@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008, Xeno86
+ *  Copyright (C) 2010, Xeno86, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -21,38 +21,31 @@
 
 #include "common.h"
 
-int acp_mcs;
+BOOL WINAPI SystemFunction036_new(PVOID pbBuffer, ULONG dwLen);
 
-static int GetMaxCharSize(UINT CodePage)
+static LONG get_pointer_obfuscator(void)
 {
-	CPINFO cpi;
-	if (!GetCPInfo(CodePage, &cpi))
-		return 2;
-	return cpi.MaxCharSize;
+    static LONG obfuscator;
+
+    if (obfuscator == 0)
+    {
+		LONG rand;
+		SystemFunction036_new(&rand, sizeof(rand));
+		rand |= 0xc0000000;
+		InterlockedCompareExchange(&obfuscator, rand, 0);
+    }
+
+    return obfuscator;
 }
 
-BOOL common_init(void)
-{
-	acp_mcs = GetMaxCharSize(CP_ACP);
-	return TRUE;
-}
+/* FIXME: EncodePointer/DecodePointer should use per-process obfuscator */
 
-char* file_fixWprefix(char* in)
+/* MAKE_EXPORT XorPointer=EncodePointer */
+/* MAKE_EXPORT XorPointer=DecodePointer */
+/* MAKE_EXPORT XorPointer=EncodeSystemPointer */
+/* MAKE_EXPORT XorPointer=DecodeSystemPointer */
+PVOID WINAPI XorPointer(PVOID ptr)
 {
-	if (*(int *)in == 0x5c3f5c5c) //if (!strncmp(in, "\\?\", 4))
-	{
-		in += 4;
-		if (*(int *)in == 0x5c434e55) //if (!strncmp(in, "UNC\", 4))
-		{
-			in += 2;
-			*in = '\\';
-		}
-	}
-	return in;
-}
-
-void fatal_error(const char* msg)
-{
-	MessageBox(NULL, msg, "KernelEx error", MB_OK | MB_ICONERROR);
-	ExitProcess(1);
+    LONG ptrval = (LONG) ptr;
+    return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }

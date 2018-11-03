@@ -7,3 +7,5 @@ shell32
 rpcrt4
 winspool
 shfolder
+winmm
+ws2_32

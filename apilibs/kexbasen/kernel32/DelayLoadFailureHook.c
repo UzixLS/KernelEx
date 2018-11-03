@@ -19,7 +19,7 @@
  *
  */
 
-#include <windows.h>
+#include "common.h"
 
 typedef struct
 {
@@ -52,7 +52,7 @@ FARPROC WINAPI DelayLoadFailureHook_new(
 			hShlwapi = LoadLibrary("shlwapi.dll");
 	}
 
-	DLFH ShlwapiDelayLoad = (DLFH) GetProcAddress(hShlwapi,"DelayLoadFailureHook");
+	DLFH ShlwapiDelayLoad = (DLFH) kexGetProcAddress(hShlwapi,"DelayLoadFailureHook");
 	if (!ShlwapiDelayLoad) 
 		return NULL;
 

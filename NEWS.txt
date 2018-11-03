@@ -1,3 +1,41 @@
+KernelEx v4.5 RC 4 by Xeno86
+2010-09-21
+
+What's new:
+-----------
+* Fixed: missing background colors and images in Mozilla Firefox 3.6.9/3.6.10
+* Fixed: MSIMG32 warning and menu icon transparency issues in Opera 10.62
+* Fixed: crashes introduced in RC 3
+* KernelEx auxiliary libraries weren't loaded when full path to system file was passed in call to LoadLibary
+
+#################################################
+
+KernelEx v4.5 RC 3 by Xeno86
+2010-09-10
+
+hotfix to prevent DLL circular-references causing crashes on certain configurations
+
+#################################################
+
+KernelEx v4.5 RC 2 by Xeno86
+2010-09-08
+
+What's new:
+-----------
+* Implemented SysLink common control class
+
+Apps fixed / now working:
+-------------------------
+* Fixed: Google Picasa options dialog (empty tabs)
+* Fixed: Adobe Flash Player crashes (reported by mailcat via sf.net forum)
+* Fixed: Adobe Flash Player 10.1 volume control
+* Fixed: Wizard101 game crash (bug #3041092)
+* Fixed: Maxthon browser (freezing)
+* Now working: Maxthon 1.6.7
+* Now working: VLC 1.1.2 (without RP9)
+
+#################################################
+
 KernelEx v4.5 RC 1 by Xeno86
 2010-07-30
 
@@ -18,7 +56,7 @@ Apps fixed / now working:
 * Fixed: VLC 1.0+ (UI)
 * Fixed: Firefox 3.6.4+ (high cpu usage)
 * Now working: Adobe Flash 10.1 plugin
-* Now working: Mozilla Firefox 4.0 Beta 1
+* Now working: Mozilla Firefox 4.0 Beta 2
 * Now working: Artweaver 1.0
 * Now working: MPC-HC (newer builds, svn build 1391+)
 

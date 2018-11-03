@@ -23,6 +23,7 @@
 #define _RPCRT4_APILIST_H
 
 #include "kexcoresdk.h"
+#include <rpc.h>
 
 BOOL init_rpcrt4();
 extern const apilib_api_table apitable_rpcrt4;

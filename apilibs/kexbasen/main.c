@@ -31,9 +31,11 @@
 #include "rpcrt4/_rpcrt4_apilist.h"
 #include "winspool/_winspool_apilist.h"
 #include "shfolder/_shfolder_apilist.h"
+#include "winmm/_winmm_apilist.h"
+#include "ws2_32/_ws2_32_apilist.h"
 //#include "/__apilist.h"
 
-static apilib_api_table api_table[10];
+static apilib_api_table api_table[12];
 
 static void fill_apitable()
 {
@@ -46,6 +48,8 @@ static void fill_apitable()
 	api_table[6] = apitable_rpcrt4;
 	api_table[7] = apitable_winspool;
 	api_table[8] = apitable_shfolder;
+	api_table[9] = apitable_winmm;
+	api_table[10] = apitable_ws2_32;
 	//last entry is null terminator
 }
 
@@ -59,7 +63,9 @@ const apilib_api_table* get_api_table()
 
 static BOOL init()
 {
-	return common_init() && init_kernel32() && init_gdi32() && init_user32() && init_advapi32() && init_comdlg32() && init_shell32() && init_rpcrt4() && init_winspool() && init_shfolder();
+	return common_init() && init_kernel32() && init_gdi32() && init_user32() 
+		&& init_advapi32() && init_comdlg32() && init_shell32() && init_rpcrt4() 
+		&& init_winspool() && init_shfolder() && init_winmm() && init_ws2_32();
 }
 
 static void uninit()

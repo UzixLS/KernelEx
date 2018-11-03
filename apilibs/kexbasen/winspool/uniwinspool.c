@@ -30,6 +30,7 @@
 
 #include "common.h"
 #include "unifwd.h"
+#include <winspool.h>
 
 static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1), sizeof(PRINTER_INFO_2),
                                      sizeof(PRINTER_INFO_3), sizeof(PRINTER_INFO_4),

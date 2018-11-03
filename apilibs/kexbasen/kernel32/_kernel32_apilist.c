@@ -112,7 +112,6 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("PeekConsoleInputW", PeekConsoleInputW_fwd),
 	DECL_API("QueryDosDeviceW", QueryDosDeviceW_fwd),
 	DECL_API("QueueUserWorkItem", QueueUserWorkItem_new),
-	DECL_API("ReadConsoleInputW", ReadConsoleInputW_fwd),
 	DECL_API("ReadConsoleOutputCharacterW", ReadConsoleOutputCharacterW_fwd),
 	DECL_API("ReadConsoleOutputW", ReadConsoleOutputW_fwd),
 	DECL_API("ReadConsoleW", ReadConsoleW_fwd),

@@ -90,6 +90,7 @@ extern LONG old_jtab[];
 bool are_extensions_enabled();
 bool are_extensions_enabled_module(const char* path);
 DWORD encode_address(DWORD addr, const ApiLibrary* apilib);
+PROC WINAPI GetK32OrdinalAddress(WORD wOrd);
 PROC WINAPI iGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 PROC WINAPI ExportFromOrdinal(IMTE_KEX* target, MODREF* caller, BOOL is_static, WORD ordinal);
 PROC WINAPI ExportFromName(IMTE_KEX* target, MODREF* caller, BOOL is_static, WORD hint, LPCSTR name);

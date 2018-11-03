@@ -294,12 +294,14 @@ void FileDeclParser::parse_forward_to_unicows(const string& line) throw(exceptio
 int FileDeclParser::find_matching_export(const string& s)
 {
 	int count = 0;
+	size_t pos;
 
 	//try named exports first
 	vector<export_entry_named>::iterator itn = exports_named.begin();
 	while (itn != exports_named.end())
 	{
-		if (s.find(itn->source_name) != string::npos)
+		pos = s.find(itn->source_name);
+		if (pos != string::npos && is_full_decl(s, pos, itn->source_name.length()))
 			count++;
 		itn++;
 	}
@@ -307,11 +309,21 @@ int FileDeclParser::find_matching_export(const string& s)
 	vector<export_entry_ordinal>::iterator ito = exports_ordinal.begin();
 	while (ito != exports_ordinal.end())
 	{
-		if (s.find(ito->source_name) != string::npos)
+		pos = s.find(ito->source_name);
+		if (pos != string::npos && is_full_decl(s, pos, ito->source_name.length()))
 			count++;
 		ito++;
 	}
 	return count;
+}
+
+bool FileDeclParser::is_full_decl(const string& s, int beg, int len)
+{
+	if (beg > 0 && (isalnum(s[beg-1]) || s[beg-1] == '_'))
+		return false;
+	if (beg + len < s.length() && (isalnum(s[beg+len]) || s[beg+len] == '_'))
+		return false;
+	return true;
 }
 
 void FileDeclParser::prefilter() throw(exception)

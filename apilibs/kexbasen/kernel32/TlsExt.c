@@ -127,7 +127,10 @@ void detach_exttls(void)
 
 	ext = (LPVOID*) tdb->TlsSlots[TLS_SIZE-1];
 	if (ext)
+	{
 		HeapFree(GetProcessHeap(), 0, ext);
+		tdb->TlsSlots[TLS_SIZE-1] = 0;
+	}
 }
 
 /* MAKE_EXPORT TlsAlloc_new=TlsAlloc */

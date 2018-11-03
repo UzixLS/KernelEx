@@ -1,3 +1,37 @@
+KernelEx v4.5 RC 4 by Xeno86
+2010-09-21
+
+added kernel32.EncodePointer, DecodePointer, EncodeSystemPointer, DecodeSystemPointer
+SystemParametersInfo/SPI_GETHIGHCONTRAST call doesn't fail now when accessability pack is not installed or wrong uiParam parameter is passed (fixes Firefox 3.6.9/3.6.10)
+force usage of KernelEx's 'Known DLLs' when full system path is passed to LoadLibrary call
+fixed iGetProcAddress/kexGetProcAddress not taking into account relocation - fixes crashes revealed by RC 3
+
+---------------------------------------
+
+KernelEx v4.5 RC 3 by Xeno86
+2010-09-10
+
+added fix to prevent DLL circular-references
+
+---------------------------------------
+
+KernelEx v4.5 RC 2 by Xeno86
+2010-09-08
+
+ported SysLink COMCTL32 class (from Wine project, fixes Google Picasa options dialog)
+added kernel32.SystemTimeToTzSpecificLocalTime, TzSpecificLocalTimeToSystemTime (from Wine project, for Google Picasa 3.8)
+implemented shell32.SHBindToParent (needed by Maxthon 1.6.7) [Tihiy]
+fixed TlsExt pointer not zeroed after freeing
+added WS2_32.getaddrinfo, freeaddrinfo, getnameinfo implementation based on wspiapi.h
+added WINMM.waveInGetDevCapsW, waveOutGetDevCapsW (makes Flash Player 10.1 volume control work)
+added USER32.SetParent fix to forbid deadly circular references (fixes VLC 1.1.2 crash) [ported from RP9]
+fixed handling of lpOverlapped parameter in kernel32.PostQueuedCompletionStatus 
+restricted completion ports to NT only
+added kernel32.GetProcessId, CreateFiberEx
+replaced kernel32.ReadConsoleInputW from MSLU with custom implementation due to bugs in the former [Tihiy]
+
+---------------------------------------
+
 KernelEx v4.5 RC 1 by Xeno86
 2010-07-30
 

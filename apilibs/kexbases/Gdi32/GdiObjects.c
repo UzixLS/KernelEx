@@ -25,7 +25,6 @@
 #include "k32ord.h"
 #include "kexcoresdk.h"
 
-static BOOL blockkexgdiobj;
 static WORD g_GDILH_addr;
 static DWORD g_GdiBase;
 static int script_cache_psidx;
@@ -40,7 +39,6 @@ BOOL InitGDIObjects(void)
 {
 	g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
 	g_GDILH_addr = ((PINSTANCE16)g_GdiBase)->pLocalHeap;
-	blockkexgdiobj = (BOOL)GetProcAddress(GetModuleHandle("rp10.dll"),"blockkexgdiobj");
 	script_cache_psidx = kexPsAllocIndex();
 	return (BOOL)g_GdiBase;
 }
@@ -126,7 +124,6 @@ static DWORD SwitchGDIObjectType( PGDIOBJ16 obj )
 /* MAKE_EXPORT GetObjectType_fix=GetObjectType */
 DWORD WINAPI GetObjectType_fix( HGDIOBJ hgdiobj )
 {
-	if (blockkexgdiobj) return GetObjectType(hgdiobj);
 	//GetObjectType is rewritten in order to boost it's correctness and speed:
 	//constantly throwing page/segfaults is very bad on virtual machines.
 	PGDIOBJ16 obj = GetGDIObjectPtr( hgdiobj );	
@@ -166,7 +163,6 @@ WORD GetCurrentTDB()
 /* MAKE_EXPORT DeleteObject_fix=DeleteObject */
 BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 {
-	if (blockkexgdiobj) return DeleteObject(hObject);
 	PGDIOBJ16 obj = GetGDIObjectPtr( hObject );
 	if ( !obj || !SwitchGDIObjectType(obj) ) return FALSE;
 	DWORD violated = 0;
@@ -178,7 +174,7 @@ BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 			DeleteUSPFontCache_fn DeleteUSPFontCache = (DeleteUSPFontCache_fn) kexPsGetValue(script_cache_psidx);
 			if (!DeleteUSPFontCache)
 			{
-				DeleteUSPFontCache = (DeleteUSPFontCache_fn)GetProcAddress(LoadLibrary("KEXBASEN.DLL"), "DeleteUSPFontCache");
+				DeleteUSPFontCache = (DeleteUSPFontCache_fn)kexGetProcAddress(LoadLibrary("KEXBASEN.DLL"), "DeleteUSPFontCache");
 				kexPsSetValue(script_cache_psidx, DeleteUSPFontCache);
 			}
 			if (DeleteUSPFontCache)
@@ -206,7 +202,6 @@ BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 /* MAKE_EXPORT SelectObject_fix=SelectObject */
 HGDIOBJ WINAPI SelectObject_fix( HDC hdc, HGDIOBJ hgdiobj )
 {
-	if (blockkexgdiobj) return SelectObject(hdc,hgdiobj);
 	//9x should do this
 	if ( !hdc ) SetLastError(ERROR_INVALID_HANDLE);
 	if ( !hdc || !hgdiobj ) return NULL;
@@ -233,7 +228,6 @@ HGDIOBJ WINAPI SelectObject_fix( HDC hdc, HGDIOBJ hgdiobj )
 /* MAKE_EXPORT DeleteDC_fix=DeleteDC */
 BOOL WINAPI DeleteDC_fix( HDC hdc )
 {
-	if (blockkexgdiobj) return DeleteDC(hdc);
 	BOOL ret;
 	PGDIOBJ16 obj = GetGDIObjectPtr( hdc );
 	if ( !obj || !SwitchGDIObjectType(obj) ) return FALSE;

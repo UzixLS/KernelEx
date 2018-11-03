@@ -117,6 +117,10 @@ SOURCE=.\Kernel32\CopyFileEx.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\CreateFiberEx.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\CreateThread_fix.c
 # End Source File
 # Begin Source File
@@ -138,6 +142,10 @@ SOURCE=.\Kernel32\GetFileSizeEx.c
 # Begin Source File
 
 SOURCE=.\Kernel32\GetModuleHandleEx.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\GetProcessId.c
 # End Source File
 # Begin Source File
 
@@ -217,11 +225,23 @@ SOURCE=.\Kernel32\OpenThread.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\pointer.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\RemoteDesktop.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\RtlCaptureContext.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\SetFilePointerEx.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\time.c
 # End Source File
 # Begin Source File
 
@@ -314,6 +334,14 @@ SOURCE=.\User32\MapVirtualKey_fix.c
 # Begin Source File
 
 SOURCE=.\User32\SendMessage_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\SetParent_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\SystemParametersInfo_fix.c
 # End Source File
 # Begin Source File
 
@@ -492,6 +520,26 @@ SOURCE=.\shell32\CommandLineToArgvW.c
 SOURCE=.\shell32\IsUserAnAdmin.c
 # End Source File
 # End Group
+# Begin Group "comctl32"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\comctl32\_comctl32_apilist.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\comctl32\_comctl32_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\comctl32\newclassreg.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\comctl32\syslink.c
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\common.c
@@ -581,10 +629,6 @@ InputPath=.\kexbases.def
 # Begin Source File
 
 SOURCE=.\main.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\Kernel32\RtlCaptureContext.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

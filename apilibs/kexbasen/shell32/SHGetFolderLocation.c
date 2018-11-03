@@ -67,7 +67,7 @@ static SHGetFolderLocation_t dld()
 {
 	HMODULE h = GetModuleHandle("SHELL32");
 	SHGetFolderLocation_t pfn = (SHGetFolderLocation_t) 
-			GetProcAddress(h, "SHGetFolderLocation");
+			kexGetProcAddress(h, "SHGetFolderLocation");
 	if (!pfn)
 		pfn = SHGetFolderLocation_impl;
 	return pfn;

@@ -128,7 +128,7 @@ BOOL WINAPI PostQueuedCompletionStatus_new(
 {
 	PCOMPLET_PORT port = (PCOMPLET_PORT)MapViewOfFile(CompletionPort,FILE_MAP_ALL_ACCESS,0,0,0);
 	//kexDebugPrint("PostQueuedCompletionStatus queued from port %p: %p %p %p",port,dwNumberOfBytesTransferred,dwCompletionKey,lpOverlapped);
-	if (!port || port->signature != PORT_SIGNATURE || !lpOverlapped)
+	if (!port || port->signature != PORT_SIGNATURE)
 	{
 		UnmapViewOfFile(port);
 		SetLastError(ERROR_INVALID_PARAMETER);

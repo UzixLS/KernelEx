@@ -58,6 +58,8 @@ BOOL WINAPI LockWorkStation_new(void);
 UINT WINAPI MapVirtualKeyA_new(UINT uCode, UINT uMapType);
 UINT WINAPI MapVirtualKeyExA_new(UINT uCode, UINT uMapType, HKL dwhkl);
 LRESULT WINAPI SendMessageA_fix(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+HWND WINAPI SetParent_fix(HWND hWndChild, HWND hWndNewParent);
+BOOL WINAPI SystemParametersInfoA_fix(UINT uiAction, UINT uiParam, PVOID pvParam, UINT fWinIni);
 BOOL WINAPI UpdateLayeredWindow_new(HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
 STUB SetLayeredWindowAttributes_stub;
 STUB DefRawInputProc_stub;

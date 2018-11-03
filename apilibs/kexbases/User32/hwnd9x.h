@@ -25,6 +25,8 @@
 #ifndef _HWND32_H
 #define _HWND32_H
 
+#define IS_SYSTEM_HWND(hwnd) ((hwnd)>=(HWND)0x80 && (hwnd)<=(HWND)0x88)
+
 #pragma pack (1)
 typedef struct _RECTS
 {
@@ -106,5 +108,7 @@ typedef struct _MSGQUEUE
 	WORD    block2;     // 5Eh+1Ah      block for SendMessageA (event?)
 } MSGQUEUE, *PMSGQUEUE;
 #pragma pack()
+
+typedef PWND (WINAPI *HTOP_API) (HWND hwnd);
 
 #endif

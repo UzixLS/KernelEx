@@ -59,7 +59,7 @@ unsigned long __stdcall GetUnicowsAddress(const char* name)
 {
 	if (!hUnicows)
 		unifwd_init();
-	PROC addr = GetProcAddress(hUnicows, name);
+	PROC addr = kexGetProcAddress(hUnicows, name);
 	if (!addr)
 		unicows_fatal_error(name);
 	return (unsigned long) addr;

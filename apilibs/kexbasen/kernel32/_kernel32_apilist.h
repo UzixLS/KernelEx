@@ -108,7 +108,6 @@ FWDPROC OpenSemaphoreW_fwd;
 FWDPROC OpenWaitableTimerW_fwd;
 FWDPROC PeekConsoleInputW_fwd;
 FWDPROC QueryDosDeviceW_fwd;
-FWDPROC ReadConsoleInputW_fwd;
 FWDPROC ReadConsoleOutputCharacterW_fwd;
 FWDPROC ReadConsoleOutputW_fwd;
 FWDPROC ReadConsoleW_fwd;

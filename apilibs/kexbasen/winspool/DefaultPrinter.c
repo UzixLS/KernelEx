@@ -20,9 +20,10 @@
  */
 
 #include "common.h"
+#include <winspool.h>
 
-/* MAKE_EXPORT GetDefaultPrinterA=GetDefaultPrinterA */
-BOOL WINAPI GetDefaultPrinterA(LPSTR buf, LPDWORD size)
+/* MAKE_EXPORT GetDefaultPrinterA_new=GetDefaultPrinterA */
+BOOL WINAPI GetDefaultPrinterA_new(LPSTR buf, LPDWORD size)
 {
 	DWORD needed, returned;
 	BOOL ret;
@@ -53,8 +54,8 @@ BOOL WINAPI GetDefaultPrinterA(LPSTR buf, LPDWORD size)
 	return TRUE;
 }
 
-/* MAKE_EXPORT GetDefaultPrinterW=GetDefaultPrinterW */
-BOOL WINAPI GetDefaultPrinterW(LPWSTR bufW, LPDWORD sizeW)
+/* MAKE_EXPORT GetDefaultPrinterW_new=GetDefaultPrinterW */
+BOOL WINAPI GetDefaultPrinterW_new(LPWSTR bufW, LPDWORD sizeW)
 {
 	BOOL ret;
 	DWORD sizeA = *sizeW;
