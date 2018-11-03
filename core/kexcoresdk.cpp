@@ -62,14 +62,14 @@ PROC kexGetProcAddress(HMODULE hModule, PCSTR lpProcName)
 	return iGetProcAddress(hModule, lpProcName);
 }
 
-void* kexPIDtoPDB(DWORD pid)
+HANDLE kexOpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId)
 {
-	return PIDtoPDB(pid);
+	return _OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
 }
 
-void* kexTIDtoTDB(DWORD tid)
+BOOL kexAreExtensionsEnabled()
 {
-	return TIDtoTDB(tid);
+	return are_extensions_enabled();
 }
 
 void kexGetModuleSettings(const char* module, 

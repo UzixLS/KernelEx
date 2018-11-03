@@ -6,3 +6,4 @@ comdlg32
 shell32
 rpcrt4
 winspool
+shlwapi

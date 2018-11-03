@@ -70,6 +70,7 @@ struct config_params
 
 #pragma pack(pop)
 
+bool are_extensions_enabled();
 DWORD encode_address(DWORD addr, const ApiLibrary* apilib);
 PROC WINAPI iGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 PROC WINAPI ExportFromOrdinal(IMTE_KEX* target, MODREF* caller, PMODREF** refmod, WORD ordinal);

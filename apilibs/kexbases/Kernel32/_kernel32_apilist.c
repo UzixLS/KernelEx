@@ -35,7 +35,7 @@ BOOL init_openthread();
 BOOL init_kernel32()
 {
 	get_cpuinfo();
-	return init_tryentercritsec() && init_openthread();
+	return init_tryentercritsec();
 }
 
 /*

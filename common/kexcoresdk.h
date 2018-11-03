@@ -135,20 +135,18 @@ _KEXCOREIMP DWORD kexGetVersion();
 _KEXCOREIMP PROC kexGetProcAddress(HMODULE hModule, PCSTR lpProcName);
 
 
-/** kexPIDtoPDB - obtain pointer to process database entry, given process identifier.
- *
- * @param pid Process identifier.
- * @return Pointer to process database entry on success, NULL on failure.
+/** kexOpenThread - open thread object.
+ *	
+ * Refer to OpenThread API documentation for parameters and output.
  */
-_KEXCOREIMP void* kexPIDtoPDB(DWORD pid);
+_KEXCOREIMP HANDLE kexOpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId);
 
 
-/** kexTIDtoTDB - obtain pointer to thread database entry, given thread identifier.
+/** kexAreExtensionsEnabled - checks if API extensions are enabled for current process.
  *
- * @param tid Thread identifier.
- * @return Pointer to thread database entry on success, NULL on failure.
+ * @return TRUE if extensions are enabled, FALSE otherwise.
  */
-_KEXCOREIMP void* kexTIDtoTDB(DWORD tid);
+_KEXCOREIMP BOOL kexAreExtensionsEnabled();
 
 
 /** kexGetModuleSettings - Retrieve per module settings.

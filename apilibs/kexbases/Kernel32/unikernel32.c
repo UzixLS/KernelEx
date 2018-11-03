@@ -842,17 +842,19 @@ LPWSTR WINAPI lstrcpynW_new(LPWSTR dst, LPCWSTR src, INT n)
 {
 	LPWSTR ret = dst;
 	
-	if (IsBadReadPtr(src, n) || IsBadWritePtr(dst, n))
+	__try
+	{
+		while ((n > 1) && *src)
+		{
+			*dst++ = *src++;
+			n--;
+		}
+		*dst = 0;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
 	}
-	
-    while ((n > 1) && *src)
-	{
-		*dst++ = *src++;
-		n--;
-	}
-	*dst = 0;
     return ret;
 }

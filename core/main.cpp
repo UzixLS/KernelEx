@@ -119,7 +119,7 @@ void load_MPRServices()
         RegOpenKey(hk_serv, subkey, &hk_this);
         size = sizeof(dllname);
         if (RegQueryValueEx(hk_this, "DllName", NULL, NULL, (BYTE*)dllname, &size) 
-                == ERROR_SUCCESS && strcmpi(dllname, own_path) != 0)
+                == ERROR_SUCCESS)
         {         
             LoadLibrary(dllname);
         }

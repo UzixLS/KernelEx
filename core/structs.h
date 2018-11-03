@@ -249,7 +249,8 @@ typedef struct _TDBX98 TDBX98;
 
 // Thread database (FS:[0x18] - 0x8)
 typedef struct _TDB98 {        // Size = 0x228 (from Kernel32)
-    WORD    Type;              // 00 K32 object type
+    BYTE    Type;              // 00 K32 object type
+	BYTE    Unknown_A;         // 01
     WORD    cReference;        // 02 Reference count
     DWORD   pSomeEvent;        // 04 K32 event object used when someone waits on the thread object
     TIB98   tib;               // 08 Thread information block (TIB)
@@ -266,7 +267,8 @@ typedef struct _TDB98 {        // Size = 0x228 (from Kernel32)
 } TDB98, *PTDB98;
 
 typedef struct _TDBME {        // Size = 0x228 (from Kernel32)
-    WORD    Type;              // 00 K32 object type
+    BYTE    Type;              // 00 K32 object type
+	BYTE    Unknown_A;         // 01
     WORD    cReference;        // 02 Reference count
     DWORD   pSomeEvent;        // 04 K32 event object used when someone waits on the thread object
     TIB98   tib;               // 08 Thread information block (TIB)

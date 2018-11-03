@@ -38,13 +38,16 @@
 Setup::Setup(const char* backup_file)
 {
 	this->backup_file = backup_file;
-	h_kernel32 = GetModuleHandle("kernel32");
+	for (string::iterator it = this->backup_file.begin() ; it != this->backup_file.end() ; it++)
+		*it = toupper(*it);
+
+	h_kernel32 = GetModuleHandle("KERNEL32");
 	
 	detect_old_version();
 
 	pemem.OpenMemory(h_kernel32);
 	if (!pemem.HasTarget())
-		ShowError(IDS_FAILOPEN, "k32mem");
+		ShowError(IDS_FAILOPEN, "KERNEL32 memory image");
 
 	version = get_signature_ver();
 
@@ -291,6 +294,30 @@ void Setup::find_ExportFromX()
 			EFN_EFO_call = a;
 }
 
+void Setup::find_IsKnownDLL()
+{
+	static const short pattern[] = {
+		0xFF,0x75,0xFC,0x8D,0x8D,0xF0,0xFE,0xFF,0xFF,0x51,0xE8,-2,-2,-2,-2,
+		0x85,0xC0,0x75,0x1E,0x8D,0x85,0xE8,0xFD,0xFF,0xFF,
+		0x8D,0x8D,0xF0,0xFE,0xFF,0xFF,0x50,0x51
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size,pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "IsKnownDLL");
+		else ShowError(IDS_MULPAT, "IsKnownDLL");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "IsKnownDLL", 
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	IsKnownDLL_call = found_loc + 10;
+	_IsKnownDLL = decode_call(IsKnownDLL_call, 5);
+}
+
 void Setup::kill_process(const char* name)
 {
 	PROCESSENTRY32 pe32;
@@ -400,8 +427,8 @@ void Setup::install()
 
 	if (version >= 0)
 	{
-		if (version > KEX_STUB_VER)
-			ShowError(IDS_INVSTUB, version);
+		if (version == KEX_STUB_VER)
+			return;
 		else
 			upgrade = true;
 	}
@@ -412,12 +439,14 @@ void Setup::install()
 	pefile.OpenFile(upgrade ? backup_file.c_str() : kernel32path, 0x10000);
 	if (!pefile.HasTarget())
 	{
-		if (version == KEX_STUB_VER)
-			return;
-		ShowError(IDS_FAILOPEN, upgrade ? backup_file.c_str() : kernel32path);
+		if (upgrade)
+			ShowError(IDS_FAILOPENBACKUP, backup_file.c_str(), kernel32path);
+		else
+			ShowError(IDS_FAILOPEN, kernel32path);
 	}
 
 	find_ExportFromX();
+	find_IsKnownDLL();
 	disable_platform_check();
 	disable_resource_check();
 	mod_imte_alloc();
@@ -444,11 +473,13 @@ void Setup::install()
 
 	memcpy(dseg->signature, "KrnlEx", 6);
 	dseg->version = KEX_STUB_VER;
-	dseg->jtab[0] = _ExportFromOrdinal + pefile.GetImageBase();
-	dseg->jtab[1] = _ExportFromOrdinal + pefile.GetImageBase();
-	dseg->jtab[2] = _ExportFromName + pefile.GetImageBase();
-	dseg->jtab[3] = _ExportFromName + pefile.GetImageBase();
+	dseg->jtab[JTAB_EFO_DYN] = _ExportFromOrdinal + pefile.GetImageBase();
+	dseg->jtab[JTAB_EFO_STA] = _ExportFromOrdinal + pefile.GetImageBase();
+	dseg->jtab[JTAB_EFN_DYN] = _ExportFromName + pefile.GetImageBase();
+	dseg->jtab[JTAB_EFN_STA] = _ExportFromName + pefile.GetImageBase();
+	dseg->jtab[JTAB_KNO_DLL] = _IsKnownDLL + pefile.GetImageBase();
 
+	//exportfromx patch
 	DWORD code = (DWORD) pefile.GetSectionByName(CODE_SEG);
 	int code_size = pefile.GetSectionSize(CODE_SEG);
 
@@ -487,6 +518,11 @@ void Setup::install()
 
 	if (efo_cnt != 2 || efn_cnt != 2)
 		ShowError(IDS_ERRCHECK);
+
+	//isknowndll patch
+	set_call_ref(IsKnownDLL_call, (DWORD) &cseg->jmp_stub[JTAB_KNO_DLL]);
+	DBGPRINTF(("KNO_DLL: address %08x\n", pefile.PointerToRva((void*) a) 
+			+ pefile.GetImageBase()));
 
 	// backup original file
 	if (!upgrade)

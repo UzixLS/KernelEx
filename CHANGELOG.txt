@@ -1,3 +1,18 @@
+KernelEx v4.0 Final 2 by Xeno86
+2009-08-20
+
+fixed handling of forwarded exports broken in revision 32
+fixed very rare crash which could occur at boot when module table pointer becomes invalid
+added algorithm similar to KnownDLLs for auxiliary libraries to be disabled when extensions are disabled
+perform stub upgrade on version mismatch, not only if it is lower than expected
+added SHLWAPI.StrCmpLogicalW
+added SHELL32.SHOpenFolderAndSelectItems stub
+fixed KERNEL32.lstrcpynW
+added kexAreExtensionsEnabled to SDK
+api logging should now work correctly
+
+---------------------------------------
+
 KernelEx v4.0 Final by Xeno86
 2009-07-23
 

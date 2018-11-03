@@ -23,13 +23,14 @@
 #define __LOADSTUB_H
 
 #define KEX_SIGNATURE "KrnlEx"
-#define KEX_STUB_VER 0
+#define KEX_STUB_VER 1
 
-#define JTAB_SIZE 4
+#define JTAB_SIZE 5
 #define JTAB_EFO_DYN 0
 #define JTAB_EFO_STA 1
 #define JTAB_EFN_DYN 2
 #define JTAB_EFN_STA 3
+#define JTAB_KNO_DLL 4
 
 #include <pshpack1.h>
 typedef struct

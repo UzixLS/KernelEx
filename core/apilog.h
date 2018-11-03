@@ -29,12 +29,13 @@ class ThreadAddrStack
 {
 public:
 	ThreadAddrStack();
-	static void __stdcall push_ret_addr(DWORD tls, DWORD addr);
-	static DWORD __stdcall pop_ret_addr(DWORD tls);
+	static void __stdcall push_ret_addr(DWORD addr);
+	static DWORD __stdcall pop_ret_addr();
+	static DWORD __stdcall get_level();
 
 private:
 	int pos;
-	DWORD stack[31];
+	DWORD stack[1023];
 };
 
 #pragma pack(push,1)
@@ -44,41 +45,46 @@ class log_stub
 {
 public:
 	log_stub(const char* source, const char* target, const char* name, 
-			unsigned long proc, unsigned long log_fun, DWORD tls) 
+			unsigned long proc, unsigned long log_fun) 
 			: call_orig(proc, true), jmp_logfun(log_fun), 
 			tas_store((unsigned long) ThreadAddrStack::push_ret_addr, true),
-			tas_restore((unsigned long) ThreadAddrStack::pop_ret_addr, true)
+			tas_restore((unsigned long) ThreadAddrStack::pop_ret_addr, true),
+			tas_depth((unsigned long) ThreadAddrStack::get_level, true)
 	{
-		c_push1 = c_push2 = c_push3 = c_push4 = c_push5 = 0x68;
-		tls1 = tls2 = tls;
+		c_push2 = c_push3 = c_push4 = 0x68;
 		v_source = source;
 		v_target = target;
 		v_name = name;
-		c_pusheax1 = c_pusheax2 = 0x50;
+		c_pusheax1 = c_pusheax2 = c_pusheax3 = c_pusheax4 = 0x50;
+		c_popeax4 = 0x58;
+		c_pushecx = 0x51;
+		c_popecx = 0x59;
 	}
 
 private:
-	unsigned char c_push1;
-	DWORD tls1;
-	redir_stub tas_store; //arg1=tls, arg2=caller ret
+	unsigned char c_popeax4;  //caller ret
+	unsigned char c_pushecx;
+	unsigned char c_pusheax4; //caller ret
+	redir_stub tas_store;
+	unsigned char c_popecx;
 	redir_stub call_orig;
 	unsigned char c_pusheax1; //orig ret
-	unsigned char c_push2;
+	redir_stub tas_depth;
+	unsigned char c_pusheax3;  //call stack depth
+	unsigned char c_push2;    //api name
 	const char* v_name;
-	unsigned char c_push3;
+	unsigned char c_push3;    //target module
 	const char* v_target;
-	unsigned char c_push4;
+	unsigned char c_push4;    //calling module
 	const char* v_source;
-	unsigned char c_push5;
-	DWORD tls2;
-	redir_stub tas_restore; //restore caller ret
-	unsigned char c_pusheax2;	
-	redir_stub jmp_logfun; //jmp to log_fun
+	redir_stub tas_restore;
+	unsigned char c_pusheax2; //caller return address
+	redir_stub jmp_logfun;    //jump to log_fun
 };
 
 #pragma pack(pop)
 
 PROC create_log_stub(const char* caller, const char* target, const char* api, PROC orig);
-
+PROC create_log_stub(const char* caller, const char* target, WORD ord, PROC orig);
 
 #endif

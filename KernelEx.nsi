@@ -1,4 +1,4 @@
-  !define VERSION '4.0 Final'
+  !define VERSION '4.0 Final 2'
 
 ;--------------------------------
 ;Includes
@@ -256,36 +256,36 @@ Section "Install"
   File /oname=$0 auxiliary\msimg32.dll
   Delete "$INSTDIR\msimg32.dll"
   Rename /REBOOTOK $0  "$INSTDIR\msimg32.dll"
-  WriteRegStr HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" \
-    "MSIMG32" "..\KernelEx\msimg32.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "MSIMG32" "MSIMG32.DLL"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\pdh.dll
   Delete "$INSTDIR\pdh.dll"
   Rename /REBOOTOK $0  "$INSTDIR\pdh.dll"
-  WriteRegStr HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" \
-    "PDH" "..\KernelEx\pdh.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "PDH" "PDH.DLL"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\psapi.dll
   Delete "$INSTDIR\psapi.dll"
   Rename /REBOOTOK $0  "$INSTDIR\psapi.dll"
-  WriteRegStr HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" \
-    "PSAPI" "..\KernelEx\psapi.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "PSAPI" "PSAPI.DLL"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\uxtheme.dll
   Delete "$INSTDIR\uxtheme.dll"
   Rename /REBOOTOK $0  "$INSTDIR\uxtheme.dll"
-  WriteRegStr HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" \
-    "UXTHEME" "..\KernelEx\uxtheme.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "UXTHEME" "UXTHEME.DLL"
   
   GetTempFileName $0 "$INSTDIR"
   File /oname=$0 auxiliary\wtsapi32.dll
   Delete "$INSTDIR\wtsapi32.dll"
   Rename /REBOOTOK $0  "$INSTDIR\wtsapi32.dll"
-  WriteRegStr HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" \
-    "WTSAPI32" "..\KernelEx\wtsapi32.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "WTSAPI32" "WTSAPI32.DLL"
   
   SetOverwrite lastused
   
@@ -342,15 +342,15 @@ Section "Uninstall"
   Delete "$INSTDIR\license.txt"
   
   Delete /REBOOTOK "$INSTDIR\msimg32.dll"
-  DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "MSIMG32"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "MSIMG32"
   Delete /REBOOTOK "$INSTDIR\pdh.dll"
-  DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "PDH"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "PDH"
   Delete /REBOOTOK "$INSTDIR\psapi.dll"
-  DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "PSAPI"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "PSAPI"
   Delete /REBOOTOK "$INSTDIR\uxtheme.dll"
-  DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "UXTHEME"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "UXTHEME"
   Delete /REBOOTOK "$INSTDIR\wtsapi32.dll"
-  DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "WTSAPI32"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "WTSAPI32"
   
   Delete "$INSTDIR\verify.exe"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "KexVerify"

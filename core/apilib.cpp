@@ -195,9 +195,9 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 	apilib->index = apilib_cnt;
 
 	//set mod_index for newly loaded api libraries
-	pmteModTable = *ppmteModTable;
 	mr = MRFromHLib(apilib->mod_handle);
 	DBGASSERT(mr);
+	pmteModTable = *ppmteModTable;
 	((IMTE_KEX*) pmteModTable[mr->mteIndex])->mod_index = 0xff00 + apilib->index;
 
 	//add to table of new ApiLibraries

@@ -46,7 +46,7 @@
 
 void dbgvprintf(const char* format, void* _argp);
 void dbgprintf(const char* format, ...);
-PROC create_log_stub(const char* caller, const char* target, const char* api, PROC orig);
 
+#include "apilog.h"
 
 #endif

@@ -27,7 +27,9 @@
 #include "internals.h"
 #include "DebugWindow.h"
 
-void* get_process_env_data(const char* env, void* (*c)())
+#define APILOG_TLS_INDEX       78
+
+void* get_process_env_data(const char* env, void* (*creator)())
 {
 	//environment variable: ENV=ProcessID:DATA
 	char buf[20];
@@ -41,7 +43,7 @@ void* get_process_env_data(const char* env, void* (*c)())
 			|| ProcID != GetCurrentProcessId())
 	{
 		//invalid/missing value - create new data
-		data = c();
+		data = creator();
 		if (data)
 		{
 			sprintf(buf, "%x:%x", GetCurrentProcessId(), data);
@@ -64,7 +66,11 @@ HANDLE get_process_debug_heap()
 
 void* tls_creator()
 {
-	return (void*) TlsAlloc();
+	for (int i = 0 ; i < APILOG_TLS_INDEX+1 ; i++)
+		TlsAlloc();
+	for (int i = 0 ; i < APILOG_TLS_INDEX ; i++)
+		TlsFree(i);
+	return (void*) APILOG_TLS_INDEX;
 }
 
 DWORD get_process_debug_tls()
@@ -75,7 +81,7 @@ DWORD get_process_debug_tls()
 extern "C"
 int snprintf(char *buffer, size_t n, const char* format, ...);
 
-DWORD __stdcall log_api(const char* source, const char* target, const char* api_name, DWORD ret)
+DWORD __stdcall log_api(const char* source, const char* target, const char* api_name, DWORD depth, DWORD ret)
 {
 	DebugWindow* dw = DebugWindow::get();
 	if (!dw)
@@ -83,8 +89,20 @@ DWORD __stdcall log_api(const char* source, const char* target, const char* api_
 	
 	char msg[DEBUGMSG_MAXLEN];
 
-	const char* proc = ((*ppmteModTable)[(*pppdbCur)->pExeMODREF->mteIndex])->pszModName;
-	snprintf(msg, sizeof(msg), "%s|%x|%s|%s|%s|%x", proc, 
+	//fancy call stack depth indicator
+	if (depth < DEBUGMSG_MAXLEN / 2)
+	{
+		for (int i = 0 ; i < depth ; i++)
+			msg[i] = 'l';
+	}
+	else
+	{
+		msg[0] = 'E';
+		msg[1] = 'E';
+		depth = 2;
+	}
+
+	snprintf(msg + depth, sizeof(msg) - depth, "|%x|%s|%s|%s|%x", 
 			GetCurrentThreadId(), source, target, api_name, ret);
 
 	dw->append(msg);
@@ -97,31 +115,56 @@ ThreadAddrStack::ThreadAddrStack()
 	pos = 0;
 }
 
-void __stdcall ThreadAddrStack::push_ret_addr(DWORD tls, DWORD addr)
+void __stdcall ThreadAddrStack::push_ret_addr(DWORD addr)
 {
-	ThreadAddrStack* tas = (ThreadAddrStack*) TlsGetValue(tls);
+	//TlsGetValue clears last error value so remember & restore it
+	DWORD lasterr = GetLastError();
+	ThreadAddrStack* tas = (ThreadAddrStack*) TlsGetValue(APILOG_TLS_INDEX);
+	SetLastError(lasterr);
 	if (!tas)
 	{
 		void* mem = HeapAlloc(get_process_debug_heap(), 0, sizeof(ThreadAddrStack));
 		tas = new (mem) ThreadAddrStack;
-		TlsSetValue(tls, mem);
+		TlsSetValue(APILOG_TLS_INDEX, mem);
 	}
 	tas->stack[tas->pos++] = addr;
+	DBGASSERT(tas->pos < sizeof(tas->stack) / sizeof(tas->stack[0]));
 }
 
-DWORD __stdcall ThreadAddrStack::pop_ret_addr(DWORD tls)
+DWORD __stdcall ThreadAddrStack::pop_ret_addr()
 {
-	ThreadAddrStack* tas = (ThreadAddrStack*) TlsGetValue(tls);
-	if (!tas || !tas->pos)
-		return 0;
+	//TlsGetValue clears last error value so remember & restore it
+	DWORD lasterr = GetLastError();
+	ThreadAddrStack* tas = (ThreadAddrStack*) TlsGetValue(APILOG_TLS_INDEX);
+	SetLastError(lasterr);
+	DBGASSERT(tas->pos > 0);
 	return tas->stack[--tas->pos];
+}
+
+DWORD __stdcall ThreadAddrStack::get_level()
+{
+	//TlsGetValue clears last error value so remember & restore it
+	DWORD lasterr = GetLastError();
+	ThreadAddrStack* tas = (ThreadAddrStack*) TlsGetValue(APILOG_TLS_INDEX);
+	SetLastError(lasterr);
+	return tas->pos;
 }
 
 PROC create_log_stub(const char* caller, const char* target, const char* api, PROC orig)
 {
 	HANDLE heap = get_process_debug_heap();
+	char* new_api = (char*) HeapAlloc(heap, 0, strlen(api) + 1);
+	strcpy(new_api, api);
+	get_process_debug_tls();
 	void* mem = HeapAlloc(heap, 0, sizeof(log_stub));
 	return (PROC) new (mem) log_stub(caller, 
-			target, api, (unsigned long) orig, 
-			(unsigned long) log_api, get_process_debug_tls());
+			target, new_api, (unsigned long) orig, 
+			(unsigned long) log_api);
+}
+
+PROC create_log_stub(const char* caller, const char* target, WORD ord, PROC orig)
+{
+	char ord_name[16];
+	snprintf(ord_name, sizeof(ord_name), "Ordinal:%d", ord);
+	return create_log_stub(caller, target, ord_name, orig);
 }

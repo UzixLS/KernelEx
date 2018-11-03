@@ -29,7 +29,7 @@
 static bool is_winme;
 HINSTANCE hInstance;
 
-IMTE*** ppmteModTable = NULL;
+IMTE*** volatile ppmteModTable = NULL;
 HMODULE h_kernel32;
 CRITICAL_SECTION* krnl32lock = NULL;
 PDB98** pppdbCur = NULL;
@@ -37,11 +37,11 @@ WORD* pimteMax = NULL;
 
 MRFromHLib_t MRFromHLib = NULL;
 TIDtoTDB_t TIDtoTDB = NULL;
-PIDtoPDB_t PIDtoPDB = NULL;
 MRLoadTree_t MRLoadTree = NULL;
 FreeLibTree_t FreeLibTree = NULL;
 FLoadTreeNotify_t FLoadTreeNotify = NULL;
 FreeLibRemove_t FreeLibRemove = NULL;
+AllocHandle_t AllocHandle = NULL;
 
 sstring kernelex_dir("");
 sstring own_path("");
@@ -162,6 +162,25 @@ MODREF* MRfromCallerAddr(DWORD addr)
 	return NULL;
 }
 
+HANDLE _OpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId)
+{
+	HANDLE ret;
+	TDB98* tdb = TIDtoTDB(dwThreadId);
+	if (!tdb || tdb->Type != WIN98_K32OBJ_THREAD)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return NULL;
+	}
+
+	dwDesiredAccess &= THREAD_ALL_ACCESS;
+	if (bInheritHandle)
+		dwDesiredAccess |= 0x80000000;
+	ret = AllocHandle(*pppdbCur, tdb, dwDesiredAccess);
+	if (ret == INVALID_HANDLE_VALUE)
+		return NULL;
+	return ret;
+}
+
 /* find win32 mutex */
 static CRITICAL_SECTION* find_krnl32lock()
 {
@@ -273,23 +292,6 @@ static TIDtoTDB_t find_TIDtoTDB()
 	return ret;
 }
 
-static PIDtoPDB_t find_PIDtoPDB()
-{
-	PIDtoPDB_t ret;
-
-	const char* pat_name = "PIDtoPDB";
-	short pat[] = {0xFF,0x74,0x24,0x0C,0xE8,-2,-2,-2,-2};
-	int pat_len = sizeof(pat) / sizeof(short);
-	
-	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "OpenProcess"), pat_len, pat, pat_len, pat_name);
-	if (!res)
-		return NULL;
-
-	ret = (PIDtoPDB_t)decode_calljmp(res);
-	DBGPRINTF(("%s @ 0x%08x\n", pat_name, ret));
-	return ret;
-}
-
 static MRLoadTree_t find_MRLoadTree()
 {
 	MRLoadTree_t ret;
@@ -370,6 +372,23 @@ static FreeLibRemove_t find_FreeLibRemove()
 	return ret;
 }
 
+static AllocHandle_t find_AllocHandle()
+{
+	AllocHandle_t ret;
+	
+	const char* pat_name = "AllocHandle";
+	short pat[] = {0x83,0xD1,0xFF,0x81,0xE2,0xFF,0x0F,0x1F,0x00,0x81,0xE1,0x00,0x00,0x00,0x80,0x0B,0xCA,0x8B,0x15,-1,-1,-1,-1,0x51,0x50,0xFF,0x32,0xE8,-2,-2,-2,-2};
+	int pat_len = sizeof(pat) / sizeof(short);
+	
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "OpenProcess"), 0x80, pat, pat_len, pat_name);
+	if (!res)
+		return NULL;
+
+	ret = (AllocHandle_t)decode_calljmp(res);
+	DBGPRINTF(("%s @ 0x%08x\n", pat_name, ret));
+	return ret;
+}
+
 static bool find_kernelex_install_dir()
 {
 	//registry value InstallDir is written by the installer
@@ -424,17 +443,17 @@ int internals_init()
 	MRFromHLib = find_MRFromHLib();
 	pimteMax = find_pimteMax();
 	TIDtoTDB = find_TIDtoTDB();
-	PIDtoPDB = find_PIDtoPDB();
 	MRLoadTree = find_MRLoadTree();
 	FreeLibTree = find_FreeLibTree();
 	FLoadTreeNotify = find_FLoadTreeNotify();
 	FreeLibRemove = find_FreeLibRemove();
+	AllocHandle = find_AllocHandle();
 	bool instdir_rslt = find_kernelex_install_dir();
 	is_winme = (GetVersion() == 0xc0005a04);
 
 	if (!h_kernel32 || !ppmteModTable || !krnl32lock || !pppdbCur || !MRFromHLib
-			|| !pimteMax || !TIDtoTDB || !PIDtoPDB || !MRLoadTree || !FreeLibTree 
-			|| !FLoadTreeNotify || !FreeLibRemove || !instdir_rslt)
+			|| !pimteMax || !TIDtoTDB || !MRLoadTree || !FreeLibTree 
+			|| !FLoadTreeNotify || !FreeLibRemove || !AllocHandle || !instdir_rslt)
 		return 0;
 	return 1;
 }

@@ -38,12 +38,14 @@ private:
 	string backup_file;
 	DWORD _ExportFromOrdinal;
 	DWORD _ExportFromName;
+	DWORD _IsKnownDLL;
 	HMODULE h_kernel32;
 	PEmanip pemem;
 	PEmanip pefile;
 	DWORD gpa_ExportFromOrdinal_call;
 	DWORD gpa_ExportFromName_call;
 	DWORD EFN_EFO_call;
+	DWORD IsKnownDLL_call;
 	int version;
 	bool is_winme;
 	bool upgrade;
@@ -56,6 +58,7 @@ private:
 	void mod_imte_alloc();
 	void mod_pdb_alloc();
 	void find_ExportFromX();
+	void find_IsKnownDLL();
 	DWORD find_ExportFromOrdinal();
 	DWORD find_ExportFromName();
 	void kill_process(const char* name);

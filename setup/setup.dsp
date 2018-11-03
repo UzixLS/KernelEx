@@ -113,6 +113,10 @@ SOURCE=..\common\pemanip.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\resource.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\setup.h
 # End Source File
 # Begin Source File

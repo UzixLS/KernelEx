@@ -55,6 +55,7 @@ private:
 	static BOOL CALLBACK FilterDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	void InitDialog(HWND hwnd);
 	void HandleMenu();
+	void DeleteSelItems();
 	void AppendLog(char* msg);
 	void WriteToFile();
 	static DWORD WINAPI thread(void* param);

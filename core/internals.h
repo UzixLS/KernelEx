@@ -39,7 +39,7 @@
 
 extern HINSTANCE hInstance;
 
-extern IMTE*** ppmteModTable;
+extern IMTE*** volatile ppmteModTable;
 extern HMODULE h_kernel32;
 extern CRITICAL_SECTION* krnl32lock;
 extern PDB98** pppdbCur;
@@ -53,11 +53,11 @@ bool isWinMe();
 
 typedef MODREF* (__stdcall *MRFromHLib_t)(HMODULE);
 typedef TDB98* (__stdcall *TIDtoTDB_t)(DWORD);
-typedef PDB98* (__stdcall *PIDtoPDB_t)(DWORD);
 typedef MODREF* (__stdcall * MRLoadTree_t)(LPCSTR);
 typedef BOOL (__stdcall * FreeLibTree_t)(MODREF*);
 typedef BOOL (__stdcall * FLoadTreeNotify_t)(MODREF*, BOOL);
 typedef VOID (__stdcall * FreeLibRemove_t)(VOID);
+typedef HANDLE (__stdcall *AllocHandle_t)(PDB98*, TDB98*, DWORD);
 
 extern MRFromHLib_t MRFromHLib;
 
@@ -67,17 +67,13 @@ extern MRFromHLib_t MRFromHLib;
  */
 extern TIDtoTDB_t TIDtoTDB;
 
-/** Convert Process ID into pointer to Process Database. 
- * @param pid Process ID.
- * @return Pointer to Process Database.
- */
-extern PIDtoPDB_t PIDtoPDB;
-
 extern MRLoadTree_t MRLoadTree;
 extern FreeLibTree_t FreeLibTree;
 extern FLoadTreeNotify_t FLoadTreeNotify;
 extern FreeLibRemove_t FreeLibRemove;
+extern AllocHandle_t AllocHandle;
 
 MODREF* MRfromCallerAddr(DWORD addr);
+HANDLE _OpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId);
 
 #endif

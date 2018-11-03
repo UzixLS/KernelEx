@@ -35,7 +35,7 @@ BEGIN
     IDS_FAILSEC             "ERROR: Failed to allocate %s section memory"
     IDS_FAILBAK             "ERROR: Failed to create backup in %s"
     IDS_ERRCHECK            "ERROR: Checksum error"
-    IDS_INVSTUB             "ERROR: Invalid stub version found: %d. Possibly newer KernelEx. Aborting."
+    IDS_FAILOPENBACKUP      "ERROR: Failed to open backup file %s.\nPossible causes: previous version not uninstalled correctly or file has been deleted.\nRestore %s manually from install media."
     IDS_WINVER              "Incompatible Windows version"
 END
 

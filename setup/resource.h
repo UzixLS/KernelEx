@@ -9,7 +9,7 @@
 #define IDS_FAILSEC                     5
 #define IDS_FAILBAK                     6
 #define IDS_ERRCHECK                    7
-#define IDS_INVSTUB                     8
+#define IDS_FAILOPENBACKUP              8
 #define IDS_WINVER                      9
 
 // Next default values for new objects
