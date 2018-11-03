@@ -62,6 +62,7 @@ MAKE_HEADER(ULONG __stdcall CommonUnimpStub())
 
 MAKE_HEADER(DWORD __stdcall MapSL(DWORD addr16))
 MAKE_HEADER(DWORD __stdcall LoadLibrary16(LPSTR libname))
+MAKE_HEADER(ULONG __stdcall K32_RtlNtStatusToDosError(LONG status))
 
 #ifdef __cplusplus
 }

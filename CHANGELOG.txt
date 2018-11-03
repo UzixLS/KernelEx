@@ -1,3 +1,35 @@
+KernelEx v4.5 RC 5 by Xeno86
+2010-11-02
+
+font UID is used instead of handle to identify fonts in cache (UIDs are unique, handles may be reused), 
+rewritten code to fix GDI objects leaking (improved stability, more leaks covered)
+RPC code is extended to support proxies with Win2k+ extensions (for MS Office 2007 converters)
+implemented OLE32.CoWaitForMultipleHandles with Wine code (for MS Office 2007 converters)
+use proper locking when accessing DC object in TextOut functions (improved stability)
+make GetTextExtentPoint32 threat negative string lengths as error (as NT does, fixes random Foxit Reader crashes during scrolling)
+make QueryInterface(CLSID_ShellLink,IID_IUnknown) prepare IShellLinkA interface for use (fixes "Easy Assembler Shell" installer)
+renamed "Compatibility" tab to "KernelEx" tab
+fix for USER32.LoadMenuA loading menus from LOAD_LIBRARY_AS_DATAFILE mmaped DLLs 
+replaced MSLU USER32.LoadMenuIndirectW with direct call 
+replaced buggy MSLU menu functions not checking flags with custom implementation: USER32.LoadMenuW, InsertMenuW, AppendMenuW, ChangeMenuW, ModifyMenuW
+fixed Akelpad incorrect national input + Office 2003 one-char-in-dialog-title ThUniLay bug
+fixed SetWindowTextW behaviour
+modified SHGetSpecialFolderPath fix for compatibility with win95 shell32
+added SHELL32.SHCreateDirectoryEx missing on Windows 98
+added KERNEL32.MapViewOfFile workaround for Word 2003
+added ADVAPI32 Lsa and DecryptFile/EncryptFile stubs (for Word 2003)
+added KERNEL32.SetDllDirectory stubs (for newer mpc-hc)
+Unicode applications receive Tahoma shell font (fixes Qt GUI problems)
+added protection against ExitProcess in DLL_PROCESS_DETACH which causes a crash on 9x
+set calling thread priority to the lowest possible in order to improve chance for thread which calls ExitProcess to finish latest and call dll process detach like NT (fixes OpenOffice.org shutdown crash)
+added a protection against SHFOLDER unloading by hostile programs (fixes VLC 1.1.4 DVD playback crash)
+terminate process if EnterCriticalSection is called on orphaned CS in DLL_PROCESS_DETACH - Vista behaviour (fixes OpenOffice.org shutdown crash)
+modified raw input stubs to return proper error codes and properly reset pointers
+replaced GetOpenFileNameW/GetSaveFileNameW MSLU wrapper with custom implementation
+fix: GetFileVersionInfoSizeW didn't return proper value on failure
+
+---------------------------------------
+
 KernelEx v4.5 RC 4 by Xeno86
 2010-09-21
 

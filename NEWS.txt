@@ -1,3 +1,28 @@
+KernelEx v4.5 RC 5 by Xeno86
+2010-11-02
+
+What's new:
+----------------------------------
+* KernelEx should now work better with Windows 95 shell
+* Fixed stability issues with GDI anti-leaking code
+
+Apps fixed / now working:
+-------------------------
+* Fixed: OpenOffice.org often crashed on closing
+* Fixed: VLC 1.1.x crashed on DVD playback on windows 98 shell
+* Fixed: MAME insufficient memory error
+* Fixed: Inkscape 0.47 invisible save dialog problem
+* Fixed: Foxit Reader 3,4 resource leaks and random scrolling crashes
+* Fixed: Opera crashed in 'Windows 2000' mode when trying to save file
+* Fixed: Qt4 apps not showing interface fonts
+* Fixed: AkelPad had broken national input
+* Fixed: Easy Assembler Shell installer crash
+* Now working: Media Player Classic Home Cinema rev 2374+
+* Now working: MS Office 2003 Word/Excel + Viewers (experimental)
+* Now working: MS Office 2007 converters [docx only] (experimental)
+
+#################################################
+
 KernelEx v4.5 RC 4 by Xeno86
 2010-09-21
 

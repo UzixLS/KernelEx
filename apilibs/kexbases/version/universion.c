@@ -31,6 +31,8 @@ DWORD WINAPI GetFileVersionInfoSizeW_new(LPWSTR filenameW, LPDWORD handle)
 	file_GetCP();
 	file_ALLOC_WtoA(filename);
 	size = GetFileVersionInfoSizeA(filenameA, handle);
+	if (size == 0)
+		return size;
 	return size * (1 + sizeof(WCHAR)) + 4;
 }
 

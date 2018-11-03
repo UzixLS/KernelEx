@@ -9,3 +9,4 @@ winspool
 shfolder
 winmm
 ws2_32
+ole32

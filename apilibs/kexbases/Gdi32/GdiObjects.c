@@ -1,7 +1,7 @@
 /*
  *  KernelEx
  *
- *  Copyright (C) 2009, Tihiy
+ *  Copyright (C) 2009-2010, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -24,22 +24,20 @@
 #include "GdiObjects.h"
 #include "k32ord.h"
 #include "kexcoresdk.h"
+#include "Orhpans.h"
 
 static WORD g_GDILH_addr;
 static DWORD g_GdiBase;
-static int script_cache_psidx;
+static int orphan_class_psidx;
 
 #define REBASEGDI(x) ((PVOID)( g_GdiBase + LOWORD((DWORD)(x)) ))
 #define REBASEGDIHIGH(x) ( g_GdiBase + (DWORD)(x) ) 
-
-#define GDIHEAP32BASE 0x10000
-#define GDIHEAP32TOP  0x20000
 
 BOOL InitGDIObjects(void)
 {
 	g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
 	g_GDILH_addr = ((PINSTANCE16)g_GdiBase)->pLocalHeap;
-	script_cache_psidx = kexPsAllocIndex();
+	orphan_class_psidx = kexPsAllocIndex();
 	return (BOOL)g_GdiBase;
 }
 
@@ -48,7 +46,7 @@ PGDIOBJ16 GetGDIObjectPtr( HGDIOBJ hgdiobj )
 	WORD wHandle = (WORD)hgdiobj;
 	if ( wHandle & 1 ) return NULL; //all gdi handles end in b10 or b00, not b01
 	if ( wHandle & 3 ) //64K heap
-	{		
+	{
 		PLHENTRY entry = (PLHENTRY)REBASEGDI( wHandle );
 		if ( wHandle <= g_GDILH_addr || entry->bFlags == LHE_FREEHANDLE || entry->wBlock <= g_GDILH_addr )
 			return NULL; //deleted or invalid handle
@@ -62,7 +60,7 @@ PGDIOBJ16 GetGDIObjectPtr( HGDIOBJ hgdiobj )
 			return (PGDIOBJ16)REBASEGDI(entry->wBlock);
 		}
 	}
-	else //high heap
+	else //high heap (not moveable)
 	__try
 	{
 		if ( wHandle < 0x80 ) return NULL; //high heap handles start with 0x80
@@ -120,36 +118,39 @@ static DWORD SwitchGDIObjectType( PGDIOBJ16 obj )
 	return 0;
 }
 
-
 /* MAKE_EXPORT GetObjectType_fix=GetObjectType */
 DWORD WINAPI GetObjectType_fix( HGDIOBJ hgdiobj )
 {
 	//GetObjectType is rewritten in order to boost it's correctness and speed:
-	//constantly throwing page/segfaults is very bad on virtual machines.
-	PGDIOBJ16 obj = GetGDIObjectPtr( hgdiobj );	
+	//constantly throwing page/segfaults is very bad on virtual machines.			
 	DWORD result = 0;
-	if ( obj )
+	if (hgdiobj)
 	{
+		PGDIOBJ16 obj;
 		GrabWin16Lock();
-		result = SwitchGDIObjectType( obj );
+		obj = GetGDIObjectPtr( hgdiobj );
+		if ( obj )
+			result = SwitchGDIObjectType( obj );
 		ReleaseWin16Lock();
-	}
-	else  //still, can be metafile selector
-	{
-		WORD wHandle = (WORD)hgdiobj;
-		if ( (wHandle & 6) == 6 ) //test for ldt selector
+		if ( !obj )  //still, can be metafile selector
 		{
-			LDT_ENTRY selector;
-			GetThreadSelectorEntry( GetCurrentThread(), wHandle, &selector );
-			if ( selector.HighWord.Bits.Type == 3 )
-				result = GetObjectType(hgdiobj); //resort to gdi32
+			WORD wHandle = (WORD)hgdiobj;
+			if ( (wHandle & 6) == 6 ) //test for ldt selector
+			{
+				LDT_ENTRY selector;
+				GetThreadSelectorEntry( GetCurrentThread(), wHandle, &selector );
+				if ( selector.HighWord.Bits.Type == 3 ) //read/write usermode?
+					result = GetObjectType(hgdiobj); //resort to gdi32
+			}
 		}
 	}
-	if ( !result ) SetLastError( ERROR_INVALID_HANDLE );
+	if ( !result )
+		SetLastError( ERROR_INVALID_HANDLE );
 	return result;
 }
 
 __declspec(naked)
+static inline
 WORD GetCurrentTDB() 
 {
 	__asm
@@ -160,98 +161,110 @@ WORD GetCurrentTDB()
 	}
 }
 
+/************************************************************************
+  The purpose of GdiObjects is to simulate NT GDI object rules, which
+  allows deleting object handles while selected into DCs.
+
+  To do this, we set up an array of those handles which are checked up
+  and destroyed if unselected in FIFO order when some time passes or
+  array (list+map) is big enough.
+ ************************************************************************/
+
+//those have to be under w16lock
+static inline
+GdiOrphans* GetOrphans()
+{
+	return (GdiOrphans*)kexPsGetValue(orphan_class_psidx);
+}
+
+static inline
+GdiOrphans* CreateOrphans()
+{
+	GdiOrphans* orphans = GetOrphans();
+	if (orphans == NULL)
+	{
+		orphans = new GdiOrphans;
+		kexPsSetValue(orphan_class_psidx,orphans);
+	}
+	return orphans;
+}
+
 /* MAKE_EXPORT DeleteObject_fix=DeleteObject */
 BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
-{
-	PGDIOBJ16 obj = GetGDIObjectPtr( hObject );
-	if ( !obj || !SwitchGDIObjectType(obj) ) return FALSE;
-	DWORD violated = 0;
+{	
+	PGDIOBJ16 obj;
+	GdiOrphans* orphans = NULL;
+	DWORD dwNumber = 0;
+	if (!hObject) return FALSE;
+	GrabWin16Lock();
+	obj = GetGDIObjectPtr( hObject );
+	if ( !obj || !SwitchGDIObjectType(obj) )
+	{
+		ReleaseWin16Lock();
+		return FALSE;
+	}
+	//check if object is selected
 	if ( obj->wOwner == GetCurrentTDB() ) //not system or foreign objects
 	{
-		if (obj->wType == GDI_TYPE_FONT)
+		if (obj->wType == GDI_TYPE_FONT || obj->wType == GDI_TYPE_PEN )
 		{
-			typedef void (*DeleteUSPFontCache_fn)(HFONT hFont);
-			DeleteUSPFontCache_fn DeleteUSPFontCache = (DeleteUSPFontCache_fn) kexPsGetValue(script_cache_psidx);
-			if (!DeleteUSPFontCache)
+			if ( obj->wRefCount >= GDI_REFCOUNT_ONCE )
 			{
-				DeleteUSPFontCache = (DeleteUSPFontCache_fn)kexGetProcAddress(LoadLibrary("KEXBASEN.DLL"), "DeleteUSPFontCache");
-				kexPsSetValue(script_cache_psidx, DeleteUSPFontCache);
+				DBGPRINTF(("Attempt to delete selected %s %p\n",
+					obj->wType == GDI_TYPE_FONT ? "font":"pen",hObject));
+				dwNumber = obj->dwNumber;
 			}
-			if (DeleteUSPFontCache)
-				DeleteUSPFontCache((HFONT)hObject);			
 		}
-		if (obj->wType == GDI_TYPE_FONT && ((PFONTOBJ16)obj)->wSelCount >= SEL_FONT_ONCE )
+		if (obj->wType == GDI_TYPE_BITMAP) //can be selected into one DC
 		{
-			DBGPRINTF(("somebody is trying to delete selected font %p\n",hObject));
-			violated = GDI_TYPE_FONT;
+			PBITMAPOBJ16 bmpobj = (PBITMAPOBJ16)obj;
+			if ( bmpobj->wSelCount )
+			{
+				DBGPRINTF(("Attempt to delete selected bitmap %p\n",
+					hObject));
+				dwNumber = obj->dwNumber;
+			}
 		}
-		if (obj->wType == GDI_TYPE_BITMAP && ((PBITMAPOBJ16)obj)->wSelCount == SEL_BITMAP_ONCE )
-		{
-			DBGPRINTF(("somebody is trying to delete selected bitmap %p\n",hObject));
-			violated = GDI_TYPE_BITMAP;
-		}
+		//if there is sth to record, initialize orphans class
+		orphans = (dwNumber) ? CreateOrphans() : GetOrphans();
 	}
-	BOOL ret = DeleteObject( hObject );
-	if ( violated == GDI_TYPE_FONT )
-		((PFONTOBJ16)obj)->wSelCount |= SEL_FONT_DEL;
-	else if ( violated == GDI_TYPE_BITMAP )
-		((PBITMAPOBJ16)obj)->wSelCount |= SEL_BITMAP_DEL;
-	return ret;
+	ReleaseWin16Lock();
+	if (orphans)
+	{
+		if ( dwNumber )
+			orphans->RecordOrphan(hObject,dwNumber);
+		else
+			if ( orphans->ForgetOrphan(hObject) )
+				DBGPRINTF(("WARNING: deleted handle %p is destroyed!!!\n",hObject));
+	}
+	return DeleteObject( hObject );
 }
 
 /* MAKE_EXPORT SelectObject_fix=SelectObject */
 HGDIOBJ WINAPI SelectObject_fix( HDC hdc, HGDIOBJ hgdiobj )
 {
-	//9x should do this
+	//validation 9x should do
 	if ( !hdc ) SetLastError(ERROR_INVALID_HANDLE);
 	if ( !hdc || !hgdiobj ) return NULL;
-	HGDIOBJ ret;
-	ret = SelectObject( hdc, hgdiobj );
-	PGDIOBJ16 obj = GetGDIObjectPtr( ret );
-	if ( obj && obj->wOwner )
-	{
-		if ( obj->wType == GDI_TYPE_FONT && ((PFONTOBJ16)obj)->wSelCount == SEL_FONT_DEL )
-		{
-			DBGPRINTF(("deleting font %p on unselecting\n",ret));
-			DeleteObject(ret);
-		}
-		if ( obj->wType == GDI_TYPE_BITMAP && ((PBITMAPOBJ16)obj)->wSelCount == SEL_BITMAP_DEL )
-		{
-			((PBITMAPOBJ16)obj)->wSelCount = 0;
-			DBGPRINTF(("deleting bitmap %p on unselecting\n",ret));
-			DeleteObject(ret);
-		}		
+	//if object was deleted, don't let it be reselected
+	GrabWin16Lock();
+	PGDIOBJ16 obj = GetGDIObjectPtr( hgdiobj );
+	GdiOrphans* orphans = NULL;
+	DWORD dwNumber;	
+	if ( obj && obj->wOwner == GetCurrentTDB() )
+	{		
+		orphans = GetOrphans();
+		dwNumber = obj->dwNumber;
 	}
-	return ret;
+	ReleaseWin16Lock();	
+	if ( orphans && orphans->IsOrphan(hgdiobj, dwNumber) )
+	{
+		DBGPRINTF(("WARNING: Attempt to select deleted handle %p\n",hgdiobj));
+		return NULL;
+	}
+	return SelectObject( hdc, hgdiobj );
 }
 
-/* MAKE_EXPORT DeleteDC_fix=DeleteDC */
-BOOL WINAPI DeleteDC_fix( HDC hdc )
-{
-	BOOL ret;
-	PGDIOBJ16 obj = GetGDIObjectPtr( hdc );
-	if ( !obj || !SwitchGDIObjectType(obj) ) return FALSE;
-	HGDIOBJ fnt = GetCurrentObject(hdc,OBJ_FONT);
-	HGDIOBJ bmp = GetCurrentObject(hdc,OBJ_BITMAP);
-	ret = DeleteDC(hdc);
-	if (ret)
-	{
-		PFONTOBJ16 fntobj = (PFONTOBJ16)GetGDIObjectPtr(fnt);
-		PBITMAPOBJ16 bitmapobj = (PBITMAPOBJ16)GetGDIObjectPtr(bmp);
-		if (fntobj && fntobj->wOwner && fntobj->wType == GDI_TYPE_FONT && fntobj->wSelCount == SEL_FONT_DEL)
-		{
-			DBGPRINTF(("deleting font %p on dc cleanup\n",fnt));
-			DeleteObject(fnt);
-		}
-		if (bitmapobj && bitmapobj->header.wOwner && bitmapobj->header.wType == GDI_TYPE_BITMAP && bitmapobj->wSelCount == SEL_BITMAP_DEL)
-		{
-			bitmapobj->wSelCount = 0;
-			DBGPRINTF(("deleting bitmap %p on dc cleanup\n",bmp));
-			DeleteObject(bmp);
-		}
-	}
-	return ret;
-}
 
 /* MAKE_EXPORT CreateDIBSection_fix=CreateDIBSection */
 HBITMAP WINAPI CreateDIBSection_fix(
@@ -265,5 +278,19 @@ HBITMAP WINAPI CreateDIBSection_fix(
 {
 	if (pbmi && pbmi->bmiHeader.biSize == sizeof(BITMAPINFO)) //9x does not forgive
 		pbmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER); //9x does not forget
-	return CreateDIBSection(hdc,pbmi,iUsage,ppvBits,hSection,dwOffset);
+	HBITMAP ret = CreateDIBSection(hdc,pbmi,iUsage,ppvBits,hSection,dwOffset);
+	GdiOrphans* orphans = GetOrphans();
+	if (orphans)
+		orphans->RunCleanup();
+	return ret;
+}
+
+/* MAKE_EXPORT CreateFontIndirectA_fix=CreateFontIndirectA */
+HFONT WINAPI CreateFontIndirectA_fix( CONST LOGFONT* lplf )
+{
+	HFONT ret = CreateFontIndirectA(lplf);
+	GdiOrphans* orphans = GetOrphans();
+	if (orphans)
+		orphans->RunCleanup();
+	return ret;
 }

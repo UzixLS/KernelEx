@@ -23,9 +23,16 @@
 #include "kexcoresdk.h"
 #include "_shell32_apilist.h"
 
+extern void uninit_SHGetFolderPath();
+
 BOOL init_shell32()
 {
 	return TRUE;
+}
+
+void uninit_shell32()
+{
+	uninit_SHGetFolderPath();
 }
 
 static const apilib_named_api shell32_named_apis[] = 
@@ -37,6 +44,8 @@ static const apilib_named_api shell32_named_apis[] =
 	DECL_API("FindExecutableW", FindExecutableW_fwd),
 	DECL_API("SHBindToParent", SHBindToParent_new),
 	DECL_API("SHBrowseForFolderW", SHBrowseForFolderW_fwd),
+	DECL_API("SHCreateDirectoryExA", SHCreateDirectoryExA_new),
+	DECL_API("SHCreateDirectoryExW", SHCreateDirectoryExW_new),
 	DECL_API("SHFileOperationW", SHFileOperationW_fwd),
 	DECL_API("SHGetFileInfoW", SHGetFileInfoW_fwd),
 	DECL_API("SHGetFolderLocation", SHGetFolderLocation_new),
@@ -44,8 +53,8 @@ static const apilib_named_api shell32_named_apis[] =
 	DECL_API("SHGetFolderPathW", SHGetFolderPathW_new),
 	DECL_API("SHGetNewLinkInfoW", SHGetNewLinkInfoW_fwd),
 	DECL_API("SHGetSpecialFolderLocation", SHGetSpecialFolderLocation_fix),
-	DECL_API("SHGetSpecialFolderPathA", SHGetSpecialFolderPathA_fix),
-	DECL_API("SHGetSpecialFolderPathW", SHGetSpecialFolderPathW_fix),
+	DECL_API("SHGetSpecialFolderPathA", SHGetSpecialFolderPathA_new),
+	DECL_API("SHGetSpecialFolderPathW", SHGetSpecialFolderPathW_new),
 	DECL_API("SHParseDisplayName", SHParseDisplayName_new),
 	DECL_API("ShellAboutW", ShellAboutW_fwd),
 	DECL_API("ShellExecuteExW", ShellExecuteExW_fwd),

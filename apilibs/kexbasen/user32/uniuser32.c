@@ -23,11 +23,9 @@
 #include <commctrl.h>
 #include "unifwd.h"
 
-FORWARD_TO_UNICOWS(AppendMenuW);
 FORWARD_TO_UNICOWS(BroadcastSystemMessageW);
 FORWARD_TO_UNICOWS(ChangeDisplaySettingsExW);
 FORWARD_TO_UNICOWS(ChangeDisplaySettingsW);
-FORWARD_TO_UNICOWS(ChangeMenuW);
 FORWARD_TO_UNICOWS(DdeCreateStringHandleW);
 FORWARD_TO_UNICOWS(DdeInitializeW);
 FORWARD_TO_UNICOWS(DdeQueryStringW);
@@ -57,7 +55,6 @@ FORWARD_TO_UNICOWS(GetPropW);
 FORWARD_TO_UNICOWS(GetTabbedTextExtentW);
 FORWARD_TO_UNICOWS(GrayStringW);
 FORWARD_TO_UNICOWS(InsertMenuItemW);
-FORWARD_TO_UNICOWS(InsertMenuW);
 FORWARD_TO_UNICOWS(LoadAcceleratorsW);
 FORWARD_TO_UNICOWS(LoadBitmapW);
 FORWARD_TO_UNICOWS(LoadCursorFromFileW);
@@ -65,12 +62,9 @@ FORWARD_TO_UNICOWS(LoadCursorW);
 FORWARD_TO_UNICOWS(LoadIconW);
 FORWARD_TO_UNICOWS(LoadImageW);
 FORWARD_TO_UNICOWS(LoadKeyboardLayoutW);
-FORWARD_TO_UNICOWS(LoadMenuIndirectW);
-FORWARD_TO_UNICOWS(LoadMenuW);
 FORWARD_TO_UNICOWS(MapVirtualKeyExW);
 FORWARD_TO_UNICOWS(MapVirtualKeyW);
 FORWARD_TO_UNICOWS(MessageBoxIndirectW);
-FORWARD_TO_UNICOWS(ModifyMenuW);
 FORWARD_TO_UNICOWS(RegisterClipboardFormatW);
 FORWARD_TO_UNICOWS(RegisterDeviceNotificationW);
 FORWARD_TO_UNICOWS(RegisterWindowMessageW);

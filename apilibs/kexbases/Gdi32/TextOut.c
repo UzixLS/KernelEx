@@ -6,7 +6,7 @@
  *  Copyright 2002,2003 Shachar Shemesh 
  *  Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla) 
  *
- *  Copyright (C) 2008, Tihiy
+ *  Copyright (C) 2008, 2010, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -110,6 +110,7 @@ BOOL WINAPI SetWorldTransform_NT(
   CONST XFORM *lpXform   // transformation data
 )
 {
+	GrabWin16Lock();
 	PDCOBJ dcobj = GetDCObj(hdc);
 	WORD savemapmode;
 	int wx;
@@ -119,6 +120,7 @@ BOOL WINAPI SetWorldTransform_NT(
 	if ( !dcobj || !lpXform || !almostzero(lpXform->eM12) || !almostzero(lpXform->eM21)
 		|| almostzero(lpXform->eM11) || almostzero(lpXform->eM22) )
 	{
+		ReleaseWin16Lock();
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE; //no rotating for you
 	}
@@ -132,6 +134,7 @@ BOOL WINAPI SetWorldTransform_NT(
 	SetViewportOrgEx(hdc,(int)lpXform->eDx,(int)lpXform->eDy,NULL);
 	//set it back
 	dcobj->mapmode = savemapmode;
+	ReleaseWin16Lock();
 	return TRUE;
 }
 
@@ -156,17 +159,24 @@ BOOL WINAPI GetTextMetricsA_NT(
   LPTEXTMETRIC lptm   // text metrics
 )
 {
+	GrabWin16Lock();
 	PDCOBJ dcobj = GetDCObj(hdc);
 	int saved = 0;
 	BOOL retval;
-	if ( !dcobj ) return FALSE;
+	if ( !dcobj )
+	{
+		ReleaseWin16Lock();
+		return FALSE;
+	}
 	if ( dcobj->ViewportExtX != 1 || dcobj->ViewportExtY != 1 || dcobj->WindowExtX != 1 || dcobj->WindowExtY != 1 )
 	{
 		saved = SaveDC(hdc);
 		ResetMapMode(hdc);
 	}
 	retval = GetTextMetricsA(hdc,lptm);
-	if ( saved ) RestoreDC(hdc,-1);
+	if ( saved )
+		RestoreDC(hdc,-1);
+	ReleaseWin16Lock();
 	return retval;
 }
 
@@ -286,7 +296,6 @@ BOOL WINAPI ExtTextOutW_new(
 {
 	BOOL result;
 	int* buffer = NULL;
-	PDCOBJ dcobj = GetDCObj( hdc );
 	WORD savemapmode = 0;
 	
 	if ( HIWORD(lpString) )
@@ -309,6 +318,9 @@ BOOL WINAPI ExtTextOutW_new(
 			}
 		}
 	}
+
+	GrabWin16Lock();
+	PDCOBJ dcobj = GetDCObj( hdc );
 	if ( dcobj && dcobj->mapmode == MM_TEXT && 
 		( dcobj->ViewportExtX!=1 || dcobj->ViewportExtY!=1
 		|| dcobj->WindowExtX!=1 || dcobj->WindowExtY!=1) )
@@ -319,6 +331,7 @@ BOOL WINAPI ExtTextOutW_new(
 	result = ExtTextOutW(hdc,X,Y,fuOptions,lprc,lpString,cbCount,lpDx);
 	if ( savemapmode )
 		dcobj->mapmode = savemapmode;
+	ReleaseWin16Lock();
 
 	if ( buffer && cbCount>128 )
 		HeapFree(GetProcessHeap(),0,buffer);

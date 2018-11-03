@@ -1,4 +1,4 @@
-  !define _VERSION '4.5 RC 4'
+  !define _VERSION '4.5 RC 5'
   
   !ifndef _DEBUG
     !define FLAVOUR 'Release'

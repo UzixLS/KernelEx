@@ -22,17 +22,28 @@
 
 #include <malloc.h>
 #include <windows.h>
-#include "common.h"
 #include <usp10.h>
 #include "ScriptCache.h"
+#include "k32ord.h"
+#include "../../kexbases/Gdi32/GdiObjects.h"
 
-#ifdef __cplusplus
-extern "C"
-#endif
-__declspec(dllexport)
-void DeleteUSPFontCache(HFONT hFont)
+static DWORD g_GdiBase;
+BOOL InitUberGDI(void)
 {
-	ScriptCache::instance.ResetCache(hFont);
+	g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
+	return (BOOL)g_GdiBase;
+}
+
+//grab GDI object number to distinguish fonts
+//don't do strict validation or locking since
+//dc font can't move or vanish when selected
+FONTUID GetHDCFontUID(HDC hdc)
+{
+	WORD wFont = (WORD)GetCurrentObject(hdc,OBJ_FONT);
+	if (wFont < 0x80) return 0;
+	DWORD* high = (DWORD*)(g_GdiBase + GDIHEAP32BASE + wFont);
+	PGDIOBJ16 fntobj = (PGDIOBJ16)(g_GdiBase + *high);
+	return fntobj->dwNumber;
 }
 
 /* MAKE_EXPORT GetGlyphIndicesW_new=GetGlyphIndicesW */
@@ -47,7 +58,7 @@ int WINAPI GetGlyphIndicesW_new(
 	HRESULT result;
 	if (!hdc || !pgi || (UINT)lpstr<0xFFFFu || !c) return GDI_ERROR;
 	ScriptCache::instance.Lock();
-	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 	result = ScriptGetCMap(hdc,&cache,lpstr,c,0,pgi);
 	if ( !( result == S_OK || result == S_FALSE ) ) 
@@ -143,7 +154,7 @@ BOOL WINAPI GetTextExtentExPointI_new(
 	}
 
 	ScriptCache::instance.Lock();
-	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 
 	//in UberKern, ScriptPlace was used. However, it's too costly...
@@ -200,7 +211,7 @@ BOOL WINAPI GetCharWidthI_new(
 	}
 
 	ScriptCache::instance.Lock();
-	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 
 	if ( !pgi ) //cgi glyphs starting giFirst
@@ -247,7 +258,7 @@ BOOL WINAPI GetCharABCWidthsI_new(
 	}
 
 	ScriptCache::instance.Lock();
-	HFONT hFont = (HFONT)GetCurrentObject(hdc,OBJ_FONT);
+	FONTUID hFont = GetHDCFontUID(hdc);
 	SCRIPT_CACHE cache = ScriptCache::instance.GetCache(hFont);
 
 	if ( !pgi ) //cgi glyphs starting giFirst

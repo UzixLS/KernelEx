@@ -1,6 +1,7 @@
 /*
  *  KernelEx
  *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2010, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -21,6 +22,16 @@
 
 #include <shlobj.h>
 #include "folderfix.h"
+#include "common.h"
+
+/*	Win95 shell doesn't support SHGetSpecialFolderPathA/W so we don't use it;
+ *	it has SHGetSpecialFolderPath (@175) however which we link to.
+ */
+#ifdef SHGetSpecialFolderPath
+#undef SHGetSpecialFolderPath
+#endif
+SHSTDAPI_(BOOL) SHGetSpecialFolderPath(HWND hwndOwner, LPSTR lpszPath, int nFolder, BOOL fCreate);
+
 
 /* MAKE_EXPORT SHGetSpecialFolderLocation_fix=SHGetSpecialFolderLocation */
 HRESULT WINAPI SHGetSpecialFolderLocation_fix(HWND hwndOwner, int nFolder, LPVOID *_ppidl)
@@ -32,16 +43,23 @@ HRESULT WINAPI SHGetSpecialFolderLocation_fix(HWND hwndOwner, int nFolder, LPVOI
 	return SHGetSpecialFolderLocation(hwndOwner, nFolder, ppidl);
 }
 
-/* MAKE_EXPORT SHGetSpecialFolderPathA_fix=SHGetSpecialFolderPathA */
-BOOL WINAPI SHGetSpecialFolderPathA_fix(HWND hwndOwner, LPSTR lpszPath, int nFolder, BOOL fCreate)
+/* MAKE_EXPORT SHGetSpecialFolderPathA_new=SHGetSpecialFolderPathA */
+BOOL WINAPI SHGetSpecialFolderPathA_new(HWND hwndOwner, LPSTR lpszPath, int nFolder, BOOL fCreate)
 {
 	nFolder = folder_fix(nFolder);
-	return SHGetSpecialFolderPathA(hwndOwner, lpszPath, nFolder, fCreate);
+	return SHGetSpecialFolderPath(hwndOwner, lpszPath, nFolder, fCreate);
 }
 
-/* MAKE_EXPORT SHGetSpecialFolderPathW_fix=SHGetSpecialFolderPathW */
-BOOL WINAPI SHGetSpecialFolderPathW_fix(HWND hwndOwner, LPWSTR lpszPath, int nFolder, BOOL fCreate)
+/* MAKE_EXPORT SHGetSpecialFolderPathW_new=SHGetSpecialFolderPathW */
+BOOL WINAPI SHGetSpecialFolderPathW_new(HWND hwndOwner, LPWSTR lpszPathW, int nFolder, BOOL fCreate)
 {
-	nFolder = folder_fix(nFolder);
-	return SHGetSpecialFolderPathW(hwndOwner, lpszPath, nFolder, fCreate);
+	char pathA[MAX_PATH];
+	LPSTR lpszPathA = pathA;
+	if (!lpszPathW)
+		return E_INVALIDARG;
+	*lpszPathW = L'\0';
+	BOOL ret = SHGetSpecialFolderPathA_new(hwndOwner,lpszPathA,nFolder,fCreate);
+	if (ret)
+		AtoW(lpszPath,MAX_PATH);
+	return ret;
 }

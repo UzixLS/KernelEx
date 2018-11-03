@@ -229,7 +229,10 @@ int WINAPI GetObjectW_new(
 	LOGFONTW fontW = {0};
 	if (!GetObjectA(hgdiobj,sizeof(LOGFONTA),&fontA)) return 0; //err not font
 	memcpy(&fontW,&fontA,FIELD_OFFSET(LOGFONTA,lfFaceName));
-	MultiByteToWideChar(CP_ACP,0,fontA.lfFaceName,-1,fontW.lfFaceName,LF_FACESIZE);
+	if (hgdiobj == GetStockObject(DEFAULT_GUI_FONT)) //unicode apps get Tahoma
+		lstrcpyW(fontW.lfFaceName,L"Tahoma");
+	else
+		MultiByteToWideChar(CP_ACP,0,fontA.lfFaceName,-1,fontW.lfFaceName,LF_FACESIZE);	
 	memcpy(lpvObject,&fontW,cbBuffer);
 	return cbBuffer;
 }

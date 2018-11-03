@@ -22,7 +22,7 @@
 #ifndef __MODINIT_H
 #define __MODINIT_H
 
-#include "structs.h"
+#include "kstructs.h"
 
 bool ModuleInitializer_init();
 

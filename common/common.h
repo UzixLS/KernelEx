@@ -26,6 +26,7 @@
 #include <windows.h>
 #include <malloc.h>
 #include "kexcoresdk.h"
+#include "k32ord.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,9 +39,11 @@ typedef int __stdcall FWDPROC(void);
 
 extern int acp_mcs;
 BOOL common_init(void);
-int WINAPI CommonUnimpStub(void);
 char* file_fixWprefix(char* in);
 void fatal_error(const char* msg);
+
+size_t lstrlenAnull(LPCSTR s);
+size_t lstrlenWnull(LPCWSTR s);
 
 #ifdef __cplusplus
 };
@@ -61,7 +64,7 @@ void fatal_error(const char* msg);
 	{ \
 		__asm xor eax,eax \
 		__asm mov cl, params \
-		__asm jmp CommonUnimpStub \
+		__asm jmp dword ptr [CommonUnimpStub] \
 	}
 #endif
 
@@ -114,5 +117,30 @@ void fatal_error(const char* msg);
 
 #define file_ABUFtoW(str, cntsrc, bsize) \
 	MultiByteToWideChar(file_CP, 0, str##A, cntsrc, str##W, bsize)
+
+//In macros: convert A<->W on stack
+#define STACK_WtoA(strW,strA) \
+	strA = (LPSTR)strW; \
+	if (HIWORD(strW)) \
+	{ \
+		int c = lstrlenWnull((LPCWSTR)strW); \
+		if (c) \
+		{ \
+			strA = (LPSTR)alloca(c*2); \
+			WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)strW, -1, (LPSTR)strA, c, NULL, NULL); \
+		} \
+	}
+	
+#define STACK_AtoW(strA,strW) \
+	strW = (LPWSTR)strA; \
+	if (HIWORD(strA)) \
+	{ \
+		int c = lstrlenAnull((LPCSTR)strA); \
+		if (c) \
+		{ \
+			strW = (LPWSTR)alloca(c*sizeof(WCHAR)); \
+			MultiByteToWideChar(CP_ACP, 0, (LPCSTR)strA, -1, (LPWSTR)strW, c); \
+		} \
+	}
 
 #endif

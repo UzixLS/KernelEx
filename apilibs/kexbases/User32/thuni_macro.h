@@ -21,6 +21,7 @@
  */
 
 #include <malloc.h>
+#include "common.h"
 #include "kexcoresdk.h"
 
 #ifndef __THUNIMACRO_H
@@ -29,27 +30,6 @@
 #define VALID_PTR(x) (HIWORD(x))
 
 #define MAX_STACK 512
-
-//In macroses: convert A<->W on stack
-#define STACK_WtoA(strW,strA) \
-	strA = (LPSTR)strW; \
-	if HIWORD(strW) \
-	{ \
-		int c = lstrlenW((LPWSTR)strW); \
-		c = (c+1)*2; \
-		strA = (LPSTR)alloca(c); \
-		WideCharToMultiByte(CP_ACP, 0, (LPWSTR)strW, -1, (LPSTR)strA, c, NULL, NULL); \
-	}
-	
-#define STACK_AtoW(strA,strW) \
-	strW = (LPWSTR)strA; \
-	if (HIWORD(strA)) \
-	{ \
-		int c = lstrlenA((LPSTR)strA); \
-		c++; \
-		strW = (LPWSTR)alloca(c*sizeof(WCHAR)); \
-		MultiByteToWideChar(CP_ACP, 0, (LPSTR)strA, -1, (LPWSTR)strW, c); \
-	}
 
 //Out macroses: allocate buffer, call W>-<A function, convert A<->W
 #define ABUFFER_ALLOC(buffer,len) \

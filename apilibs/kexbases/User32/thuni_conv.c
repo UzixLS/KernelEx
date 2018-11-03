@@ -2,7 +2,7 @@
  *  KernelEx
  *  Copyright 1995 Martin von Loewis
  *  Copyright 1996 Alexandre Julliard
- *  Copyright 2009 Tihiy
+ *  Copyright 2009-2010 Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -306,6 +306,10 @@ LRESULT WINAPI CallProcAnsiWithUnicode( WNDPROC callback, HWND hwnd, UINT msg, W
 		case WM_IME_CHAR:
 			wParam = wparam_WtoA( msg, wParam );
 		break;
+		case WM_NOTIFYFORMAT:
+			/* for default window procedures */
+			if ( IS_SHARED(callback) && lParam == NF_QUERY && IsWindowUnicode_NEW((HWND)wParam) )
+				return NFR_UNICODE;
 	}
 	return CallWindowProcA(callback,hwnd,msg,wParam,lParam);
 }
@@ -318,9 +322,13 @@ LRESULT WINAPI CallProcAnsiWithUnicode( WNDPROC callback, HWND hwnd, UINT msg, W
 LRESULT WINAPI CallProcUnicodeWithAnsi( WNDPROC callback, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
-	{
+	{		
+		case WM_NCCREATE: 
+			/* unicode window is being created? mark it before event fires */
+			if (IsWindowReallyUnicode(hwnd))
+					SetWindowUnicode(hwnd,TRUE);
+			//fall down
 		case WM_CREATE:
-		case WM_NCCREATE:
 			{
 				if (!VALID_PTR(lParam)) return CallWindowProc_stdcall(callback,hwnd,msg,wParam,lParam);
 				

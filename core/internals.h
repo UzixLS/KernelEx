@@ -22,7 +22,7 @@
 #ifndef __INTERNALS_H
 #define __INTERNALS_H
 
-#include "structs.h"
+#include "kstructs.h"
 #include "sharedmem.h"
 #include "sstring.hpp"
 #include "resource.h"

@@ -70,81 +70,72 @@ HRESULT STDMETHODCALLTYPE CShellLink::QueryInterface(
 	/* [in] */ REFIID riid,
 	/* [iid_is][out] */ void **ppvObject)
 {
-	HRESULT hr;
+	HRESULT hr = S_OK;
 
 	if (riid == IID_IUnknown)
 	{
-		hr = S_OK;
+		if (!m_ShellLinkA)
+			hr = m_Unknown->QueryInterface(IID_IShellLinkA, (void**) &m_ShellLinkA);
 		*ppvObject = static_cast<IUnknown*>(static_cast<IShellLinkA*>(this));
 	}
 	else if (riid == IID_IShellLinkA)
 	{
-		if (m_ShellLinkA)
-			m_ShellLinkA->Release();
-		hr = m_Unknown->QueryInterface(IID_IShellLinkA, (void**) &m_ShellLinkA);
+		if (!m_ShellLinkA)
+			hr = m_Unknown->QueryInterface(IID_IShellLinkA, (void**) &m_ShellLinkA);
 		*ppvObject = static_cast<IShellLinkA*>(this);
 	}
 	else if (riid == IID_IShellLinkW)
 	{
-		if (m_ShellLinkA)
-			m_ShellLinkA->Release();
-		hr = m_Unknown->QueryInterface(IID_IShellLinkA, (void**) &m_ShellLinkA);
+		if (!m_ShellLinkA)
+			hr = m_Unknown->QueryInterface(IID_IShellLinkA, (void**) &m_ShellLinkA);
 		*ppvObject = static_cast<IShellLinkW*>(this);
 	}
 	else if (riid == IID_IPersistFile)
 	{
-		if (m_PersistFile)
-			m_PersistFile->Release();
-		hr = m_Unknown->QueryInterface(IID_IPersistFile, (void**) &m_PersistFile);
+		if (!m_PersistFile)
+			hr = m_Unknown->QueryInterface(IID_IPersistFile, (void**) &m_PersistFile);
 		*ppvObject = static_cast<IPersistFile*>(this);
 	}
 	else if (riid == IID_IPersistStream)
 	{
-		if (m_PersistStream)
-			m_PersistStream->Release();
-		hr = m_Unknown->QueryInterface(IID_IPersistStream, (void**) &m_PersistStream);
+		if (!m_PersistStream)
+			hr = m_Unknown->QueryInterface(IID_IPersistStream, (void**) &m_PersistStream);
 		*ppvObject = static_cast<IPersistStream*>(this);
 	}
 	else if (riid == IID_IShellExtInit)
 	{
-		if (m_ShellExtInit)
-			m_ShellExtInit->Release();
-		hr = m_Unknown->QueryInterface(IID_IShellExtInit, (void**) &m_ShellExtInit);
+		if (!m_ShellExtInit)
+			hr = m_Unknown->QueryInterface(IID_IShellExtInit, (void**) &m_ShellExtInit);
 		*ppvObject = static_cast<IShellExtInit*>(this);
 	}
 	else if (riid == IID_IContextMenu)
 	{
-		if (m_ContextMenu)
-			m_ContextMenu->Release();
-		hr = m_Unknown->QueryInterface(IID_IContextMenu, (void**) &m_ContextMenu);
+		if (!m_ContextMenu)
+			hr = m_Unknown->QueryInterface(IID_IContextMenu, (void**) &m_ContextMenu);
 		*ppvObject = static_cast<IContextMenu*>(this);
 	}
 	else if (riid == IID_IContextMenu2)
 	{
-		if (m_ContextMenu2)
-			m_ContextMenu2->Release();
-		hr = m_Unknown->QueryInterface(IID_IContextMenu2, (void**) &m_ContextMenu2);
+		if (!m_ContextMenu2)
+			hr = m_Unknown->QueryInterface(IID_IContextMenu2, (void**) &m_ContextMenu2);
 		*ppvObject = static_cast<IContextMenu2*>(this);
 	}
 	else if (riid == IID_IDropTarget)
 	{
-		if (m_DropTarget)
-			m_DropTarget->Release();
-		hr = m_Unknown->QueryInterface(IID_IDropTarget, (void**) &m_DropTarget);
+		if (!m_DropTarget)
+			hr = m_Unknown->QueryInterface(IID_IDropTarget, (void**) &m_DropTarget);
 		*ppvObject = static_cast<IDropTarget*>(this);
 	}
 	else if (riid == IID_IExtractIconA)
 	{
-		if (m_ExtractIconA)
-			m_ExtractIconA->Release();
-		hr = m_Unknown->QueryInterface(IID_IExtractIconA, (void**) &m_ExtractIconA);
+		if (!m_ExtractIconA)
+			hr = m_Unknown->QueryInterface(IID_IExtractIconA, (void**) &m_ExtractIconA);
 		*ppvObject = static_cast<IExtractIconA*>(this);
 	}
 	else if (riid == IID_IExtractIconW)
 	{
-		if (m_ExtractIconA)
-			m_ExtractIconA->Release();
-		hr = m_Unknown->QueryInterface(IID_IExtractIconA, (void**) &m_ExtractIconA);
+		if (!m_ExtractIconA)
+			hr = m_Unknown->QueryInterface(IID_IExtractIconA, (void**) &m_ExtractIconA);
 		*ppvObject = static_cast<IExtractIconW*>(this);
 	}
 	else

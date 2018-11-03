@@ -23,9 +23,11 @@
 #include "kexcoresdk.h"
 #include "_gdi32_apilist.h"
 
+BOOL InitUberGDI(void);
+
 BOOL init_gdi32()
 {
-	return TRUE;
+	return InitUberGDI();
 }
 
 static const apilib_named_api gdi32_named_apis[] = 

@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KERNELEXBASESHARED_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /O2 /I "." /I "../../common" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D _WIN32_WINNT=0x0500 /YX /FD /TP /GF /c
+# ADD CPP /nologo /W3 /O2 /I "." /I "../../common" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D _WIN32_WINNT=0x0500 /YX /FD /TP /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KERNELEXBASESHARED_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /Zi /Od /I "." /I "../../common" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D _WIN32_WINNT=0x0500 /YX /FD /TP /GZ /GF /c
+# ADD CPP /nologo /W3 /Gm /Zi /Od /I "." /I "../../common" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D _WIN32_WINNT=0x0500 /YX /FD /TP /GZ /GF /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
@@ -125,7 +125,11 @@ SOURCE=.\Kernel32\CreateThread_fix.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Kernel32\DeleteCriticalSection.c
+SOURCE=.\Kernel32\CriticalSection_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\ExitProcess_fix.c
 # End Source File
 # Begin Source File
 
@@ -333,6 +337,14 @@ SOURCE=.\User32\MapVirtualKey_fix.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\User32\Menu.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\RawInput.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\User32\SendMessage_fix.c
 # End Source File
 # Begin Source File
@@ -413,6 +425,18 @@ SOURCE=.\Gdi32\GetGlyphOutlineA_fix.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Gdi32\GetTextExtentPoint32_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Gdi32\Orhpans.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Gdi32\Orhpans.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Gdi32\TextOut.c
 # End Source File
 # Begin Source File
@@ -434,6 +458,10 @@ SOURCE=.\Advapi32\_advapi32_apilist.h
 # Begin Source File
 
 SOURCE=.\Advapi32\_advapi32_stubs.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Advapi32\lsa.c
 # End Source File
 # Begin Source File
 
@@ -542,7 +570,7 @@ SOURCE=.\comctl32\syslink.c
 # End Group
 # Begin Source File
 
-SOURCE=.\common.c
+SOURCE=..\..\common\common.c
 # End Source File
 # Begin Source File
 
@@ -636,7 +664,7 @@ SOURCE=.\main.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\common.h
+SOURCE=..\..\common\common.h
 # End Source File
 # Begin Source File
 

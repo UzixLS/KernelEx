@@ -1,6 +1,7 @@
 /*
  *  KernelEx
- *  Copyright (C) 2010, Tihiy, Xeno86
+ *
+ *  Copyright (C) 2010, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,42 +20,41 @@
  *
  */
 
-#ifndef __SCRIPTCACHE_H
-#define __SCRIPTCACHE_H
+#ifndef __ORPHANS_H
+#define __ORPHANS_H
 
-#include <windows.h>
-#include <usp10.h>
 #pragma warning(disable:4530) //we don't do exception handling
+#pragma warning(disable:4786) //don't care about this either
 #include <list>
-#pragma warning(default:4530)
+#include <map>
 
-#define MAXSCRIPTCACHESIZE 10
+#define MAXGDIORPHANS 6	//threshold size which triggers cleanup
+#define ORPHANTTL 2000	//msecs to try give for objects to live
 
-typedef DWORD FONTUID;
-
-typedef struct
-{
-	FONTUID hFont;
-	SCRIPT_CACHE cache;
-} FONTCACHE, *PFONTCACHE;
+//gdi object handle and its gdi number for consistency check
+typedef struct _GDIORPHAN
+{	
+	HGDIOBJ hObject;
+	DWORD dwNumber;
+} GDIORPHAN, *PGDIORPHAN;
 
 using namespace std;
 
-class ScriptCache
+class GdiOrphans
 {
-public:
-		static ScriptCache instance;
-		~ScriptCache();
-		SCRIPT_CACHE GetCache(FONTUID hFont);
-		void SetCache(FONTUID hFont, SCRIPT_CACHE newcache);
-		void Lock();
-		void Unlock();
-
+public:	
+	GdiOrphans();
+	~GdiOrphans();
+	void RecordOrphan(HGDIOBJ hObject, DWORD dwNumber);	
+	BOOL IsOrphan(HGDIOBJ hObject, DWORD dwNumber);
+	BOOL ForgetOrphan(HGDIOBJ hObject);
+	void RunCleanup();
 private:
-		list<FONTCACHE> cache;
-		CRITICAL_SECTION cs;
-
-		ScriptCache();
+	map<HGDIOBJ,PGDIORPHAN> handle_map;
+	list<PGDIORPHAN> handle_list;	
+	CRITICAL_SECTION cs;
+	void CleanupOrphan();
+	DWORD dwTickLastRecord;
 };
 
 #endif

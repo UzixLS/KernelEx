@@ -201,6 +201,14 @@ SOURCE=.\comdlg32\openfilename_fix.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\comdlg32\opensavefile.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\comdlg32\opensavefile.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\comdlg32\unicomdlg32.c
 # End Source File
 # End Group
@@ -225,6 +233,10 @@ SOURCE=.\shell32\SHBindToParent.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\shell32\SHCreateDirectoryEx.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\shell32\SHGetFolderLocation.c
 # End Source File
 # Begin Source File
@@ -233,7 +245,7 @@ SOURCE=.\shell32\SHGetFolderPath.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\shell32\SHGetSpecialFolder_fix.c
+SOURCE=.\shell32\SHGetSpecialFolder.c
 # End Source File
 # Begin Source File
 
@@ -254,6 +266,10 @@ SOURCE=.\rpcrt4\_rpcrt4_apilist.c
 # Begin Source File
 
 SOURCE=.\rpcrt4\_rpcrt4_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\rpcrt4\NdrDllGetClassObject.c
 # End Source File
 # Begin Source File
 
@@ -332,9 +348,25 @@ SOURCE=.\ws2_32\_ws2_32_apilist.h
 SOURCE=.\ws2_32\addinfo.c
 # End Source File
 # End Group
+# Begin Group "ole32"
+
+# PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\common.c
+SOURCE=.\ole32\_ole32_apilist.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ole32\_ole32_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ole32\CoWaitForMultipleHandles.c
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=..\..\common\common.c
 # End Source File
 # Begin Source File
 
@@ -436,7 +468,7 @@ SOURCE=.\unifwd.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\common.h
+SOURCE=..\..\common\common.h
 # End Source File
 # Begin Source File
 

@@ -16,3 +16,4 @@ EXPORTS
     MakeCriticalSectionGlobal
     MapSL
     LoadLibrary16 @35 NONAME
+    K32_RtlNtStatusToDosError

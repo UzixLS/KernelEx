@@ -294,6 +294,10 @@ SOURCE=..\common\kexcoresdk.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\common\kstructs.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\ModInit.h
 # End Source File
 # Begin Source File
@@ -319,10 +323,6 @@ SOURCE=.\sharedmem.h
 # Begin Source File
 
 SOURCE=..\common\sstring.hpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\structs.h
 # End Source File
 # Begin Source File
 

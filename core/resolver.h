@@ -22,7 +22,7 @@
 #ifndef __RESOLVER_H
 #define __RESOLVER_H
 
-#include "structs.h"
+#include "kstructs.h"
 #include "apilib.h"
 
 /***** loader flags *****/

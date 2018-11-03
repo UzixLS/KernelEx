@@ -1,6 +1,7 @@
-#ifndef __STRUCTS_H
-#define __STRUCTS_H
+#ifndef __KSTRUCTS_H
+#define __KSTRUCTS_H
 
+// Kernel32 Objects (WIN98)
 #define WIN98_K32OBJ_SEMAPHORE            0x1
 #define WIN98_K32OBJ_EVENT                0x2
 #define WIN98_K32OBJ_MUTEX                0x3
@@ -94,7 +95,8 @@ typedef struct _MODREF {          // Size = 0x1C + 4*cImportedModules
 
 // IMTE
 typedef struct _IMTE {            // Size = 0x3C
-    DWORD           unknown1;     // 00
+    WORD            unknown1;     // 00
+	WORD            unknown1A;    // 02
     IMAGE_NT_HEADERS*   pNTHdr;   // 04 pointer to shared PE header for module
     DWORD           unknown2;     // 08
     PSTR            pszFileName;  // 0C long path name
@@ -282,6 +284,39 @@ typedef struct _TDBX98 {
     DWORD  BlockedOnID;        // 54
 } TDBX98, *PTDBX98;
 
+// File mapping object
+typedef struct _FILEMAPPING {  // Size = 0x28 (from Kernel32)
+    WORD type;                 // 00 WIN98_K32OBJ_MEM_MAPPED_FILE
+    WORD refCount;             // 02 object reference count
+    PVOID kernObj;             // 04 some kernel heap object
+    DWORD Unknown1;            // 08
+    PVOID mapaddr;             // 0C current mapped address
+	DWORD Unknown2[6];         // 10
+} FILEMAPPING, *PFILEMAPPING;
+
 #pragma pack(pop)
 
-#endif
+#pragma warning (disable:4035)		// turn off no return code warning
+
+static inline
+PDB98* get_pdb(void)
+{
+	__asm mov eax, fs:30h
+}
+
+static inline
+TIB98* get_tib(void)
+{
+	__asm mov eax, fs:18h
+}
+
+static inline
+TDB98* get_tdb(void)
+{
+	get_tib();
+	__asm sub eax, 8h
+}
+
+#pragma warning (default:4035)		// turn on no return code warning
+
+#endif /* __KSTRUCTS_H */

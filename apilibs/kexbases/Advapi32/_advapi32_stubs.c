@@ -59,3 +59,9 @@ UNIMPL_FUNC(InitiateSystemShutdownExW, 6);
 
 UNIMPL_FUNC(FileEncryptionStatusA, 2);
 UNIMPL_FUNC(FileEncryptionStatusW, 2);
+
+UNIMPL_FUNC(EncryptFileA, 1);
+UNIMPL_FUNC(EncryptFileW, 1);
+
+UNIMPL_FUNC(DecryptFileA, 2);
+UNIMPL_FUNC(DecryptFileW, 2);

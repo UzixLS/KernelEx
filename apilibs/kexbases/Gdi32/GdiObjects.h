@@ -1,7 +1,7 @@
 /*
  *  KernelEx
  *
- *  Copyright (C) 2009, Tihiy
+ *  Copyright (C) 2009-2010, Tihiy
  *  This file is part of KernelEx source code.
  *
  *  KernelEx is free software; you can redistribute it and/or modify
@@ -26,6 +26,9 @@
 void GrabWin16Lock();
 void ReleaseWin16Lock();
 
+#define GDIHEAP32BASE 0x10000
+#define GDIHEAP32TOP  0x20000
+
 #define LHE_DISCARDED	0x40
 #define LHE_MUTATED		0x80
 #define LHE_FREEHANDLE	0xFF
@@ -43,10 +46,7 @@ void ReleaseWin16Lock();
 #define GDI_TYPE_METADC	0x4F51
 #define GDI_TYPE_ENHMETA 0x4F52
 
-#define SEL_FONT_ONCE	0x4
-#define SEL_FONT_DEL	0x2
-#define SEL_BITMAP_ONCE	0x01
-#define SEL_BITMAP_DEL	0x10
+#define GDI_REFCOUNT_ONCE	0x4
 
 #define ResetMapMode( hdc ) SetMapMode( hdc, GetMapMode(hdc) )
 
@@ -72,36 +72,32 @@ typedef struct
 
 typedef struct
 {
+	WORD wZero;				//+0 zero
+	WORD wType;				//+2 object type | flags
+	DWORD dwNumber;			//+4 number++
+	WORD wReserved;			//+8 sth specific
+	WORD wRefCount;			//+A number of DCs selected into * GDI_REFCOUNT_ONCE
+	WORD wOwner;			//+C HTASK (TDB16) of process or library owning
+} GDIOBJ16, *PGDIOBJ16;
+
+//bitmaps and DCs have special headers
+typedef struct
+{
 	WORD wZero;				//+0
 	WORD wType;				//+2
 	DWORD dwNumber;			//+4
 	DWORD dwSpecific;		//+8
 	WORD wOwner;			//+C
-} GDIOBJ16, *PGDIOBJ16;
-
-typedef struct
-{
-	GDIOBJ16 header;
-	WORD wGlobalBitmap;		//+14
-	WORD wSelCount;			//+16
-	WORD wHDC;				//+18
-	WORD wGlobalBitmapInfo;	//+20
-	DWORD dwReservedShit;	//+22
-	WORD wBitmapStuff;		//+26
-	WORD wDeviceStuff;		//+28
-	WORD wBitmapType;		//+30
-	WORD wLogColorSpace;	//+32
+	WORD wGlobalBitmap;		//+E
+	WORD wSelCount;			//+10
+	WORD wHDC;				//+12
+	WORD wGlobalBitmapInfo;	//+14
+	DWORD dwReservedShit;	//+16
+	WORD wBitmapStuff;		//+1A
+	WORD wDeviceStuff;		//+1C
+	WORD wBitmapType;		//+1E
+	WORD wLogColorSpace;	//+20
 } BITMAPOBJ16, *PBITMAPOBJ16;
-
-typedef struct
-{
-	WORD wZero;				//+0
-	WORD wType;				//+2
-	DWORD dwStuff;			//+4
-	WORD wReserved;			//+8 (not used?)
-	WORD wSelCount;			//+A 
-	WORD wOwner;			//+C
-} FONTOBJ16, *PFONTOBJ16;
 
 typedef struct
 {

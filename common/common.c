@@ -56,3 +56,31 @@ void fatal_error(const char* msg)
 	MessageBox(NULL, msg, "KernelEx error", MB_OK | MB_ICONERROR);
 	ExitProcess(1);
 }
+
+size_t lstrlenAnull(LPCSTR s)
+{
+	__try
+	{
+		LPCSTR ss = s;
+		while (*ss) ss++;
+		return ss - s + 1;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		return 0;
+	}
+}
+
+size_t lstrlenWnull(LPCWSTR s)
+{
+	__try
+	{
+		LPCWSTR ss = s;
+		while (*ss) ss++;
+		return ss - s + 1;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		return 0;
+	}
+}

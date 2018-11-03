@@ -22,7 +22,7 @@
 #include <windows.h>
 #include "k32ord.h"
 #include "kexcoresdk.h"
-#include "../../../core/structs.h"
+#include "kstructs.h"
 
 /*
  * Design note:
@@ -60,15 +60,6 @@ static CRITICAL_SECTION* find_TlsLock()
 {
 	PROC pTlsAlloc = kexGetProcAddress(GetModuleHandle("KERNEL32"), "TlsAlloc");
 	return *(CRITICAL_SECTION**)((DWORD) pTlsAlloc + 2);
-}
-
-static inline 
-PDB98* get_pdb(void)
-{
-	TIB98* tib;
-	__asm mov eax, fs:18h;
-	__asm mov tib, eax;
-	return tib->pProcess;
 }
 
 /* initialization */

@@ -1,7 +1,7 @@
 /*
  *  KernelEx
+ *  Copyright (C) 2010, Tihiy
  *
- *  Copyright (C) 2008, Tihiy
  *  This file is part of KernelEx source code.
  *
  *  KernelEx is free software; you can redistribute it and/or modify
@@ -18,13 +18,26 @@
  *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
+ 
 #include <windows.h>
+#include "kstructs.h"
 
-/* MAKE_EXPORT DeleteCriticalSection_new=DeleteCriticalSection */
-void WINAPI DeleteCriticalSection_new(PCRITICAL_SECTION lpCriticalSection)
+/* MAKE_EXPORT ExitProcess_fix=ExitProcess */
+VOID WINAPI ExitProcess_fix( UINT uExitCode )
 {
-	//make DeleteCriticalSection not fail on deleted section
-	byte* deleted = (byte*) lpCriticalSection;
-	if (*deleted != 0) DeleteCriticalSection(lpCriticalSection);
+	PDB98* pdb = get_pdb();
+	
+	//process is already terminating. we would badly crash 
+	if (pdb->Flags & fTerminating)
+	{
+		//so instead silently fail
+		SetErrorMode(SEM_NOGPFAULTERRORBOX | SEM_FAILCRITICALERRORS);
+		RaiseException(EXCEPTION_ACCESS_VIOLATION, 0, 0, NULL);
+	}
+
+	//set calling thread priority to the lowest possible. this way 
+	//we greatly improve chance for thread which calls ExitProcess
+	//to finish latest and call dll process detach like NT
+	SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_IDLE);
+	ExitProcess(uExitCode);
 }

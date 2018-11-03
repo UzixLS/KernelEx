@@ -33,7 +33,7 @@ ScriptCache::~ScriptCache()
 	DeleteCriticalSection(&cs);
 }
 
-SCRIPT_CACHE ScriptCache::GetCache(HFONT hFont)
+SCRIPT_CACHE ScriptCache::GetCache(FONTUID hFont)
 {	
 	list<FONTCACHE>::const_iterator it;
 	for (it = cache.begin(); it != cache.end(); it++)
@@ -44,7 +44,7 @@ SCRIPT_CACHE ScriptCache::GetCache(HFONT hFont)
 	return NULL;
 }
 
-void ScriptCache::SetCache(HFONT hFont,SCRIPT_CACHE newcache)
+void ScriptCache::SetCache(FONTUID hFont,SCRIPT_CACHE newcache)
 {
 	list<FONTCACHE>::iterator it;
 	for (it = cache.begin(); it != cache.end(); it++)
@@ -71,22 +71,6 @@ void ScriptCache::SetCache(HFONT hFont,SCRIPT_CACHE newcache)
 		ScriptFreeCache(&ref.cache);
 		cache.pop_back();
 	}	
-}
-
-void ScriptCache::ResetCache(HFONT hFont)
-{
-	Lock();
-	list<FONTCACHE>::iterator it;
-	for (it = cache.begin(); it != cache.end(); it++)
-	{
-		if (it->hFont == hFont)
-		{
-			ScriptFreeCache(&it->cache);
-			cache.erase(it);
-			break;
-		}
-	}	
-	Unlock();
 }
 
 void ScriptCache::Lock()

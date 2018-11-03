@@ -11,6 +11,7 @@ static DWORD GetWindowProcessId( HWND hwnd )
 }
 
 #define ISOURPROCESSHWND(hwnd) ( GetWindowProcessId(hwnd) == GetCurrentProcessId() )
+#define IS_SHARED(x) (((DWORD)x) & 0x80000000)
 
 #define WS_EX_UNICODE 0x80000000
 #define WF_EX_WIN32 0x02000000
@@ -37,7 +38,14 @@ LRESULT WINAPI DefWindowProcW_NEW( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 LRESULT WINAPI DefDlgProcW_NEW( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI DefMDIChildProcW_NEW( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL IsWindowReallyUnicode(HWND hwnd);
+BOOL WINAPI IsWindowUnicode_NEW( HWND hWnd );
 
 LRESULT WINAPI SendMessageA_fix(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 BOOL InitUniThunkLayer();
+
+#ifdef __cplusplus
+extern "C"
+#endif
+__declspec(dllexport)
+void SetWindowUnicode(HWND hWnd, BOOL bUnicode);
