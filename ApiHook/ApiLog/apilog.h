@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -19,11 +19,11 @@
  *
  */
 
-#ifndef __APILOG_H
-#define __APILOG_H
+#ifndef _APILOG_APILOG_H
+#define _APILOG_APILOG_H
 
-#include "resolver.h"
-
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 class ThreadAddrStack
 {
@@ -39,6 +39,24 @@ private:
 };
 
 #pragma pack(push,1)
+
+
+/* Creates a stub that calls address specified in the constructor. */
+class redir_stub
+{
+public:
+	redir_stub(unsigned long target, bool make_call = true)
+	{
+		op = make_call ? 0xe8 : 0xe9;
+		addr = target - ((unsigned long)(this) + 5);
+	}
+
+private:
+	unsigned char op;
+	unsigned long addr;
+};
+
+
 
 /* Creates a stub for api logging. */
 class log_stub
@@ -100,8 +118,5 @@ private:
 };
 
 #pragma pack(pop)
-
-PROC create_log_stub(const char* caller, const char* target, const char* api, PROC orig);
-PROC create_log_stub(const char* caller, const char* target, WORD ord, PROC orig);
 
 #endif

@@ -28,6 +28,13 @@
 class sstring
 {
 public:
+	sstring()
+	{
+		len = 0;
+		storage = new char[1];
+		storage[0] = '\0';
+	}
+
 	sstring(const char* src)
 	{
 		len = strlen(src);
@@ -78,6 +85,11 @@ public:
 	int length() const
 	{
 		return len;
+	}
+
+	bool empty() const
+	{
+		return len == 0;
 	}
 	
 private:

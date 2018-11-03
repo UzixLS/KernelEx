@@ -314,6 +314,48 @@ DWORD WINAPI GetFullPathNameW_new(LPCWSTR lpFileNameW, DWORD nBufferLength, LPWS
 	}
 	return ret;
 }
+
+static int GetCPFromLocale(LCID Locale)
+{
+	int cp;	
+	Locale = LOWORD(Locale);
+	if (GetLocaleInfoA(Locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (LPSTR)&cp, sizeof(int)))
+		return cp;
+	else
+		return CP_ACP;
+}
+
+/* MAKE_EXPORT GetLocaleInfoW_new=GetLocaleInfoW */
+int WINAPI GetLocaleInfoW_new(
+	LCID Locale,
+	LCTYPE LCType,
+	LPWSTR lpLCData,
+	int cchData
+)
+{
+	int cp;
+	int ret;
+	char *buf;
+	
+	if ((LCType & LOCALE_RETURN_NUMBER) || (cchData == 0))
+		return GetLocaleInfoA(Locale, LCType, (LPSTR) lpLCData, cchData * 2);
+	if (!lpLCData)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;
+	}
+	buf = (char*) alloca(cchData * 2);
+	buf[0] = 0;
+	ret = GetLocaleInfoA(Locale, LCType, buf, cchData * 2);
+	if (!ret)
+		return ret;
+	if (LCType & LOCALE_USE_CP_ACP)
+		cp = CP_ACP;
+	else
+		cp = GetCPFromLocale(Locale);
+	ret = MultiByteToWideChar(cp, 0, buf, -1, lpLCData, cchData);
+	return ret;
+}
  
 //MAKE_EXPORT GetLongPathNameW_new=GetLongPathNameW
 DWORD WINAPI GetLongPathNameW_new(LPCWSTR lpszShortPathW, LPWSTR lpszLongPathW, DWORD cchBuffer)

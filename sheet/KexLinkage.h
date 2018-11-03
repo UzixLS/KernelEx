@@ -38,7 +38,7 @@ class KexLinkage
 			const char* conf_name, DWORD mod_flags);
 	typedef void (*kexResetModuleSettings_t)(const char* module);
 	typedef unsigned long (*kexGetKEXVersion_t)(void);
-	typedef int (*kexIsDebugCore_t)(void);
+	typedef DWORD (*kexGetCoreCaps_t)(void);
 
 public:
 
@@ -60,7 +60,7 @@ public:
 	kexSetModuleSettings_t m_kexSetModuleSettings;
 	kexResetModuleSettings_t m_kexResetModuleSettings;
 	kexGetKEXVersion_t m_kexGetKEXVersion;
-	kexIsDebugCore_t m_kexIsDebugCore;
+	kexGetCoreCaps_t m_kexGetCoreCaps;
 
 protected:
 	KexLinkage();

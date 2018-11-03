@@ -35,13 +35,16 @@ unsigned long kexGetKEXVersion()
 	return VERSION_CODE;
 }
 
-int kexIsDebugCore()
+DWORD kexGetCoreCaps()
 {
+	DWORD caps = 0;
 #ifdef _DEBUG
-	return 1;
-#else
-	return 0;
+	caps |= KCC_DEBUG;
 #endif
+#ifdef _ENABLE_APIHOOK
+	caps |= KCC_APIHOOK;
+#endif
+	return caps;
 }
 
 void kexDebugPrint(const char* format, ...)
@@ -91,7 +94,7 @@ void kexGetModuleSettings(const char* module,
 	DWORD flags = 0;
 	if (as.flags & LDR_KEX_DISABLE) flags |= KRF_KEX_DISABLE;
 	if (as.flags & LDR_OVERRIDE_PROC_MOD) flags |= KRF_OVERRIDE_PROC_MOD;
-	if (as.flags & LDR_LOG_APIS) flags |= KRF_LOG_APIS;
+	if (as.flags & LDR_HOOK_APIS) flags |= KRF_HOOK_APIS;
 	if (as.flags & LDR_NO_INHERIT) flags |= KRF_NO_INHERIT;
 	if (as.flags & LDR_VALID_FLAG) flags |= KRF_VALID_FLAG;
 	*mod_flags = flags;
@@ -103,7 +106,7 @@ void kexSetModuleSettings(const char* module,
 	BYTE flags = 0;
 	if (mod_flags & KRF_KEX_DISABLE) flags |= LDR_KEX_DISABLE;
 	if (mod_flags & KRF_OVERRIDE_PROC_MOD) flags |= LDR_OVERRIDE_PROC_MOD;
-	if (mod_flags & KRF_LOG_APIS) flags |= LDR_LOG_APIS;
+	if (mod_flags & KRF_HOOK_APIS) flags |= LDR_HOOK_APIS;
 	if (mod_flags & KRF_NO_INHERIT) flags |= LDR_NO_INHERIT;
 	SettingsDB::instance.write_single(module, conf_name, flags);
 }

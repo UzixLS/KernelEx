@@ -44,6 +44,7 @@ HFONT WINAPI CreateFontIndirectA_fix(CONST LOGFONT* lplf);
 DWORD WINAPI GetGlyphOutlineA_fix(HDC hdc, UINT uChar, UINT uFormat, LPGLYPHMETRICS lpgm, DWORD cbBuffer, LPVOID lpvBuffer, CONST MAT2 *lpmat2);
 BOOL WINAPI GetTextExtentPoint32A_fix(HDC hdc, LPCSTR str, int count, LPSIZE size);
 BOOL WINAPI GetTextExtentPoint32W_fix(HDC hdc, LPCWSTR str, int count, LPSIZE size);
+BOOL WINAPI MaskBlt_new(HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT nHeight, HDC hdcSrc, INT nXSrc, INT nYSrc, HBITMAP hbmMask, INT xMask, INT yMask, DWORD dwRop);
 DWORD WINAPI GetFontUnicodeRanges_new(HDC hdc, LPGLYPHSET lpgs);
 int WINAPI SetGraphicsMode_NT(HDC hdc, int iMode);
 BOOL WINAPI SetWorldTransform_9x(HDC hdc, CONST XFORM *lpXform);

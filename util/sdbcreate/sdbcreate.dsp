@@ -118,11 +118,21 @@ ProjDir=.
 InputPath=.\sdbapi.h
 
 "$(OutDir)\sdbapi.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cl /nologo /c /TC /DSDBAPI_IMPLIB /Fo$(OutDir)\sdbapi.obj "$(ProjDir)\sdbapi.h" 
-	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(ProjDir)\sdbapi.def" /OUT:$(OutDir)\sdbapi.dll /IMPLIB:$(OutDir)\sdbapi.lib $(OutDir)\sdbapi.obj 
-	del $(OutDir)\sdbapi.exp 
-	del $(OutDir)\sdbapi.obj 
-	del $(OutDir)\sdbapi.dll 
+	echo /nologo /c /TC /DSDBAPI_IMPLIB >"%TEMP%\resp1455.tmp" 
+	echo /Fo"$(OutDir)\sdbapi.obj" >>"%TEMP%\resp1455.tmp" 
+	echo "$(ProjDir)\sdbapi.h" >>"%TEMP%\resp1455.tmp" 
+	cl @"%TEMP%\resp1455.tmp" 
+	del "%TEMP%\resp1455.tmp" >NUL 
+	echo /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 >"%TEMP%\resp1456.tmp" 
+	echo /DEF:"$(ProjDir)\sdbapi.def" >>"%TEMP%\resp1456.tmp" 
+	echo /OUT:"$(OutDir)\sdbapi.dll" >>"%TEMP%\resp1456.tmp" 
+	echo /IMPLIB:"$(OutDir)\sdbapi.lib" >>"%TEMP%\resp1456.tmp" 
+	echo "$(OutDir)\sdbapi.obj" >>"%TEMP%\resp1456.tmp" 
+	link @"%TEMP%\resp1456.tmp" 
+	del "%TEMP%\resp1456.tmp" >NUL 
+	del "$(OutDir)\sdbapi.exp" >NUL 
+	del "$(OutDir)\sdbapi.obj" >NUL 
+	del "$(OutDir)\sdbapi.dll" >NUL 
 	
 # End Custom Build
 
@@ -135,11 +145,21 @@ ProjDir=.
 InputPath=.\sdbapi.h
 
 "$(OutDir)\sdbapi.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cl /nologo /c /TC /DSDBAPI_IMPLIB /Fo$(OutDir)\sdbapi.obj "$(ProjDir)\sdbapi.h" 
-	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(ProjDir)\sdbapi.def" /OUT:$(OutDir)\sdbapi.dll /IMPLIB:$(OutDir)\sdbapi.lib $(OutDir)\sdbapi.obj 
-	del $(OutDir)\sdbapi.exp 
-	del $(OutDir)\sdbapi.obj 
-	del $(OutDir)\sdbapi.dll 
+	echo /nologo /c /TC /DSDBAPI_IMPLIB >"%TEMP%\resp1455.tmp" 
+	echo /Fo"$(OutDir)\sdbapi.obj" >>"%TEMP%\resp1455.tmp" 
+	echo "$(ProjDir)\sdbapi.h" >>"%TEMP%\resp1455.tmp" 
+	cl @"%TEMP%\resp1455.tmp" 
+	del "%TEMP%\resp1455.tmp" >NUL 
+	echo /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 >"%TEMP%\resp1456.tmp" 
+	echo /DEF:"$(ProjDir)\sdbapi.def" >>"%TEMP%\resp1456.tmp" 
+	echo /OUT:"$(OutDir)\sdbapi.dll" >>"%TEMP%\resp1456.tmp" 
+	echo /IMPLIB:"$(OutDir)\sdbapi.lib" >>"%TEMP%\resp1456.tmp" 
+	echo "$(OutDir)\sdbapi.obj" >>"%TEMP%\resp1456.tmp" 
+	link @"%TEMP%\resp1456.tmp" 
+	del "%TEMP%\resp1456.tmp" >NUL 
+	del "$(OutDir)\sdbapi.exp" >NUL 
+	del "$(OutDir)\sdbapi.obj" >NUL 
+	del "$(OutDir)\sdbapi.dll" >NUL 
 	
 # End Custom Build
 

@@ -198,6 +198,11 @@ SOURCE=.\memswap.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\msvc\msvc8.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
 SOURCE=.\printf.c
 # End Source File
 # Begin Source File

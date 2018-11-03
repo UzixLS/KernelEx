@@ -25,7 +25,6 @@
 #include "debug.h"
 #include "apiconfmgr.h"
 #include "internals.h"
-#include "DebugWindow.h"
 
 extern int internals_init();
 extern void internals_uninit();
@@ -61,10 +60,6 @@ int kexInit()
 
 	resolver_hook();
 	
-#ifdef _DEBUG
-	DebugWindow::create();
-#endif
-
 	DBGPRINTF(("Initialized successfully\n"));
 	return ++init_count;
 
@@ -91,9 +86,6 @@ int kexUninit()
 	DBGPRINTF(("Uninitializing\n"));
 	resolver_unhook();
 	resolver_uninit();
-#ifdef _DEBUG
-	DebugWindow::destroy();
-#endif
 	internals_uninit();
 	return --init_count;
 }

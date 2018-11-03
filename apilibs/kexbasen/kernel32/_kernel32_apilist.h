@@ -86,7 +86,6 @@ FWDPROC GetCurrencyFormatW_fwd;
 FWDPROC GetDateFormatW_fwd;
 FWDPROC GetDriveTypeW_fwd;
 FWDPROC GetEnvironmentVariableW_fwd;
-FWDPROC GetLocaleInfoW_fwd;
 FWDPROC GetLogicalDriveStringsW_fwd;
 FWDPROC GetNamedPipeHandleStateW_fwd;
 FWDPROC GetNumberFormatW_fwd;

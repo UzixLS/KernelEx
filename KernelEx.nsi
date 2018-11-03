@@ -1,4 +1,4 @@
-  !define _VERSION '4.5 Final'
+  !define _VERSION '4.5.1'
   
   !ifndef _DEBUG
     !define FLAVOUR 'Release'
@@ -24,7 +24,7 @@
   ;Name and file
   Name "KernelEx"
   Caption "KernelEx ${VERSION} Setup"
-  OutFile "..\KernelEx-dev.exe"
+  OutFile "KernelEx-dev.exe"
 
   ;Default installation folder
   InstallDir "$WINDIR\KernelEx"

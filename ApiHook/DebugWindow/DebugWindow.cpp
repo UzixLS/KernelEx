@@ -24,25 +24,20 @@
 #include <malloc.h>
 #include "DebugWindow.h"
 #include "resource.h"
-#include "internals.h"
-#include "debug.h"
 
-extern bool apilog_enabled;
-
-const unsigned short WM_KEXSTOPDEBUG = 0x6eee;
-const unsigned short WM_KEXAPPENDLOG = 0x6eef;
-
-DebugWindow* DebugWindow::instance = NULL;
+#define DEBUGMSG_MAXLEN 256
 
 extern "C"
 char* strtok_r(char* s, const char* delim, char** holder);
 
+static bool apilog_enabled;
+
+const unsigned short WM_KEXAPPENDLOG = 0x6eef;
+
+HINSTANCE hInstance;
 
 DebugWindow::DebugWindow()
 {
-	DWORD tid;
-	DBGPRINTF(("Creating DebugWindow\n"));
-
 	hwnd = (HWND) -1;
 	
 	//we're interested in everything
@@ -53,17 +48,11 @@ DebugWindow::DebugWindow()
 	excludes.push_back("CriticalSection");
 	excludes.push_back("Interlocked");
 	
-	InitializeCriticalSection(&cs);
-	MakeCriticalSectionGlobal(&cs);
-	LoadLibrary("COMCTL32.DLL");
-	hThread = CreateThread(NULL, 0, thread, (void*) this, 0, &tid);
+	InitCommonControls();
 }
 
 DebugWindow::~DebugWindow()
 {
-	DBGPRINTF(("Destroying DebugWindow\n"));
-	DeleteCriticalSection(&cs);
-	SendMessage(hwnd, WM_KEXSTOPDEBUG, 0, 0);
 }
 
 BOOL CALLBACK DebugWindow::DebugDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -82,11 +71,11 @@ BOOL CALLBACK DebugWindow::DebugDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		MoveWindow(GetDlgItem(hwnd, IDC_LOG), 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		SendDlgItemMessage(hwnd, IDC_LOG, WM_VSCROLL, SB_BOTTOM, 0);
 		break;
-	case WM_KEXSTOPDEBUG:
+	case WM_CLOSE:
 		DestroyWindow(hwnd);
 		break;
 	case WM_KEXAPPENDLOG:
-		_this->AppendLog((char*) lParam);
+		_this->append((const char*) lParam);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -96,7 +85,7 @@ BOOL CALLBACK DebugWindow::DebugDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		if (nmhdr->idFrom == IDC_LOG)
 			if (nmhdr->code == NM_RCLICK)
 			{
-				_this->HandleMenu();
+				_this->HandleMenu(hwnd);
 				break;
 			}
 			else if (nmhdr->code == LVN_KEYDOWN)
@@ -117,7 +106,6 @@ BOOL CALLBACK DebugWindow::DebugDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 void DebugWindow::InitDialog(HWND hwnd)
 {
 	hList = GetDlgItem(hwnd, IDC_LOG);
-	SetClassLong(hwnd, GCL_STYLE, GetClassLong(hwnd, GCL_STYLE) | CS_NOCLOSE);
 	MoveWindow(hwnd, 0, 0, 480, 200, TRUE);
 	SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE,
            0, LVS_EX_FULLROWSELECT);
@@ -148,7 +136,7 @@ void DebugWindow::InitDialog(HWND hwnd)
 	menu = GetSubMenu(menu, 0);
 }
 
-void DebugWindow::HandleMenu()
+void DebugWindow::HandleMenu(HWND hwnd)
 {
 	POINT p;
 	GetCursorPos(&p);
@@ -188,7 +176,7 @@ void DebugWindow::DeleteSelItems()
 	}
 }
 
-void DebugWindow::AppendLog(char* msg)
+void DebugWindow::ListView_Append(char* msg)
 {
 	LV_ITEM item;
 	int idx;
@@ -202,8 +190,15 @@ void DebugWindow::AppendLog(char* msg)
 	if (!pch)
 		return;
 
+	int items = ListView_GetItemCount(hList);
+	if (items >= 1000)
+	{
+		ListView_DeleteItem(hList, 0);
+		items--;
+	}
+
 	item.mask = LVIF_TEXT;
-	item.iItem = ListView_GetItemCount(hList);
+	item.iItem = items;
 	item.iSubItem = 0;
 	item.pszText = pch;
 	idx = ListView_InsertItem(hList, &item);
@@ -271,7 +266,6 @@ BOOL CALLBACK DebugWindow::FilterDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 			buf = (char*) alloca(max(len1, len2));
 
 			GetDlgItemText(hwnd, IDC_DFINCLUDE, buf, len1);
-			EnterCriticalSection(&_this->cs);
 			_this->includes.clear();
 			pch = strtok_r(buf, ";", &p);
 			if (pch)
@@ -280,10 +274,8 @@ BOOL CALLBACK DebugWindow::FilterDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 				while ((pch = strtok_r(NULL, ";", &p)) != NULL)
 					_this->includes.push_back(pch);
 			}
-			LeaveCriticalSection(&_this->cs);
 
 			GetDlgItemText(hwnd, IDC_DFEXCLUDE, buf, len2);
-			EnterCriticalSection(&_this->cs);
 			_this->excludes.clear();
 			pch = strtok_r(buf, ";", &p);
 			if (pch)
@@ -292,7 +284,6 @@ BOOL CALLBACK DebugWindow::FilterDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 				while ((pch = strtok_r(NULL, ";", &p)) != NULL)
 					_this->excludes.push_back(pch);
 			}
-			LeaveCriticalSection(&_this->cs);
 
 			EndDialog(hwnd, 0);
 			break;
@@ -384,24 +375,20 @@ void DebugWindow::WriteToFile()
 	MessageBox(hwnd, "File written successfully", "Information", MB_ICONINFORMATION | MB_OK);
 }
 
-DWORD WINAPI DebugWindow::thread(void* param)
+void DebugWindow::msgloop()
 {
 	MSG msg;
-	DebugWindow* _this = (DebugWindow*) param;
-	_this->hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_DEBUG), 
-			NULL, DebugDlgProc, (LPARAM) _this);
-	ShowWindow(_this->hwnd, SW_MINIMIZE);
+	hwnd = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_DEBUG), 
+			NULL, DebugDlgProc, (LPARAM) this);
+	ShowWindow(hwnd, SW_SHOW);
 	while (GetMessage(&msg, NULL, 0, 0))
 		DispatchMessage(&msg);
-	return 0;
 }
 
 void DebugWindow::append(const char* str)
 {
 	static char msg[DEBUGMSG_MAXLEN];
 	bool filter_out = true;
-
-	EnterCriticalSection(&cs);
 
 	//filter out based on includes and excludes
 	if (includes.size() != 0)
@@ -432,46 +419,21 @@ void DebugWindow::append(const char* str)
 	}
 
 	if (filter_out)
-	{
-		LeaveCriticalSection(&cs);
 		return;
-	}
 
 	strncpy(msg, str, sizeof(msg));
 	msg[sizeof(msg) - 1] = '\0';
 
-	SendMessage(hwnd, WM_KEXAPPENDLOG, 0, (LPARAM) msg);
+	ListView_Append(msg);
 
-	LeaveCriticalSection(&cs);
 	SendMessage(hList, WM_VSCROLL, SB_BOTTOM, 0);
 }
 
-DebugWindow* DebugWindow::get()
+int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hPrevInstance, 
+		LPSTR lpCmdLine, int nCmdShow) 
 {
-	if (instance->hwnd == (HWND) -1 || instance->hwnd == NULL)
-	{
-		delete instance;
-		instance = NULL;
-	}
-	return instance;
-}
-
-bool DebugWindow::create()
-{
-	instance = new DebugWindow;
-	if (instance->hThread)
-		return true;
-	else
-	{
-		delete instance;
-		instance = NULL;
-		return false;
-	}
-}
-
-void DebugWindow::destroy()
-{
-	if (instance)
-		delete instance;
-	instance = NULL;
+	hInstance = hinstance;
+	DebugWindow dw;
+	dw.msgloop();
+	return 0;
 }

@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include <tlhelp32.h>
+#include "kexcoresdk.h"
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -37,7 +38,7 @@ DWORD WINAPI GetProcessFlags(
 	typedef DWORD (WINAPI *GPF) (HANDLE ProcessID);
 	static GPF g_GetProcessFlags = 0;
 	
-	if ( !g_GetProcessFlags ) g_GetProcessFlags = (GPF) GetProcAddress(GetModuleHandle("kernel32.dll"),"GetProcessFlags");
+	if ( !g_GetProcessFlags ) g_GetProcessFlags = (GPF) kexGetProcAddress(GetModuleHandle("kernel32.dll"),"GetProcessFlags");
 	return g_GetProcessFlags(ProcessID);
 }
 
@@ -58,7 +59,7 @@ DWORD WINAPI GetProcessId(
 		DWORD *faddr;
 		DWORD addr;
 		
-		faddr = (DWORD *) ( (DWORD)GetProcAddress(GetModuleHandle("kernel32.dll"),"SetFilePointer") + 0x1D ); //there is jmp _SetFilePointer	
+		faddr = (DWORD *) ( (DWORD)kexGetProcAddress(GetModuleHandle("kernel32.dll"),"SetFilePointer") + 0x1D ); //there is jmp _SetFilePointer	
 		addr = (DWORD) faddr + *faddr + 4 - 0x16; //0x16 bytes before _SetFilePointer there is MapProcessHandle, just what we need	
 		faddr = (DWORD *) addr;
 		if (*faddr != 0x206A006A) return FALSE; //push 0; push 0x20

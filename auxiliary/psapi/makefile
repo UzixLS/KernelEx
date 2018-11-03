@@ -6,10 +6,10 @@ RCC = windres
 OBJ = psapi.o
 RES = 
 DEF = psapi.def
-LIBS = -nostdlib -lkernel32
+LIBS = -nostdlib -lkernel32 -L../../common -lkernelex
 LDFLAGS = -s -shared -Wl,--enable-stdcall-fixup -e _DllMain@12
 BIN = ..\psapi.dll
-CFLAGS = -Os -Wall
+CFLAGS = -Os -Wall -I../../common
 CXXFLAGS = $(CFLAGS)
 
 .SUFFIXES: .rc

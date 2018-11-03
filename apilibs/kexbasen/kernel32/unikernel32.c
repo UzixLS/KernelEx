@@ -51,7 +51,6 @@ FORWARD_TO_UNICOWS(GetCurrencyFormatW);
 FORWARD_TO_UNICOWS(GetDateFormatW);
 FORWARD_TO_UNICOWS(GetDriveTypeW);
 FORWARD_TO_UNICOWS(GetEnvironmentVariableW);
-FORWARD_TO_UNICOWS(GetLocaleInfoW);
 FORWARD_TO_UNICOWS(GetLogicalDriveStringsW);
 FORWARD_TO_UNICOWS(GetNamedPipeHandleStateW);
 FORWARD_TO_UNICOWS(GetNumberFormatW);

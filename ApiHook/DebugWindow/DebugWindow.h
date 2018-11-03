@@ -32,21 +32,14 @@ using namespace std;
 class DebugWindow
 {
 public:
-	static bool create();
-	static void destroy();
-	static DebugWindow* get();
+	DebugWindow();
+	~DebugWindow();
+	void msgloop();
 	void append(const char* str);
 
 private:
-	DebugWindow();
-	~DebugWindow();
-
-	static DebugWindow* instance;
-	
 	HWND hwnd;
 	HWND hList;
-	HANDLE hThread;
-	CRITICAL_SECTION cs;
 	HMENU menu;
 	list<sstring> includes;
 	list<sstring> excludes;
@@ -54,11 +47,10 @@ private:
 	static BOOL CALLBACK DebugDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static BOOL CALLBACK FilterDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	void InitDialog(HWND hwnd);
-	void HandleMenu();
+	void HandleMenu(HWND hwnd);
 	void DeleteSelItems();
-	void AppendLog(char* msg);
+	void ListView_Append(char* msg);
 	void WriteToFile();
-	static DWORD WINAPI thread(void* param);
 };
 
 #endif

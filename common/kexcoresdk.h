@@ -106,11 +106,16 @@ typedef const apilib_api_table* (* fgat_t)();
 _KEXCOREIMP unsigned long kexGetKEXVersion();
 
 
-/** kexIsDebugCore - determine release/debug KernelEx Core version
+/** KernelEx Core capability flags. */
+#define KCC_DEBUG                1  /* Core compiled with debug features enabled */
+#define KCC_APIHOOK              2  /* Core compiled with API hook feature enabled */
+
+
+/** kexGetCoreCaps - determine KernelEx Core capabilities
  *
- * @return Zero if release Core, one if debug Core.
+ * @return Combination of capability flags.
  */
-_KEXCOREIMP int kexIsDebugCore();
+_KEXCOREIMP DWORD kexGetCoreCaps();
 
 
 /** DBGPRINTF - convenience macro for including debug messages only in debugs. 
@@ -165,7 +170,7 @@ _KEXCOREIMP BOOL kexAreExtensionsEnabled();
 /** KernelEx resolver flags. */
 #define KRF_KEX_DISABLE          1  /* disable KernelEx API extensions for this module */
 #define KRF_OVERRIDE_PROC_MOD    2  /* use same configuration and flags for all modules in a process */
-#define KRF_LOG_APIS             4  /* enable API tracing */
+#define KRF_HOOK_APIS            8  /* enable API tracing */
 #define KRF_NO_INHERIT          16  /* don't inherit configuration and flags to child processes */
 #define KRF_VALID_FLAG         128  /* denotes that flags field is valid */
 

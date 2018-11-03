@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,6
- PRODUCTVERSION 1,0,0,6
+ FILEVERSION 1,0,0,7
+ PRODUCTVERSION 1,0,0,7
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -72,15 +72,15 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "Xeno86\0"
-            VALUE "FileDescription", "sheet\0"
-            VALUE "FileVersion", "1, 0, 0, 6\0"
+            VALUE "FileDescription", "KernelEx Properties Tab\0"
+            VALUE "FileVersion", "1, 0, 0, 7\0"
             VALUE "InternalName", "sheet\0"
-            VALUE "LegalCopyright", "Copyright © 2009-2010, Xeno86\0"
+            VALUE "LegalCopyright", "Copyright © 2009-2011, Xeno86\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "sheet.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "KernelEx\0"
-            VALUE "ProductVersion", "1, 0, 0, 6\0"
+            VALUE "ProductVersion", "1, 0, 0, 7\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -134,10 +134,10 @@ BEGIN
     CONTROL         "Don't use these settings in child processes",
                     IDC_NOINHERIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
                     127,208,10
+    CONTROL         "Use API hook",IDC_HOOK,"Button",BS_AUTOCHECKBOX | NOT 
+                    WS_VISIBLE | WS_TABSTOP,15,141,208,10
     CONTROL         "Override settings of invidual modules",IDC_OVERRIDE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,141,208,10
-    CONTROL         "Enable api logging",IDC_LOG,"Button",BS_AUTOCHECKBOX | 
-                    NOT WS_VISIBLE | WS_TABSTOP,15,155,208,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,155,208,10
 END
 
 
@@ -173,7 +173,7 @@ BEGIN
     TIP_SYSTEM              "Select desired compatibility mode from the list."
     TIP_NOINHERIT           "Disables inheritance of these settings. Normally programs started by this application use settings from this tab as their default settings. Use this option to disable such behaviour."
     TIP_OVERRIDE            "Disables usage of per module settings. Use this option to use same settings for all modules in the application."
-    TIP_LOG                 "Use this option to enable api spying debugging feature."
+    TIP_HOOK                "Use this option to enable api hooking debugging feature."
     IDS_ENABLED             "KernelEx is enabled"
     IDS_DISABLED            "KernelEx is disabled"
 END

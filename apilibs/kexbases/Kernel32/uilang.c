@@ -158,3 +158,9 @@ BOOL WINAPI EnumUILanguagesW_new(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwF
 	pUILangEnumProc(buf, lParam);
 	return TRUE;
 }
+
+/* MAKE_EXPORT SetThreadUILanguage_new=SetThreadUILanguage */
+LANGID WINAPI SetThreadUILanguage_new(LANGID LangId)
+{
+	return LangId;
+}

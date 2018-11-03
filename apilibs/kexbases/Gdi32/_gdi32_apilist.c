@@ -64,6 +64,7 @@ static const apilib_named_api gdi32_named_apis[] =
 	DECL_API("GetTextExtentPoint32W", GetTextExtentPoint32W_fix),
 	DECL_API("GetTextMetricsA", GetTextMetricsA_NT),
 	DECL_API("GetWorldTransform", GetWorldTransform_NT),
+	DECL_API("MaskBlt", MaskBlt_new),
 	DECL_API("ModifyWorldTransform", ModifyWorldTransform_NT),
 	DECL_API("PolyTextOutA", PolyTextOutA_new),
 	DECL_API("PolyTextOutW", PolyTextOutW_new),

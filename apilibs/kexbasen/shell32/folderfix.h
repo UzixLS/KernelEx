@@ -48,6 +48,8 @@ inline int folder_fix(int nFolder)
 		nFolder = CSIDL_STARTMENU;
 	else if (nFolder == CSIDL_COMMON_STARTUP)
 		nFolder = CSIDL_STARTUP;
+	else if (nFolder == CSIDL_COMMON_DESKTOPDIRECTORY)
+		nFolder = CSIDL_DESKTOPDIRECTORY;
 	nFolder |= nFolderFlags;
 	return nFolder;
 }

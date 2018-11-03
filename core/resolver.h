@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -28,8 +28,7 @@
 /***** loader flags *****/
 #define LDR_KEX_DISABLE          1  /* disable KernelEx API extensions for this module */
 #define LDR_OVERRIDE_PROC_MOD    2  /* use same configuration and flags for all modules in a process */
-#define LDR_LOG_APIS             4  /* enable API tracing */
-#define LDR_FILTER_APIS          8  /* allow to control single APIs - enable, disable, switch */
+#define LDR_HOOK_APIS            8  /* enable API tracing */
 #define LDR_NO_INHERIT          16  /* don't inherit configuration and flags to child processes */
 #define LDR_VALID_FLAG         128  /* denotes that flags field is valid */
 
@@ -67,7 +66,7 @@ public:
 	redir_stub(unsigned long target, bool make_call = true)
 	{
 		op = make_call ? 0xe8 : 0xe9;
-		addr = target - (unsigned long(this) + 5);
+		addr = target - ((unsigned long)(this) + 5);
 	}
 
 private:
@@ -78,8 +77,8 @@ private:
 struct config_params
 {
 	ApiConfiguration* apiconf;
-#ifdef _DEBUG
-	bool log_apis;
+#ifdef _ENABLE_APIHOOK
+	bool hook_apis;
 #endif
 };
 

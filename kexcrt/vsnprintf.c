@@ -186,6 +186,7 @@ int vsnprintf(char *buffer, size_t n, const char *format, va_list ap)
 		st_modifiers	/* Length or conversion modifiers */
 	} state = st_normal;
 	const char *sarg;	/* %s string argument */
+	const wchar_t *warg; /* %S unicode string argument */
 	char carg;		/* %c char argument */
 	int slen;		/* String length */
 
@@ -401,6 +402,13 @@ int vsnprintf(char *buffer, size_t n, const char *format, va_list ap)
 					sarg = sarg ? sarg : "(null)";
 					slen = strlen(sarg);
 					goto is_string;
+				case 'S':	/* Unicode String */
+					warg = va_arg(ap, const wchar_t *);
+					warg = warg ? warg : L"(null)";
+					rank = rank_long;
+					sarg = (const char *) warg;
+					for (slen = 0; warg[slen]; slen++) (void)0;
+					goto is_string;
 
 				is_string:
 					{
@@ -422,6 +430,7 @@ int vsnprintf(char *buffer, size_t n, const char *format, va_list ap)
 						}
 						for (i = slen; i; i--) {
 							sch = *sarg++;
+							if (rank > rank_int) sarg++;
 							EMIT(sch);
 						}
 						if (width > slen

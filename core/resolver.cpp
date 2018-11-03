@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2011, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -30,9 +30,7 @@
 #include "thunks.h"
 #include "SettingsDB.h"
 #include "ModInit.h"
-#ifdef _DEBUG
-#include "apilog.h"
-#endif
+#include "apihook.h"
 
 using namespace std;
 
@@ -90,8 +88,9 @@ static bool get_config(MODREF* moduleMR, config_params& cp)
 				if ((parent.as.flags & LDR_VALID_FLAG) && !(parent.as.flags & LDR_NO_INHERIT))
 				{
 					process.as = parent.as;
-#ifdef _DEBUG       //don't inherit log flag
-					process.as.flags &= ~LDR_LOG_APIS;	
+#ifdef _ENABLE_APIHOOK
+					//don't inherit hook flag
+					process.as.flags &= ~LDR_HOOK_APIS;	
 #endif
 				}
 			}
@@ -133,9 +132,10 @@ static bool get_config(MODREF* moduleMR, config_params& cp)
 
 	if (module.as.flags & LDR_VALID_FLAG)
 	{
-#ifdef _DEBUG //copy log flag from process to module
-		if (process.as.flags & LDR_LOG_APIS)
-			module.as.flags |= LDR_LOG_APIS;
+#ifdef _ENABLE_APIHOOK
+		//copy hook flag from process to module
+		if (process.as.flags & LDR_HOOK_APIS)
+			module.as.flags |= LDR_HOOK_APIS;
 #endif
 		goto __end;
 	}
@@ -150,8 +150,8 @@ __end:
 
 	DBGASSERT(module.as.conf != NULL);
 	cp.apiconf = module.as.conf;
-#ifdef _DEBUG
-	cp.log_apis = (module.as.flags & LDR_LOG_APIS) != 0;
+#ifdef _ENABLE_APIHOOK
+	cp.hook_apis = (module.as.flags & LDR_HOOK_APIS) != 0;
 #endif
 	return true;
 }
@@ -513,13 +513,16 @@ PROC WINAPI ExportFromOrdinal(IMTE_KEX* target, MODREF* caller, BOOL is_static, 
 					target->pNTHdr, caller, is_static);
 		else 
 			ret = OriExportFromOrdinal(target->pNTHdr, ordinal);
-#ifdef _DEBUG
-		if (ret && cp.log_apis)
+#ifdef _ENABLE_APIHOOK
+		if (cp.hook_apis)
 		{
 			IMTE* icaller = (*ppmteModTable)[caller->mteIndex];
 			if (DWORD(ret) < target->pNTHdr->OptionalHeader.ImageBase 
 					+ target->pNTHdr->OptionalHeader.BaseOfData)
-				ret = create_log_stub(icaller->pszModName, target->pszModName, ordinal, ret);
+			{
+				ret = apihook::hook(is_static, icaller->pszFileName,
+						target->pszFileName, (LPSTR) ordinal, ret);
+			}
 		}
 #endif
 	}
@@ -568,13 +571,16 @@ PROC WINAPI ExportFromName(IMTE_KEX* target, MODREF* caller, BOOL is_static, WOR
 					target->pNTHdr, caller, is_static);
 		else 
 			ret = OriExportFromName(target->pNTHdr, hint, name);
-#ifdef _DEBUG
-		if (ret && cp.log_apis)
+#ifdef _ENABLE_APIHOOK
+		if (cp.hook_apis)
 		{
 			IMTE* icaller = (*ppmteModTable)[caller->mteIndex];
 			if (DWORD(ret) < target->pNTHdr->OptionalHeader.ImageBase 
 					+ target->pNTHdr->OptionalHeader.BaseOfData)
-				ret = create_log_stub(icaller->pszModName, target->pszModName, name, ret);
+			{
+				ret = apihook::hook(is_static, icaller->pszFileName,
+						target->pszFileName, name, ret);
+			}
 		}
 #endif
 	}

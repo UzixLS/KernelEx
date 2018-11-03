@@ -36,12 +36,12 @@ struct CTips
 	char* _TIP_SYSTEM;
 	char* _TIP_NOINHERIT;
 	char* _TIP_OVERRIDE;
-	char* _TIP_LOG;
+	char* _TIP_HOOK;
 
 	CTips()
 	{
 		_TIP_DEFAULT = _TIP_DISABLE = _TIP_COMPAT = _TIP_SYSTEM
-				= _TIP_NOINHERIT = _TIP_OVERRIDE = _TIP_LOG = NULL;
+				= _TIP_NOINHERIT = _TIP_OVERRIDE = _TIP_HOOK = NULL;
 		loaded = false;
 	}
 
@@ -55,7 +55,7 @@ struct CTips
 			free(_TIP_SYSTEM);
 			free(_TIP_NOINHERIT);
 			free(_TIP_OVERRIDE);
-			free(_TIP_LOG);
+			free(_TIP_HOOK);
 		}
 	}
 
@@ -70,7 +70,7 @@ struct CTips
 		_TIP_SYSTEM = load_string(TIP_SYSTEM);
 		_TIP_NOINHERIT = load_string(TIP_NOINHERIT);
 		_TIP_OVERRIDE = load_string(TIP_OVERRIDE);
-		_TIP_LOG = load_string(TIP_LOG);
+		_TIP_HOOK = load_string(TIP_HOOK);
 	}
 
 private:
@@ -372,7 +372,7 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			case IDC_DEFAULT:
 				if (!IsDlgButtonChecked(hwnd, IDC_DEFAULT)) break;
 				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
-				EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_HOOK), FALSE);
 				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), FALSE);
 				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), FALSE);
 				PropSheet_Changed(GetParent(hwnd), hwnd);
@@ -380,7 +380,7 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			case IDC_DISABLE:
 				if (!IsDlgButtonChecked(hwnd, IDC_DISABLE)) break;
 				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
-				EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_HOOK), FALSE);
 				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), TRUE);
 				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), TRUE);
 				PropSheet_Changed(GetParent(hwnd), hwnd);
@@ -388,14 +388,15 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			case IDC_COMPAT:
 				if (!IsDlgButtonChecked(hwnd, IDC_COMPAT)) break;
 				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), TRUE);
-				EnableWindow(GetDlgItem(hwnd, IDC_LOG), TRUE);
+				EnableWindow(GetDlgItem(hwnd, IDC_HOOK), TRUE);
 				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), TRUE);
 				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), TRUE);
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			case IDC_SYSTEM:
-			case IDC_LOG:
+			case IDC_HOOK:
 			case IDC_NOINHERIT:
+			case IDC_OVERRIDE:
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			}
@@ -438,7 +439,7 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	{
 		CheckDlgButton(hwnd, IDC_DEFAULT, BST_CHECKED);
 		EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
-		EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+		EnableWindow(GetDlgItem(hwnd, IDC_HOOK), FALSE);
 		EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), FALSE);
 		EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), FALSE);
 	}
@@ -446,10 +447,10 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	{
 		CheckDlgButton(hwnd, IDC_DISABLE, BST_CHECKED);
 		EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
-		EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+		EnableWindow(GetDlgItem(hwnd, IDC_HOOK), FALSE);
 	}
-	if (ms->flags & KRF_LOG_APIS)
-		CheckDlgButton(hwnd, IDC_LOG, BST_CHECKED);
+	if (ms->flags & KRF_HOOK_APIS)
+		CheckDlgButton(hwnd, IDC_HOOK, BST_CHECKED);
 	if (ms->flags & KRF_NO_INHERIT)
 		CheckDlgButton(hwnd, IDC_NOINHERIT, BST_CHECKED);
 	if (ms->flags & KRF_OVERRIDE_PROC_MOD)
@@ -470,25 +471,27 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 				(WPARAM) 0, (LPARAM) bufo);
 	}
 
-
-	int debug = KexLinkage::instance.m_kexIsDebugCore();
+	DWORD caps = KexLinkage::instance.m_kexGetCoreCaps();
 	{
 		//set KernelEx version
 		unsigned long ver = KexLinkage::instance.m_kexGetKEXVersion();
 		char ver_s[32];
-		snprintf(ver_s, sizeof(ver_s), "KernelEx Core v%d.%d.%d %s", 
-				ver>>24, (ver>>16) & 0xff, ver & 0xffff, debug ? "DEBUG" : "");
+		snprintf(ver_s, sizeof(ver_s), "KernelEx Core v%d.%d.%d %s", ver>>24,
+				(ver>>16) & 0xff, ver & 0xffff, caps & KCC_DEBUG ? "DEBUG" : "");
 		SendMessage(GetDlgItem(hwnd, IDC_KEXVER), WM_SETTEXT, 0, (LPARAM) ver_s);
 	}
 
-	ShowWindow(GetDlgItem(hwnd, IDC_OVERRIDE), debug ? SW_SHOW : SW_HIDE);
-	ShowWindow(GetDlgItem(hwnd, IDC_LOG), debug ? SW_SHOW : SW_HIDE);
-	if (!debug)
+	ShowWindow(GetDlgItem(hwnd, IDC_HOOK), caps & KCC_APIHOOK ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDC_OVERRIDE), caps & KCC_DEBUG ? SW_SHOW : SW_HIDE);
+
+	if (!(caps & KCC_DEBUG))
 	{
 		RECT r;
 		HWND h = GetDlgItem(hwnd, IDC_GADVAN);
 		GetWindowRect(h, &r);
-		r.bottom -= 40; //height between IDC_LOG and element above
+		r.bottom -= 20; //space between IDC_HOOK and element above
+		if (!(caps & KCC_APIHOOK))
+			r.bottom -= 20;
 		SetWindowPos(h, NULL, 0, 0, r.right - r.left, r.bottom - r.top, SWP_NOMOVE);
 	}
 
@@ -500,8 +503,8 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	CreateTooltip(hwndTip, hwnd, IDC_COMPAT, tips._TIP_COMPAT);
 	CreateTooltip(hwndTip, hwnd, IDC_SYSTEM, tips._TIP_SYSTEM);
 	CreateTooltip(hwndTip, hwnd, IDC_NOINHERIT, tips._TIP_NOINHERIT);
+	CreateTooltip(hwndTip, hwnd, IDC_HOOK, tips._TIP_HOOK);
 	CreateTooltip(hwndTip, hwnd, IDC_OVERRIDE, tips._TIP_OVERRIDE);
-	CreateTooltip(hwndTip, hwnd, IDC_LOG, tips._TIP_LOG);
 }
 
 
@@ -517,8 +520,8 @@ void KexShlExt::OnApply(HWND hwnd)
 	if (IsDlgButtonChecked(hwnd, IDC_COMPAT))
 		conf = KexLinkage::instance.confs[SendMessage(
 				GetDlgItem(hwnd, IDC_SYSTEM), CB_GETCURSEL, 0, 0)].name;
-	if (IsDlgButtonChecked(hwnd, IDC_LOG))
-		flags |= KRF_LOG_APIS;
+	if (IsDlgButtonChecked(hwnd, IDC_HOOK))
+		flags |= KRF_HOOK_APIS;
 	if (IsDlgButtonChecked(hwnd, IDC_NOINHERIT))
 		flags |= KRF_NO_INHERIT;
 	if (IsDlgButtonChecked(hwnd, IDC_OVERRIDE))

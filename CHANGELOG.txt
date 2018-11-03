@@ -1,3 +1,22 @@
+KernelEx v4.5.1 by Xeno86
+2011-05-06
+
+added kernel32.SetThreadUILanguage stub
+replaced some MSLU regkey APIs with custom implementation: advapi32.RegCreateKeyW, RegCreateKeyExW, RegDeleteKeyW, RegOpenKeyW, RegOpenKeyExW, RegSetValueExW
+replaced kernel32.GetLocaleInfoW (MSLU, error handling LOCALE_RETURN_NUMBER) with custom implementation (fixes Opera 11 download numbers)
+added advapi32.RegGetKeySecurity - allows Opera 11 uninstall to proceed further
+added redirection for 'All Users\Desktop' for SHGet*Follder* functions (allows Opera 11 installer to complete)
+fixed buffer length argument for wctomb in STACK_WtoA macro, added parentheses around macroes
+fixed advapi32.RegSetValueExA to allow null lpData pointer (allows Opera 11 setup to proceed further)
+added advapi32.GetNamedSecurityInfo (allows Opera 11 setup to proceed further)
+added GDI32.MaskBlt - fixes missing checkboxes in GTK apps - Pidgin and GIMP
+added api logging DLL + debug window for KernelEx API Hook infrastructure
+replaced old api logging with KernelEx API Hook infrastructure
+sdb: fixed google earth transform to work on non-english systems, added new product codes
+added missing configs for google earth exes
+
+---------------------------------------
+
 KernelEx v4.5 Final by Xeno86
 2010-12-30
 

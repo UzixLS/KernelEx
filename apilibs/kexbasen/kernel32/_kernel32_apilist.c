@@ -83,7 +83,6 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("GetDateFormatW", GetDateFormatW_fwd),
 	DECL_API("GetDriveTypeW", GetDriveTypeW_fwd),
 	DECL_API("GetEnvironmentVariableW", GetEnvironmentVariableW_fwd),
-	DECL_API("GetLocaleInfoW", GetLocaleInfoW_fwd),
 	DECL_API("GetLogicalDriveStringsW", GetLogicalDriveStringsW_fwd),
 	DECL_API("GetNamedPipeHandleStateW", GetNamedPipeHandleStateW_fwd),
 	DECL_API("GetNumberFormatW", GetNumberFormatW_fwd),

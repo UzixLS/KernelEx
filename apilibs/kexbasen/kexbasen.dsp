@@ -347,6 +347,10 @@ SOURCE=.\ws2_32\_ws2_32_apilist.h
 
 SOURCE=.\ws2_32\addinfo.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\ws2_32\select_fix.c
+# End Source File
 # End Group
 # Begin Group "ole32"
 
@@ -396,8 +400,8 @@ ProjDir=.
 InputPath=.\dirlist
 
 "&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
-	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	if not exist "$(WkspDir)\util\prep\Release\prep.exe" goto error 
+	"$(WkspDir)\util\prep\Release\prep.exe" "$(ProjDir)" 
 	goto quit 
 	:error 
 	echo Error - compile PREP (Release) project first 
@@ -414,8 +418,8 @@ ProjDir=.
 InputPath=.\dirlist
 
 "&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
-	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	if not exist "$(WkspDir)\util\prep\Release\prep.exe" goto error 
+	"$(WkspDir)\util\prep\Release\prep.exe" "$(ProjDir)" 
 	goto quit 
 	:error 
 	echo Error - compile PREP (Release) project first 
@@ -439,11 +443,21 @@ WkspDir=.
 InputPath=.\kexbasen.def
 
 "$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
-	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
-	del $(OutDir)\k32ord.exp 
-	del $(OutDir)\k32ord.obj 
-	del $(OutDir)\k32ord.dll 
+	echo /nologo /c /TC /DK32ORD_IMPLIB >"%TEMP%\resp1455.tmp" 
+	echo /Fo"$(OutDir)\k32ord.obj" >>"%TEMP%\resp1455.tmp" 
+	echo "$(WkspDir)\common\k32ord.h" >>"%TEMP%\resp1455.tmp" 
+	cl @"%TEMP%\resp1455.tmp" 
+	del "%TEMP%\resp1455.tmp" >NUL 
+	echo /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 >"%TEMP%\resp1456.tmp" 
+	echo /DEF:"$(WkspDir)\common\k32ord.def" >>"%TEMP%\resp1456.tmp" 
+	echo /OUT:"$(OutDir)\k32ord.dll" >>"%TEMP%\resp1456.tmp" 
+	echo /IMPLIB:"$(OutDir)\k32ord.lib" >>"%TEMP%\resp1456.tmp" 
+	echo "$(OutDir)\k32ord.obj" >>"%TEMP%\resp1456.tmp" 
+	link @"%TEMP%\resp1456.tmp" 
+	del "%TEMP%\resp1456.tmp" >NUL 
+	del "$(OutDir)\k32ord.exp" >NUL 
+	del "$(OutDir)\k32ord.obj" >NUL 
+	del "$(OutDir)\k32ord.dll" >NUL 
 	
 # End Custom Build
 
@@ -455,11 +469,21 @@ WkspDir=.
 InputPath=.\kexbasen.def
 
 "$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
-	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
-	del $(OutDir)\k32ord.exp 
-	del $(OutDir)\k32ord.obj 
-	del $(OutDir)\k32ord.dll 
+	echo /nologo /c /TC /DK32ORD_IMPLIB >"%TEMP%\resp1455.tmp" 
+	echo /Fo"$(OutDir)\k32ord.obj" >>"%TEMP%\resp1455.tmp" 
+	echo "$(WkspDir)\common\k32ord.h" >>"%TEMP%\resp1455.tmp" 
+	cl @"%TEMP%\resp1455.tmp" 
+	del "%TEMP%\resp1455.tmp" >NUL 
+	echo /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 >"%TEMP%\resp1456.tmp" 
+	echo /DEF:"$(WkspDir)\common\k32ord.def" >>"%TEMP%\resp1456.tmp" 
+	echo /OUT:"$(OutDir)\k32ord.dll" >>"%TEMP%\resp1456.tmp" 
+	echo /IMPLIB:"$(OutDir)\k32ord.lib" >>"%TEMP%\resp1456.tmp" 
+	echo "$(OutDir)\k32ord.obj" >>"%TEMP%\resp1456.tmp" 
+	link @"%TEMP%\resp1456.tmp" 
+	del "%TEMP%\resp1456.tmp" >NUL 
+	del "$(OutDir)\k32ord.exp" >NUL 
+	del "$(OutDir)\k32ord.obj" >NUL 
+	del "$(OutDir)\k32ord.dll" >NUL 
 	
 # End Custom Build
 

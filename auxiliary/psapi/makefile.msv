@@ -4,9 +4,10 @@ OBJ = psapi.obj
 RES = 
 DEF = /DEF:psapi.def
 BIN = ..\psapi.dll
-LIBS = -nodefaultlib kernel32.lib
-LDFLAGS = /DLL /OPT:NOWIN98 /ENTRY:DllMain@12
-CFLAGS = /W3 /O2 /Oi /FD
+COMMON_DIR = ../../common
+LIBS = -nodefaultlib kernel32.lib $(COMMON_DIR)/kernelex.lib
+LDFLAGS = /DLL /OPT:NOWIN98 /ENTRY:DllMain@12 /LIBPATH:$(COMMON_DIR) KernelEx.lib
+CFLAGS = /W3 /O2 /Oi /FD /I$(COMMON_DIR)
 CXXFLAGS = $(CFLAGS)
 
 all : $(BIN)

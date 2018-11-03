@@ -120,26 +120,31 @@ size_t lstrlenWnull(LPCWSTR s);
 
 //In macros: convert A<->W on stack
 #define STACK_WtoA(strW,strA) \
-	strA = (LPSTR)strW; \
-	if (HIWORD(strW)) \
 	{ \
-		int c = lstrlenWnull((LPCWSTR)strW); \
-		if (c) \
+		strA = (LPSTR)strW; \
+		if (HIWORD(strW)) \
 		{ \
-			strA = (LPSTR)alloca(c*2); \
-			WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)strW, -1, (LPSTR)strA, c, NULL, NULL); \
+			int c = lstrlenWnull((LPCWSTR)strW); \
+			if (c) \
+			{ \
+				c *= 2; \
+				strA = (LPSTR)alloca(c); \
+				WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)strW, -1, (LPSTR)strA, c, NULL, NULL); \
+			} \
 		} \
 	}
 	
 #define STACK_AtoW(strA,strW) \
-	strW = (LPWSTR)strA; \
-	if (HIWORD(strA)) \
 	{ \
-		int c = lstrlenAnull((LPCSTR)strA); \
-		if (c) \
+		strW = (LPWSTR)strA; \
+		if (HIWORD(strA)) \
 		{ \
-			strW = (LPWSTR)alloca(c*sizeof(WCHAR)); \
-			MultiByteToWideChar(CP_ACP, 0, (LPCSTR)strA, -1, (LPWSTR)strW, c); \
+			int c = lstrlenAnull((LPCSTR)strA); \
+			if (c) \
+			{ \
+				strW = (LPWSTR)alloca(c*sizeof(WCHAR)); \
+				MultiByteToWideChar(CP_ACP, 0, (LPCSTR)strA, -1, (LPWSTR)strW, c); \
+			} \
 		} \
 	}
 
