@@ -1,3 +1,33 @@
+KernelEx v4.5 RC 1 by Xeno86
+2010-07-30
+
+implemented kernel32.RtlCaptureContext for Firefox 4.0 Beta 2
+reworked compatibility tab to allow resetting compatibility settings to default values
+compatibility tab is visible on all PE modules thus allowing to change compatibility options on per-module basis
+disallow resources with high ID (>32767) when KernelEx is disabled
+perform platform check when KernelEx is disabled
+added kernel32.GetComputerNameEx stubs which supposedly make Artweaver run
+simulate TrueType MS Sans Serif for VLC
+use ASCII table instead of ISO8859-1 for character conversion (fixes problem with national characters in paths)
+added ADVAPI32.FileEncryptionStatus stubs
+added get-post I/O completion ports functionality for Firefox 3.6.4
+added a bunch of new user32 stubs allowing to run newer MPC-HC, includes: DefRawInputProc, GetRawInputBuffer, GetRawInputData, GetRawInputDeviceList, GetRawInputDeviceInfoA, GetRawInputDeviceInfoW, GetRegisteredRawInputDevices, RegisterRawInputDevices, PrintWindow
+more accurate object owner check in DeleteObject
+fixed missing ScriptCache unlock in case of error
+fixed crash on displaying of error message in KernelEx Setup program
+added a simple protection against footer corruption in jemalloc heap
+excluded jemalloc from handling limited size heaps
+added "Disable custom heap" configuration
+added "Default mode" configuration
+fixed GTA:SA crash on game load
+fixed Rally Championship '99 crash
+removed shell32.SHGetDiskFreeSpaceW as there is no such function in WIN32 api
+implemented missing SHELL32.SHGetDiskFreeSpaceEx on Windows 98
+implemented SHELL32.SHGetDiskFreeSpaceW for Adobe Flash 10
+removed positive PIDs patch as it causes incompatibility with MSYS and propably other apps too
+
+---------------------------------------
+
 KernelEx v4.5 Beta 2 by Xeno86
 2010-02-14
 

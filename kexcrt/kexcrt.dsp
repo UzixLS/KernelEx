@@ -238,6 +238,10 @@ SOURCE=.\strcpy.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\strdup.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\strlen.c
 # End Source File
 # Begin Source File

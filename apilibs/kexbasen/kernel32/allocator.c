@@ -117,16 +117,20 @@ int footer_size_for_usable_size(size_t usable)
 static inline
 DWORD read_footer(const void* ptr, size_t usable, int fs)
 {
+	DWORD ret;
 	UFooter* footer;
 	if (!ptr)
 		return 0;
 	footer = (UFooter*) ((DWORD) ptr + usable - fs);
 	if (fs == sizeof(BYTE))
-		return footer->db;
+		ret = footer->db;
 	else if (fs == sizeof(WORD))
-		return footer->dw;
+		ret = footer->dw;
 	else
-		return footer->dd;
+		ret = footer->dd;
+	if (ret > usable - fs) //heap corruption detected
+		ret = usable - fs;
+	return ret;
 }
 
 static inline
@@ -144,7 +148,7 @@ void write_footer(void* ptr, size_t usable, int fs, DWORD value)
 /* MAKE_EXPORT HeapCreate_new=HeapCreate */
 HANDLE WINAPI HeapCreate_new(DWORD flOptions, DWORD dwInitialSize, DWORD dwMaximumSize)
 {
-	if (flOptions & HEAP_SHARED)
+	if (flOptions & HEAP_SHARED || dwMaximumSize != 0)
 		return HeapCreate(flOptions, dwInitialSize, dwMaximumSize);
 	if (flOptions & HEAP_GENERATE_EXCEPTIONS)
 		return JM_HEAP_EXCP;

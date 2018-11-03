@@ -40,6 +40,7 @@ using namespace std;
 vector<export_entry_named> all_exports_named;
 vector<export_entry_ordinal> all_exports_ordinal;
 stringstream all_declarations;
+time_t timestamp;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -489,21 +490,12 @@ bool is_uptodate_dir(const string& path)
 	string file;
 	FileFinder ff;
 	struct _stat st;
-	time_t mintime;
 
-	ff.search_for(path + "_*_apilist.c");
-	file = ff.get_next_file();
-	if (file.empty())
-		throw Exception("Couldn't find output def file");
-
-	_stat((path + file).c_str(), &st);
-	mintime = st.st_mtime;
-	
 	ff.search_for(path + "*.c");
 	while (!(file = ff.get_next_file()).empty())
 	{
 		_stat((path + file).c_str(), &st);
-		if (st.st_mtime > mintime)
+		if (st.st_mtime > timestamp)
 			return false;
 	}
 
@@ -515,6 +507,14 @@ void work()
 	ifstream dirlist("dirlist");
 	if (!dirlist)
 		throw Exception("Couldn't open dirlist");
+
+	{
+		struct _stat st;
+		if (_stat(".timestamp", &st) < 0)
+			timestamp = 0;
+		else
+			timestamp = st.st_mtime;
+	}
 
 	while (!dirlist.eof())
 	{
@@ -680,6 +680,8 @@ void work()
 
 		out_file.close();
 		replace(file, file + ".tmp");
+
+		ofstream timestamp(".timestamp", ios::out | ios::trunc);
 	}
 
 }

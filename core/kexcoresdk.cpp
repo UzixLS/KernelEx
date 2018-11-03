@@ -108,6 +108,11 @@ void kexSetModuleSettings(const char* module,
 	SettingsDB::instance.write_single(module, conf_name, flags);
 }
 
+void kexResetModuleSettings(const char* module)
+{
+	SettingsDB::instance.reset_single(module);
+}
+
 void kexFlushAppSettings(void)
 {
 	SettingsDB::instance.flush_all();

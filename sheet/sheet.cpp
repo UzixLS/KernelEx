@@ -20,15 +20,17 @@
  */
 
 #include <windows.h>
-#include <stdio.h>
 #include <shlwapi.h>
 #include "sheet.h"
 #include "server.h"
 #include "resource.h"
 #include "KexLinkage.h"
 
+extern "C" int snprintf(char*, size_t, const char*, ...);
+
 struct CTips
 {
+	char* _TIP_DEFAULT;
 	char* _TIP_DISABLE;
 	char* _TIP_COMPAT;
 	char* _TIP_SYSTEM;
@@ -38,8 +40,8 @@ struct CTips
 
 	CTips()
 	{
-		_TIP_DISABLE = _TIP_COMPAT = _TIP_SYSTEM = _TIP_NOINHERIT 
-				= _TIP_OVERRIDE = _TIP_LOG = NULL;
+		_TIP_DEFAULT = _TIP_DISABLE = _TIP_COMPAT = _TIP_SYSTEM
+				= _TIP_NOINHERIT = _TIP_OVERRIDE = _TIP_LOG = NULL;
 		loaded = false;
 	}
 
@@ -47,6 +49,7 @@ struct CTips
 	{
 		if (loaded)
 		{
+			free(_TIP_DEFAULT);
 			free(_TIP_DISABLE);
 			free(_TIP_COMPAT);
 			free(_TIP_SYSTEM);
@@ -61,6 +64,7 @@ struct CTips
 		if (loaded)
 			return;
 		loaded = true;
+		_TIP_DEFAULT = load_string(TIP_DEFAULT);
 		_TIP_DISABLE = load_string(TIP_DISABLE);
 		_TIP_COMPAT = load_string(TIP_COMPAT);
 		_TIP_SYSTEM = load_string(TIP_SYSTEM);
@@ -136,23 +140,24 @@ bool KexShlExt::IsPEModule(const char* path)
 {
 	IMAGE_DOS_HEADER MZh;
 	IMAGE_NT_HEADERS PEh;
-	FILE* f;
+	HANDLE f;
 	bool result = false;
+	DWORD bytes_read;
 
-	f = fopen(path, "rb");
-	if (!f)
+	f = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	if (f == INVALID_HANDLE_VALUE)
 		return false;
 
-	if (fread(&MZh, sizeof(MZh), 1, f) != 1)
+	if (!ReadFile(f, &MZh, sizeof(MZh), &bytes_read, NULL) || bytes_read != sizeof(MZh))
 		goto __end;
-	
+
 	if (MZh.e_magic != IMAGE_DOS_SIGNATURE)
 		goto __end;
 
-	if (fseek(f, MZh.e_lfanew, SEEK_SET))
+	if (SetFilePointer(f, MZh.e_lfanew, NULL, FILE_BEGIN) == 0xffffffff)
 		goto __end;
 
-	if (fread(&PEh, sizeof(PEh), 1, f) != 1)
+	if (!ReadFile(f, &PEh, sizeof(PEh), &bytes_read, NULL) || bytes_read != sizeof(PEh))
 		goto __end;
 
 	if ((PEh.Signature != IMAGE_NT_SIGNATURE) 
@@ -163,8 +168,8 @@ bool KexShlExt::IsPEModule(const char* path)
 	result = true;
 
 __end:
-	fclose(f);
-	
+	CloseHandle(f);
+
 	return result;
 }
 
@@ -364,27 +369,28 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		{
 			switch (LOWORD(wParam))
 			{
+			case IDC_DEFAULT:
+				if (!IsDlgButtonChecked(hwnd, IDC_DEFAULT)) break;
+				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), FALSE);
+				PropSheet_Changed(GetParent(hwnd), hwnd);
+				break;
 			case IDC_DISABLE:
-				if (IsDlgButtonChecked(hwnd, IDC_DISABLE))
-				{
-					EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), FALSE);
-					EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
-					EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
-					EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), FALSE);
-				}
-				else
-				{
-					EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), TRUE);
-					EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), 
-							IsDlgButtonChecked(hwnd, IDC_COMPAT));
-					EnableWindow(GetDlgItem(hwnd, IDC_LOG), TRUE);
-					EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), TRUE);
-				}
+				if (!IsDlgButtonChecked(hwnd, IDC_DISABLE)) break;
+				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), TRUE);
+				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), TRUE);
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			case IDC_COMPAT:
-				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), 
-						IsDlgButtonChecked(hwnd, IDC_COMPAT));
+				if (!IsDlgButtonChecked(hwnd, IDC_COMPAT)) break;
+				EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), TRUE);
+				EnableWindow(GetDlgItem(hwnd, IDC_LOG), TRUE);
+				EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), TRUE);
+				EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), TRUE);
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			case IDC_SYSTEM:
@@ -428,15 +434,19 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 			SendMessage(GetDlgItem(hwnd, IDC_SYSTEM), CB_SETCURSEL, i, 0);
 			break;
 		}
-	if (!(ms->flags & KRF_VALID_FLAG) && (KexLinkage::instance.disable_extensions || !default_index_valid))
-		ms->flags |= KRF_KEX_DISABLE;
-	if (ms->flags & KRF_KEX_DISABLE)
+	if (!(ms->flags & KRF_VALID_FLAG))
 	{
-		CheckDlgButton(hwnd, IDC_DISABLE, BST_CHECKED);
-		EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), FALSE);
+		CheckDlgButton(hwnd, IDC_DEFAULT, BST_CHECKED);
 		EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
 		EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
 		EnableWindow(GetDlgItem(hwnd, IDC_NOINHERIT), FALSE);
+		EnableWindow(GetDlgItem(hwnd, IDC_OVERRIDE), FALSE);
+	}
+	if (ms->flags & KRF_KEX_DISABLE)
+	{
+		CheckDlgButton(hwnd, IDC_DISABLE, BST_CHECKED);
+		EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
+		EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
 	}
 	if (ms->flags & KRF_LOG_APIS)
 		CheckDlgButton(hwnd, IDC_LOG, BST_CHECKED);
@@ -445,13 +455,31 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	if (ms->flags & KRF_OVERRIDE_PROC_MOD)
 		CheckDlgButton(hwnd, IDC_OVERRIDE, BST_CHECKED);
 
-	//set KernelEx version
-	unsigned long ver = KexLinkage::instance.m_kexGetKEXVersion();
+	{
+		//show what are the default compatibility settings
+		char bufi[512];
+		char bufo[512];
+		char bufs[512];
+		
+		SendMessage(GetDlgItem(hwnd, IDC_DEFAULT), WM_GETTEXT, 
+				(WPARAM) sizeof(bufi), (LPARAM) bufi);
+		LoadString(g_hModule, KexLinkage::instance.disable_extensions ?
+				IDS_DISABLED : IDS_ENABLED, bufs, sizeof(bufs));
+		snprintf(bufo, sizeof(bufo), bufi, bufs);
+		SendMessage(GetDlgItem(hwnd, IDC_DEFAULT), WM_SETTEXT, 
+				(WPARAM) 0, (LPARAM) bufo);
+	}
+
+
 	int debug = KexLinkage::instance.m_kexIsDebugCore();
-	char ver_s[32];
-	sprintf(ver_s, "KernelEx Core v%d.%d.%d %s", 
-			ver>>24, (ver>>16) & 0xff, ver & 0xffff, debug ? "DEBUG" : "");
-	SendMessage(GetDlgItem(hwnd, IDC_KEXVER), WM_SETTEXT, 0, (LPARAM) ver_s);
+	{
+		//set KernelEx version
+		unsigned long ver = KexLinkage::instance.m_kexGetKEXVersion();
+		char ver_s[32];
+		snprintf(ver_s, sizeof(ver_s), "KernelEx Core v%d.%d.%d %s", 
+				ver>>24, (ver>>16) & 0xff, ver & 0xffff, debug ? "DEBUG" : "");
+		SendMessage(GetDlgItem(hwnd, IDC_KEXVER), WM_SETTEXT, 0, (LPARAM) ver_s);
+	}
 
 	ShowWindow(GetDlgItem(hwnd, IDC_OVERRIDE), debug ? SW_SHOW : SW_HIDE);
 	ShowWindow(GetDlgItem(hwnd, IDC_LOG), debug ? SW_SHOW : SW_HIDE);
@@ -467,6 +495,7 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	tips.load_tips();
 
 	HWND hwndTip = CreateTooltipWindow(hwnd);
+	CreateTooltip(hwndTip, hwnd, IDC_DEFAULT, tips._TIP_DEFAULT);
 	CreateTooltip(hwndTip, hwnd, IDC_DISABLE, tips._TIP_DISABLE);
 	CreateTooltip(hwndTip, hwnd, IDC_COMPAT, tips._TIP_COMPAT);
 	CreateTooltip(hwndTip, hwnd, IDC_SYSTEM, tips._TIP_SYSTEM);
@@ -481,6 +510,8 @@ void KexShlExt::OnApply(HWND hwnd)
 	ModuleSetting* ms = (ModuleSetting*) GetWindowLong(hwnd, GWL_USERDATA);
 	DWORD flags = 0;
 	const char* conf = "";
+	if (!IsDlgButtonChecked(hwnd, IDC_DEFAULT))
+		flags |= KRF_VALID_FLAG;
 	if (IsDlgButtonChecked(hwnd, IDC_DISABLE))
 		flags |= KRF_KEX_DISABLE;
 	if (IsDlgButtonChecked(hwnd, IDC_COMPAT))
@@ -494,7 +525,12 @@ void KexShlExt::OnApply(HWND hwnd)
 		flags |= KRF_OVERRIDE_PROC_MOD;
 
 	if (flags != ms->flags || strcmp(conf, ms->conf) != 0)
-		KexLinkage::instance.m_kexSetModuleSettings(ms->file, conf, flags);
+	{
+		if (flags & KRF_VALID_FLAG)
+			KexLinkage::instance.m_kexSetModuleSettings(ms->file, conf, flags);
+		else
+			KexLinkage::instance.m_kexResetModuleSettings(ms->file);
+	}
 }
 
 

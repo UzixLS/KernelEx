@@ -63,6 +63,8 @@ static const apilib_named_api advapi32_named_apis[] =
 	DECL_API("EnumServicesStatusExW", EnumServicesStatusExW_stub),
 	DECL_API("EqualPrefixSid", EqualPrefixSid_new),
 	DECL_API("EqualSid", EqualSid_new),
+	DECL_API("FileEncryptionStatusA", FileEncryptionStatusA_stub),
+	DECL_API("FileEncryptionStatusW", FileEncryptionStatusW_stub),
 	DECL_API("FreeSid", FreeSid_new),
 	DECL_API("GetAce", GetAce_new),
 	DECL_API("GetFileSecurityA", GetFileSecurityA_new),

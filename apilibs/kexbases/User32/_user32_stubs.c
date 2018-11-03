@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008, Xeno86
+ *  Copyright (C) 2008-2010, Xeno86, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -22,3 +22,14 @@
 #include "common.h"
 
 UNIMPL_FUNC(SetLayeredWindowAttributes, 4);
+//raw input APIs
+UNIMPL_FUNC(DefRawInputProc, 3);
+UNIMPL_FUNC(GetRawInputBuffer, 3);
+UNIMPL_FUNC(GetRawInputData, 5);
+UNIMPL_FUNC(GetRawInputDeviceList, 3);
+UNIMPL_FUNC(GetRawInputDeviceInfoA, 4);
+UNIMPL_FUNC(GetRawInputDeviceInfoW, 4);
+UNIMPL_FUNC(GetRegisteredRawInputDevices, 3);
+UNIMPL_FUNC(RegisterRawInputDevices, 3);
+//
+UNIMPL_FUNC(PrintWindow, 3);

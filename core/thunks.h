@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -26,5 +26,7 @@ PROC ExportFromOrdinalStatic_thunk(IMAGE_NT_HEADERS* PEh, WORD ordinal);
 PROC ExportFromNameStatic_thunk(IMAGE_NT_HEADERS* PEh, WORD hint, LPCSTR name);
 PROC ExportFromOrdinalDynamic_thunk(IMAGE_NT_HEADERS* PEh, WORD ordinal);
 PROC ExportFromNameDynamic_thunk(IMAGE_NT_HEADERS* PEh, WORD hint, LPCSTR name);
+void SubSysCheck();
+extern BYTE mod_ext_ena;
 
 #endif

@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,4
- PRODUCTVERSION 1,0,0,4
+ FILEVERSION 1,0,0,5
+ PRODUCTVERSION 1,0,0,5
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -80,7 +80,7 @@ BEGIN
             VALUE "OriginalFilename", "sheet.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "KernelEx\0"
-            VALUE "ProductVersion", "1, 0, 0, 4\0"
+            VALUE "ProductVersion", "1, 0, 0, 5\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -110,31 +110,34 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_PROPPAGE DIALOG DISCARDABLE  0, 0, 190, 177
+IDD_PROPPAGE DIALOG DISCARDABLE  0, 0, 232, 191
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Compatibility"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Compatibility options",IDC_GCOMPAT,7,30,176,64
+    GROUPBOX        "Basic options",IDC_GCOMPAT,7,30,218,78
+    CONTROL         "Use default compatibility options [%s]",IDC_DEFAULT,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,15,
+                    43,208,10
     CONTROL         "Disable KernelEx extensions",IDC_DISABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,43,165,10
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,15,57,208,10
     CONTROL         "Use specific compatibility mode:",IDC_COMPAT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,57,164,10
-    COMBOBOX        IDC_SYSTEM,15,70,157,60,CBS_DROPDOWNLIST | WS_DISABLED | 
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,15,71,208,10
+    COMBOBOX        IDC_SYSTEM,15,84,157,60,CBS_DROPDOWNLIST | WS_DISABLED | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "kexver here",IDC_KEXVER,7,161,71,9,WS_DISABLED
-    LTEXT           "Try changing compatibility options if you have problems\nwith running this program.",
-                    IDC_TCOMPAT,7,7,175,22
-    CONTROL         "",IDC_HORIZ1,"Static",SS_BLACKFRAME | SS_SUNKEN,7,160,
-                    176,1
-    GROUPBOX        "Advanced options",IDC_GADVAN,7,100,176,57
+    LTEXT           "kexver here",IDC_KEXVER,7,175,71,9,WS_DISABLED
+    LTEXT           "Try changing compatibility options if you have problems\nrunning the program.",
+                    IDC_TCOMPAT,7,7,218,22
+    CONTROL         "",IDC_HORIZ1,"Static",SS_BLACKFRAME | SS_SUNKEN,7,174,
+                    218,1
+    GROUPBOX        "Advanced options",IDC_GADVAN,7,114,218,57
     CONTROL         "Don't use these settings in child processes",
                     IDC_NOINHERIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
-                    113,164,10
+                    127,208,10
     CONTROL         "Override settings of invidual modules",IDC_OVERRIDE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,127,164,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,141,208,10
     CONTROL         "Enable api logging",IDC_LOG,"Button",BS_AUTOCHECKBOX | 
-                    NOT WS_VISIBLE | WS_TABSTOP,15,141,164,10
+                    NOT WS_VISIBLE | WS_TABSTOP,15,155,208,10
 END
 
 
@@ -149,9 +152,9 @@ BEGIN
     IDD_PROPPAGE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 183
+        RIGHTMARGIN, 225
         TOPMARGIN, 7
-        BOTTOMMARGIN, 170
+        BOTTOMMARGIN, 184
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -164,12 +167,15 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    TIP_DISABLE             "Use this option to run this program as if KernelEx wasn't installed."
-    TIP_COMPAT              "Changes operating system identification and emulates different operating system behavior. Choose operating system which is required to run this program."
-    TIP_SYSTEM              "Select operating system to emulate from the list."
+    TIP_DEFAULT             "Use default settings for this module as specified during installation (brackets). This option allows overriding by main executable or parent process executable settings."
+    TIP_DISABLE             "Select this option to execute module as if KernelEx wasn't installed."
+    TIP_COMPAT              "Choose desired compatibility mode as required by the application. This option allows changing operating system identification and emulation of different operating system behavior."
+    TIP_SYSTEM              "Select desired compatibility mode from the list."
     TIP_NOINHERIT           "Disables inheritance of these settings. Normally programs started by this application use settings from this tab as their default settings. Use this option to disable such behaviour."
     TIP_OVERRIDE            "Disables usage of per module settings. Use this option to use same settings for all modules in the application."
     TIP_LOG                 "Use this option to enable api spying debugging feature."
+    IDS_ENABLED             "KernelEx is enabled"
+    IDS_DISABLED            "KernelEx is disabled"
 END
 
 #endif    // English (U.S.) resources

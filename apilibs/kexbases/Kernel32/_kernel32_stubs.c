@@ -30,3 +30,5 @@ UNIMPL_FUNC(FindFirstFileExW, 6);
 UNIMPL_FUNC(HeapSetInformation, 4);
 UNIMPL_FUNC(GetProcessIoCounters, 2);
 UNIMPL_FUNC(RtlCaptureStackBackTrace, 4);
+UNIMPL_FUNC(GetComputerNameExA, 3);
+UNIMPL_FUNC(GetComputerNameExW, 3);

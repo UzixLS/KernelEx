@@ -109,6 +109,10 @@ SOURCE=.\Kernel32\_kernel32_stubs.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\CompletionPorts.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\CopyFileEx.c
 # End Source File
 # Begin Source File
@@ -577,6 +581,10 @@ InputPath=.\kexbases.def
 # Begin Source File
 
 SOURCE=.\main.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\RtlCaptureContext.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

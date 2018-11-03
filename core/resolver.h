@@ -85,7 +85,10 @@ struct config_params
 
 #pragma pack(pop)
 
+extern LONG old_jtab[];
+
 bool are_extensions_enabled();
+bool are_extensions_enabled_module(const char* path);
 DWORD encode_address(DWORD addr, const ApiLibrary* apilib);
 PROC WINAPI iGetProcAddress(HMODULE hModule, LPCSTR lpProcName);
 PROC WINAPI ExportFromOrdinal(IMTE_KEX* target, MODREF* caller, BOOL is_static, WORD ordinal);

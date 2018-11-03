@@ -190,6 +190,13 @@ _KEXCOREIMP void kexSetModuleSettings(const char* module,
                                       const char* conf_name, DWORD mod_flags);
 
 
+/** kexResetModuleSettings - Reset per module settings to defaults.
+ *
+ * @param module Module path.
+ */
+_KEXCOREIMP void kexResetModuleSettings(const char* module);
+
+
 /** kexFlushAppSettings - Reloads all module settings from registy. */
 _KEXCOREIMP void kexFlushAppSettings(void);
 

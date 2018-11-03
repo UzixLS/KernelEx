@@ -81,36 +81,18 @@ STDAPI DllRegisterServer()
 		RegCloseKey(keyCLSID);
 	}
 
-	if (RegCreateKey(HKEY_CLASSES_ROOT, "exefile\\shellex\\PropertySheetHandlers", 
+	if (RegCreateKey(HKEY_CLASSES_ROOT, "*\\shellex\\PropertySheetHandlers", 
 			&hkey) != ERROR_SUCCESS)
 		result = false;
 
 	if (result)
 	{
-		if (RegCreateKey(hkey, sCLSID_KexShlExt, &hkey2) != ERROR_SUCCESS)
+		if (RegCreateKey(hkey, "KernelEx", &hkey2) != ERROR_SUCCESS)
 			result = false;
 
 		if (result)
 		{
-			RegSetValueEx(hkey2, NULL, 0, REG_SZ, (LPBYTE)"", sizeof(""));
-			RegCloseKey(hkey2);
-		}
-
-		RegCloseKey(hkey);
-	}
-
-	if (RegCreateKey(HKEY_CLASSES_ROOT, "lnkfile\\shellex\\PropertySheetHandlers", 
-			&hkey) != ERROR_SUCCESS)
-		result = false;
-
-	if (result)
-	{
-		if (RegCreateKey(hkey, sCLSID_KexShlExt, &hkey2) != ERROR_SUCCESS)
-			result = false;
-
-		if (result)
-		{
-			RegSetValueEx(hkey2, NULL, 0, REG_SZ, (LPBYTE)"", sizeof(""));
+			RegSetValueEx(hkey2, NULL, 0, REG_SZ, (LPBYTE)sCLSID_KexShlExt, sizeof(sCLSID_KexShlExt));
 			RegCloseKey(hkey2);
 		}
 
@@ -145,26 +127,16 @@ STDAPI DllUnregisterServer()
 		RegCloseKey(keyCLSID);
 	}
 
-	if (RegOpenKey(HKEY_CLASSES_ROOT, "exefile\\shellex\\PropertySheetHandlers", 
+	if (RegOpenKey(HKEY_CLASSES_ROOT, "*\\shellex\\PropertySheetHandlers", 
 			&hkey) != ERROR_SUCCESS)
 		result = false;
 
 	if (result)
 	{
-		RegDeleteKey(hkey, sCLSID_KexShlExt);
+		RegDeleteKey(hkey, "KernelEx");
 		RegCloseKey(hkey);
 	}
 
-	if (RegOpenKey(HKEY_CLASSES_ROOT, "lnkfile\\shellex\\PropertySheetHandlers", 
-			&hkey) != ERROR_SUCCESS)
-		result = false;
-
-	if (result)
-	{
-		RegDeleteKey(hkey, sCLSID_KexShlExt);
-		RegCloseKey(hkey);
-	}
-	
 	return S_OK;
 }
 		

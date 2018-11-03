@@ -40,7 +40,7 @@ char system_path[MAX_PATH];
 int system_path_len;
 
 static PLONG jtab;
-static LONG old_jtab[JTAB_SIZE];
+LONG old_jtab[JTAB_SIZE];
 static HKEY known_dlls_key;
 
 FLoadTreeNotify_t FLoadTreeNotify;
@@ -56,6 +56,7 @@ static bool get_config(MODREF* moduleMR, config_params& cp)
 	IMTE** pmteModTable = *ppmteModTable;
 	PDB98* ppdbCur = *pppdbCur;
 	volatile MODREF_KEX module(moduleMR);
+	DBGASSERT(ppdbCur->pExeMODREF != NULL);
 	MODREF_KEX process(ppdbCur->pExeMODREF);
 
 	//shared modules should use standard api
@@ -599,6 +600,59 @@ bool are_extensions_enabled()
 	return get_config(exe, cp);
 }
 
+/** Determines whether module has API extensions enabled.
+ *  Use this function when there is no access to MODREF.
+ * @param path Full path of the module (uppercase).
+ */
+bool are_extensions_enabled_module(const char* path)
+{
+	//find entry for given module...
+	appsetting as = SettingsDB::instance.get_appsetting(path);
+
+	if (!(as.flags & LDR_VALID_FLAG))
+	{
+		//...no entry? try process exe settings...
+		PDB98* ppdbCur = *pppdbCur;
+		MODREF* exe = ppdbCur->pExeMODREF;
+
+		if (exe != NULL)
+		{
+			config_params cp;
+	
+			as.flags = LDR_VALID_FLAG;
+			if (!get_config(exe, cp))
+				as.flags |= LDR_KEX_DISABLE;
+		}
+		else
+		{
+			//...so there is NO PROCESS exe yet? try with parent process exe...
+			PDB98* ppdbParent = ppdbCur->ParentPDB;
+
+			if (ppdbParent && !(ppdbParent->Flags & (fTerminated | fTerminating | 
+					fNearlyTerminating | fDosProcess | fWin16Process)))
+			{
+				MODREF_KEX parent(ppdbParent->pExeMODREF);
+
+				//...unless parent disallows us to inherit
+				if ((parent.as.flags & LDR_VALID_FLAG) && !(parent.as.flags & LDR_NO_INHERIT))
+					as = parent.as;
+			}
+		}
+	}
+
+	//...so everything else failed eh? - take defaults then...
+	if (!(as.flags & LDR_VALID_FLAG))
+	{
+		as.flags = LDR_VALID_FLAG;
+		if (apiconfmgr.are_extensions_disabled())
+			as.flags |= LDR_KEX_DISABLE;
+	}
+
+	if (as.flags & LDR_KEX_DISABLE)
+		return false;
+	return true;
+}
+
 typedef BOOL (__stdcall *IsKnownDLL_t)(char*, const char*);
 
 static BOOL WINAPI IsKnownKexDLL(char* name, const char* ext)
@@ -646,6 +700,29 @@ static BOOL WINAPI KexLoadTreeNotify(MODREF* mr, BOOL is_static)
 		return TRUE;
 
 	return FLoadTreeNotify(mr, is_static);
+}
+
+typedef BOOL (WINAPI * GetOrdinal_t)(DWORD, DWORD, DWORD, DWORD*, WORD*, DWORD);
+
+static BOOL WINAPI KexResourceCheck(DWORD un0, DWORD un1, DWORD un2, DWORD* pNameOrId, WORD* pResult, DWORD un3)
+{
+	DWORD NameOrId = *pNameOrId; //parameter from IMAGE_RESOURCE_DIRECTORY_ENTRY
+
+	//not a named resource and index > 32767 allowed by 9x ?
+	if (!(NameOrId & 0x80000000) && NameOrId >= 0x8000 && NameOrId < 0x10000)
+	{
+		//we need to check if module has extensions enabled
+		if (mod_ext_ena)
+		{
+			NameOrId |= 0x8000; //??
+			*pResult = NameOrId;
+			return TRUE;
+		}
+	}
+
+	//fall back
+	GetOrdinal_t GetOrdinal = (GetOrdinal_t) old_jtab[JTAB_RES_CHK];
+	return GetOrdinal(un0, un1, un2, pNameOrId, pResult, un3);
 }
 
 PROC WINAPI iGetProcAddress(HMODULE hModule, LPCSTR lpProcName)
@@ -805,6 +882,8 @@ void resolver_hook()
 	old_jtab[JTAB_EFN_STA] = InterlockedExchange(jtab + JTAB_EFN_STA, (LONG) ExportFromNameStatic_thunk);
 	old_jtab[JTAB_KNO_DLL] = InterlockedExchange(jtab + JTAB_KNO_DLL, (LONG) IsKnownKexDLL);
 	old_jtab[JTAB_FLD_TRN] = InterlockedExchange(jtab + JTAB_FLD_TRN, (LONG) KexLoadTreeNotify);
+	old_jtab[JTAB_SYS_CHK] = InterlockedExchange(jtab + JTAB_SYS_CHK, (LONG) SubSysCheck);
+	old_jtab[JTAB_RES_CHK] = InterlockedExchange(jtab + JTAB_RES_CHK, (LONG) KexResourceCheck);
 }
 
 void resolver_unhook()

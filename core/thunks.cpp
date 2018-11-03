@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -23,6 +23,7 @@
 #include "thunks.h"
 #include "internals.h"
 #include "resolver.h"
+#include "../setup/loadstub.h"
 
 __declspec(naked) 
 PROC ExportFromOrdinalStatic_thunk(IMAGE_NT_HEADERS* PEh, WORD ordinal)
@@ -100,5 +101,29 @@ __asm {
 	mov [esp+8], eax //caller MODREF
 	mov dword ptr [esp+12], 0
 	jmp ExportFromName
+	}
+}
+
+BYTE mod_ext_ena;
+
+__declspec(naked)
+void SubSysCheck()
+{
+__asm {
+	seta    al    /* is subsystem value above supported by OS? */
+	push	eax
+	
+	push    [ebp+8]
+	call    are_extensions_enabled_module
+	add     esp, 4
+	mov     mod_ext_ena, al
+	cmp     al, 1
+	clc
+
+	pop     ecx
+	jz      __done	
+	cmp     cl, 0
+__done:
+	jmp     [old_jtab+4*JTAB_SYS_CHK]
 	}
 }

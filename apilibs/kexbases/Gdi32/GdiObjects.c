@@ -152,6 +152,17 @@ DWORD WINAPI GetObjectType_fix( HGDIOBJ hgdiobj )
 	return result;
 }
 
+__declspec(naked)
+WORD GetCurrentTDB() 
+{
+	__asm
+	{
+		mov ax, fs:[0Ch]
+		movzx eax, ax
+		ret
+	}
+}
+
 /* MAKE_EXPORT DeleteObject_fix=DeleteObject */
 BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 {
@@ -159,7 +170,7 @@ BOOL WINAPI DeleteObject_fix( HGDIOBJ hObject )
 	PGDIOBJ16 obj = GetGDIObjectPtr( hObject );
 	if ( !obj || !SwitchGDIObjectType(obj) ) return FALSE;
 	DWORD violated = 0;
-	if ( obj->wOwner ) //not system objects
+	if ( obj->wOwner == GetCurrentTDB() ) //not system or foreign objects
 	{
 		if (obj->wType == GDI_TYPE_FONT)
 		{

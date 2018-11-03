@@ -39,6 +39,7 @@ public:
 	void flush_all();
 	appsetting get_appsetting(const char* path);
 	void write_single(const char* path, const char* conf_name, BYTE flags);
+	void reset_single(const char* path);
 #ifdef _DEBUG
 	void dump_db();
 #endif

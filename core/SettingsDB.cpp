@@ -224,6 +224,7 @@ void SettingsDB::write_single(const char* path, const char* conf_name, BYTE flag
 	char path2[MAX_PATH];
 	strncpy(path2, path, sizeof(path2));
 	strupr(path2);
+	path = path2;
 
 	//check if configuration name is valid
 	as.conf = apiconfmgr.get_api_configuration(conf_name);
@@ -253,8 +254,43 @@ void SettingsDB::write_single(const char* path, const char* conf_name, BYTE flag
 
 	//add to DB
 	EnterCriticalSection(&cs);
-	db.erase(path2);
-	db.insert(pair<sstring,appsetting>(path2, as));
+	db.erase(path);
+	db.insert(pair<sstring,appsetting>(path, as));
+	LeaveCriticalSection(&cs);
+}
+
+void SettingsDB::reset_single(const char* path)
+{
+	LONG result;
+	HKEY key;
+
+	//convert path to uppercase
+	char path2[MAX_PATH];
+	strncpy(path2, path, sizeof(path2));
+	strupr(path2);
+	path = path2;
+
+	//erase config
+	result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+			"Software\\KernelEx\\AppSettings\\Configs", 0, KEY_WRITE, &key);
+	if (result == ERROR_SUCCESS)
+	{
+		RegDeleteValue(key, path);
+		RegCloseKey(key);
+	}
+
+	//erase flags
+	result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+			"Software\\KernelEx\\AppSettings\\Flags", 0, KEY_WRITE, &key);
+	if (result == ERROR_SUCCESS)
+	{
+		RegDeleteValue(key, path);
+		RegCloseKey(key);
+	}
+
+	//erase from DB
+	EnterCriticalSection(&cs);
+	db.erase(path);
 	LeaveCriticalSection(&cs);
 }
 

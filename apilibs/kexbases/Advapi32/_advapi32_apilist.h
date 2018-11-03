@@ -61,6 +61,8 @@ STUB EnumServicesStatusExW_stub;
 STUB CreateProcessWithLogonW_stub;
 STUB InitiateSystemShutdownExA_stub;
 STUB InitiateSystemShutdownExW_stub;
+STUB FileEncryptionStatusA_stub;
+STUB FileEncryptionStatusW_stub;
 BOOL WINAPI OpenProcessToken_new(HANDLE ProcessHandle, DWORD DesiredAccess, HANDLE *TokenHandle);
 BOOL WINAPI OpenThreadToken_new(HANDLE ThreadHandle, DWORD DesiredAccess, BOOL OpenAsSelf, HANDLE *TokenHandle);
 BOOL WINAPI DuplicateTokenEx_new(HANDLE ExistingTokenHandle, DWORD dwDesiredAccess, LPSECURITY_ATTRIBUTES lpTokenAttributes, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, TOKEN_TYPE TokenType, PHANDLE DuplicateTokenHandle);

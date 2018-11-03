@@ -1,3 +1,29 @@
+KernelEx v4.5 RC 1 by Xeno86
+2010-07-30
+
+What's new:
+----------------------------------
+* Reworked 'Compatibility' tab to allow resetting compatibility settings to default values
+* Resources with high ID are disallowed when KernelEx is disabled
+* Platform check is now re-enabled when KernelEx is disabled
+* Fixed settings not applied for applications with international characters in path
+* Implemented get-post I/O completion ports functionality
+
+Apps fixed / now working:
+-------------------------
+* Fixed: MSYS (broken)
+* Fixed: Microsoft Access XP (crashing)
+* Fixed: Rally Championship '99 (crashing)
+* Fixed: GTA San Andreas (crashing)
+* Fixed: VLC 1.0+ (UI)
+* Fixed: Firefox 3.6.4+ (high cpu usage)
+* Now working: Adobe Flash 10.1 plugin
+* Now working: Mozilla Firefox 4.0 Beta 1
+* Now working: Artweaver 1.0
+* Now working: MPC-HC (newer builds, svn build 1391+)
+
+#################################################
+
 KernelEx v4.5 Beta 2 by Xeno86
 2010-02-14
 
@@ -6,7 +32,7 @@ What's new:
 * Implemented Uniscribe font caching (improves Firefox 3 performance).
 * New thread pool implementation (fixes IE6 problems).
 * Fixed rare font related Firefox 3 crash.
-* Implemted timer queue APIs.
+* Implemented timer queue APIs.
 * Implemented SHParseDisplayName and restricted to XP+ configs to fix Firefox mailto issues.
 * Fixed premature kexCOM unloading crashing Photoshop 5 and other buggy apps.
 * Updated jemalloc to version from FF3.6.

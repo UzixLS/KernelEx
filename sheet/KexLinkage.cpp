@@ -56,12 +56,15 @@ bool KexLinkage::Prepare()
 			"kexGetModuleSettings");
 	m_kexSetModuleSettings = (kexSetModuleSettings_t) GetProcAddress(hKernelEx,
 			"kexSetModuleSettings");
+	m_kexResetModuleSettings = (kexResetModuleSettings_t) GetProcAddress(hKernelEx,
+			"kexResetModuleSettings");
 	m_kexGetKEXVersion = (kexGetKEXVersion_t) GetProcAddress(hKernelEx,
 			"kexGetKEXVersion");
 	m_kexIsDebugCore = (kexIsDebugCore_t) GetProcAddress(hKernelEx,
 			"kexIsDebugCore");
 
 	if (!m_kexGetModuleSettings || !m_kexSetModuleSettings 
+			|| !m_kexResetModuleSettings
 			|| !m_kexGetKEXVersion || !m_kexIsDebugCore)
 		return false;
 

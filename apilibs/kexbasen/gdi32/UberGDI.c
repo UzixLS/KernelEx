@@ -4,10 +4,6 @@
  *  Copyright (C) 2008, 2010, Tihiy
  *  This file is part of KernelEx source code.
  *
- *  Copyright 1993 Alexandre Julliard
- *            1997 Alex Korobka
- *  Copyright 2002,2003 Shachar Shemesh 
- *  Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla) 
  *
  *  KernelEx is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published
@@ -29,7 +25,6 @@
 #include "common.h"
 #include <usp10.h>
 #include "ScriptCache.h"
-
 
 #ifdef __cplusplus
 extern "C"
@@ -66,7 +61,11 @@ int WINAPI GetGlyphIndicesW_new(
 		int i;
 		SCRIPT_FONTPROPERTIES fpr;
 		fpr.cBytes = sizeof(SCRIPT_FONTPROPERTIES);
-		if (FAILED(ScriptGetFontProperties(hdc,&cache,&fpr))) return GDI_ERROR;
+		if (FAILED(ScriptGetFontProperties(hdc,&cache,&fpr)))
+		{
+			ScriptCache::instance.Unlock();
+			return GDI_ERROR;
+		}
 		for (i = 0; i < c; i++)
 		{
 			if (*checkglyph == fpr.wgDefault) *checkglyph = 0xFFFF;
@@ -80,26 +79,22 @@ int WINAPI GetGlyphIndicesW_new(
 
 static int WINAPI GdiGetCodePage( HDC hdc )
 {
-    UINT cp = CP_ACP;
-    CHARSETINFO csi;
-    int charset = GetTextCharset(hdc);
+	int charset = GetTextCharset(hdc);
 
-    /* Hmm, nicely designed api this one! */
-    if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
-        cp = csi.ciACP;
-    else
-    {
-        switch(charset)
-        {
-        case OEM_CHARSET:
-            cp = GetOEMCP();
-            break;
-        case DEFAULT_CHARSET:
-            cp = GetACP();          
-            break;
-        }
-    }
-   return cp;
+	switch(charset) {
+	case DEFAULT_CHARSET:
+		return GetACP();
+	case OEM_CHARSET:
+		return GetOEMCP();
+	default:
+		{
+			CHARSETINFO csi;
+			if(TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET))
+				return csi.ciACP;
+			else
+				return CP_ACP;
+		}
+	}
 }
 
 /* MAKE_EXPORT GetGlyphIndicesA_new=GetGlyphIndicesA */
@@ -296,8 +291,38 @@ DWORD WINAPI GetGlyphOutlineW_new(
 		memcpy( &matr, lpmat2, sizeof(MAT2) );
 		lpmat2 = &matr;
 	}
-	if (uFormat & GGO_GLYPH_INDEX)
+
+
+	if ( uFormat & GGO_GLYPH_INDEX )
 		return GetGlyphOutlineA( hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, lpmat2 );
-	GetGlyphIndicesW_new( hdc, (LPWSTR)&uChar, 1, (LPWORD)&glyph, 0 );
-	return GetGlyphOutlineA( hdc, glyph, uFormat | GGO_GLYPH_INDEX, lpgm, cbBuffer, lpvBuffer, lpmat2 );
+	else
+	{
+		DWORD ret = GetGlyphIndicesW_new( hdc, (LPWSTR)&uChar, 1, (LPWORD)&glyph, 0 );
+		if (ret != GDI_ERROR)
+			ret = GetGlyphOutlineA( hdc, glyph, uFormat | GGO_GLYPH_INDEX, lpgm, cbBuffer, lpvBuffer, lpmat2 );
+		
+		//someone assumed MS Shell Dlg is TrueType?
+		if (ret == GDI_ERROR && uFormat == GGO_METRICS && lpmat2 && lpgm)
+		{
+			char fontface[100];
+			GetTextFaceA(hdc,100,fontface);
+			if (strcmp(fontface,"MS Sans Serif") == 0)
+			{
+				//well let's fake it then
+				SIZE sz;
+				if (GetTextExtentPointW(hdc,(LPWSTR)&uChar,1,&sz))
+				{
+					lpgm->gmBlackBoxX = sz.cx;
+					lpgm->gmBlackBoxY = sz.cy;
+					lpgm->gmptGlyphOrigin.x = 0;
+					lpgm->gmptGlyphOrigin.y = sz.cy;
+					lpgm->gmCellIncX = sz.cx;
+					lpgm->gmCellIncY = 0;
+					ret = 1;
+				}
+			}
+		}
+		
+		return ret;
+	}
 }

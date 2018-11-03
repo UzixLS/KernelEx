@@ -36,6 +36,7 @@ class KexLinkage
 			char* conf_name, DWORD* mod_flags);
 	typedef void (*kexSetModuleSettings_t)(const char* module, 
 			const char* conf_name, DWORD mod_flags);
+	typedef void (*kexResetModuleSettings_t)(const char* module);
 	typedef unsigned long (*kexGetKEXVersion_t)(void);
 	typedef int (*kexIsDebugCore_t)(void);
 
@@ -57,6 +58,7 @@ public:
 	bool disable_extensions;
 	kexGetModuleSettings_t m_kexGetModuleSettings;
 	kexSetModuleSettings_t m_kexSetModuleSettings;
+	kexResetModuleSettings_t m_kexResetModuleSettings;
 	kexGetKEXVersion_t m_kexGetKEXVersion;
 	kexIsDebugCore_t m_kexIsDebugCore;
 
