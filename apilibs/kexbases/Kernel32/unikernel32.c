@@ -254,6 +254,18 @@ BOOL WINAPI FreeEnvironmentStringsW_new(void* env)
 	return HeapFree(GetProcessHeap(), 0, env);
 }
 
+//MAKE_EXPORT GetAtomNameW_new=GetAtomNameW
+UINT WINAPI GetAtomNameW_new(ATOM atom, LPWSTR bufferW, int size)
+{
+	UINT ret;
+	ALLOC_A(buffer, size * acp_mcs);
+    ret = GetAtomNameA(atom, bufferA, size * acp_mcs);
+    if (ret)
+		ret = ABUFtoW(buffer, ret + 1, size);
+	if (ret) ret--;
+    return ret;
+}
+
 //MAKE_EXPORT GetCurrentDirectoryW_new=GetCurrentDirectoryW
 DWORD WINAPI GetCurrentDirectoryW_new(DWORD nBufferLength, LPWSTR lpBufferW)
 {
@@ -395,6 +407,42 @@ DWORD WINAPI GetLongPathNameW_new(LPCWSTR lpszShortPathW, LPWSTR lpszLongPathW, 
 		}
 	}
 	return ret;
+}
+
+//MAKE_EXPORT GetModuleFileNameW_new=GetModuleFileNameW
+DWORD WINAPI GetModuleFileNameW_new(HMODULE hModule, LPWSTR lpFilenameW, DWORD nSize)
+{
+	DWORD ret;
+	char lpFilenameA[MAX_PATH];
+	if (nSize <= 0)
+		return 0;
+	ret = GetModuleFileNameA(hModule, lpFilenameA, MAX_PATH);
+	if (ret)
+	{
+		file_GetCP();
+		DWORD last_err = GetLastError();
+		if (ret >= MAX_PATH)
+		{
+			SetLastError(ERROR_FILENAME_EXCED_RANGE);
+			return 0;
+		}
+		ret = file_AtoW(lpFilename, nSize);
+		if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+		{
+			ret = nSize;
+		}
+		else if (ret) ret--;
+		SetLastError(last_err);
+	}
+	return ret;
+}
+
+//MAKE_EXPORT GetModuleHandleW_new=GetModuleHandleW
+HMODULE WINAPI GetModuleHandleW_new(LPCWSTR lpModuleNameW)
+{
+	file_GetCP();
+	file_ALLOC_WtoA(lpModuleName);
+	return GetModuleHandleA(lpModuleNameA);
 }
 
 //MAKE_EXPORT GetShortPathNameW_new=GetShortPathNameW
@@ -543,6 +591,22 @@ UINT WINAPI GlobalGetAtomNameW_new(ATOM atom, LPWSTR bufferW, int size)
 	if (ret) ret--;
     return ret;
 }
+
+//MAKE_EXPORT LoadLibraryW_new=LoadLibraryW
+HINSTANCE WINAPI LoadLibraryW_new(LPCWSTR lpLibFileNameW)
+{
+	file_GetCP();
+	file_ALLOC_WtoA(lpLibFileName);
+	return LoadLibraryA(lpLibFileNameA);
+}
+
+//MAKE_EXPORT LoadLibraryExW_new=LoadLibraryExW
+HINSTANCE WINAPI LoadLibraryExW_new(LPCWSTR lpLibFileNameW, HANDLE hFile, DWORD dwFlags)
+{
+	file_GetCP();
+	file_ALLOC_WtoA(lpLibFileName);
+	return LoadLibraryExA(lpLibFileNameA, hFile, dwFlags);
+} 
 
 //MAKE_EXPORT Module32FirstW_new=Module32FirstW
 BOOL WINAPI Module32FirstW_new(HANDLE hSnapshot, LPMODULEENTRY32W lpmeW)

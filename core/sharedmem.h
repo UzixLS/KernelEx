@@ -36,7 +36,7 @@ void* realloc(void* ptr, size_t size);
 void* recalloc(void* ptr, size_t size);
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

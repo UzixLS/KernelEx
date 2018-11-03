@@ -1123,11 +1123,11 @@ GetFileSecurityW_new( LPCWSTR lpFileName,
     DWORD               nNeeded;
     LPBYTE      pBuffer;
     DWORD               iLocNow;
-    SECURITY_DESCRIPTOR_RELATIVE *pSDRelative;
+    SECURITY_DESCRIPTOR *pSDRelative;
 
     FIXMEW("GetFileSecurityW(%s) : returns fake SECURITY_DESCRIPTOR\n", lpFileName);
 
-    nNeeded = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    nNeeded = sizeof(SECURITY_DESCRIPTOR);
     if (RequestedInformation & OWNER_SECURITY_INFORMATION)
         nNeeded += sizeof(sidWorld);
     if (RequestedInformation & GROUP_SECURITY_INFORMATION)
@@ -1145,33 +1145,33 @@ GetFileSecurityW_new( LPCWSTR lpFileName,
     if (!InitializeSecurityDescriptor_new(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION))
         return FALSE;
 
-    pSDRelative = (PISECURITY_DESCRIPTOR_RELATIVE) pSecurityDescriptor;
+    pSDRelative = (PISECURITY_DESCRIPTOR) pSecurityDescriptor;
     pSDRelative->Control |= SE_SELF_RELATIVE;
     pBuffer = (LPBYTE) pSDRelative;
-    iLocNow = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    iLocNow = sizeof(SECURITY_DESCRIPTOR);
 
     if (RequestedInformation & OWNER_SECURITY_INFORMATION)
     {
         memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
-        pSDRelative->Owner = iLocNow;
+        pSDRelative->Owner = (PACL) iLocNow;
         iLocNow += sizeof(sidWorld);
     }
     if (RequestedInformation & GROUP_SECURITY_INFORMATION)
     {
         memcpy(pBuffer + iLocNow, &sidWorld, sizeof(sidWorld));
-        pSDRelative->Group = iLocNow;
+        pSDRelative->Group = (PACL) iLocNow;
         iLocNow += sizeof(sidWorld);
     }
     if (RequestedInformation & DACL_SECURITY_INFORMATION)
     {
         GetWorldAccessACL((PACL) (pBuffer + iLocNow));
-        pSDRelative->Dacl = iLocNow;
+        pSDRelative->Dacl = (PACL) iLocNow;
         iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL;
     }
     if (RequestedInformation & SACL_SECURITY_INFORMATION)
     {
         GetWorldAccessACL((PACL) (pBuffer + iLocNow));
-        pSDRelative->Sacl = iLocNow;
+        pSDRelative->Sacl = (PACL) iLocNow;
         /* iLocNow += WINE_SIZE_OF_WORLD_ACCESS_ACL; */
     }
     return TRUE;

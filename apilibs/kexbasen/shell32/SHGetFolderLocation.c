@@ -40,13 +40,6 @@
 #include <shlwapi.h>
 #include "common.h"
 #include "_shell32_apilist.h"
-#include "auxdecl.h"
-
-EXTERN_C HRESULT WINAPI SHILCreateFromPathA(LPCSTR path, LPITEMIDLIST *ppidl, DWORD *attributes); /* ORDINAL 28 */
-EXTERN_C LPVOID WINAPI SHAlloc(DWORD len); /* ORDINAL 196 */
-EXTERN_C void WINAPI SHFree(LPVOID pv); /* ORDINAL 195 */
-EXTERN_C LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST pidl); /* ORDINAL 153 */
-EXTERN_C LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2); /* ORDINAL 25 */
 
 /**************************************************************************
  *
@@ -287,7 +280,7 @@ HRESULT WINAPI SHGetFolderLocation_new(
                 DWORD attributes=0;
 
                 TRACE("Value=%s\n", debugstr_w(szPath));
-                hr = SHILCreateFromPathA(szPath, ppidl, &attributes);
+                hr = SHILCreateFromPath((LPWSTR)szPath, ppidl, &attributes);
             }
             else if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
             {

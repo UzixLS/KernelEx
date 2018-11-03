@@ -1,6 +1,5 @@
-//Microsoft Developer Studio generated resource script.
-//
 #include "resource.h"
+#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -54,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 4,0,1,2
- PRODUCTVERSION 4,0,1,2
+ FILEVERSION RCVERSION
+ PRODUCTVERSION RCVERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -73,14 +72,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "Xeno86\0"
             VALUE "FileDescription", "KernelEx Base Shared Api Library\0"
-            VALUE "FileVersion", "4, 0, 1, 2\0"
+            VALUE "FileVersion", _RCVERSION_ "\0"
             VALUE "InternalName", "kexbases\0"
             VALUE "LegalCopyright", "Copyright © 2009, Xeno86\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "kexbases.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "KernelEx\0"
-            VALUE "ProductVersion", "4, 0, 1, 2\0"
+            VALUE "ProductVersion", VERSION_STR "\0"
             VALUE "SpecialBuild", "\0"
         END
     END

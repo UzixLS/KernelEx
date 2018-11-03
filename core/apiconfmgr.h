@@ -29,39 +29,39 @@ class ApiConfigurationManager
 public:
 	ApiConfigurationManager();
 	~ApiConfigurationManager();
-	void reload_api_configurations();
-	static ApiConfiguration* get_api_configuration(const char* conf_name);
-	static ApiConfiguration* get_default_configuration();
+	bool load_api_configurations();
+	ApiConfiguration* get_default_configuration();
+	bool are_extensions_disabled();
+	ApiConfiguration* get_api_configuration(const char* conf_name);
 
 #ifdef _DEBUG
-	static void dump_configurations();
+	void dump_configurations();
 #endif
 
 protected:
 	
 private:
 	char core_conf_file[MAX_PATH];
-	ApiConfiguration** new_apiconf_ptrs;
-	int new_apiconf_cnt;
-	int default_apiconf_index;
-	ApiLibraryManager libmgr;
-
-	static ApiConfiguration** curr_apiconf_ptrs;
-	static int curr_apiconf_cnt;
-	static ApiConfiguration** prev_apiconf_ptrs;
-	static int prev_apiconf_cnt;
-	static ApiConfiguration* default_apiconf;
+	ApiConfiguration** apiconf_ptrs;
+	int apiconf_cnt;
+	ApiConfiguration* default_apiconf;
+	bool disable_extensions;
 
 	bool join_apilibs(ApiConfiguration* apiconf);
 	bool parse_overrides(ApiConfiguration* apiconf);
 	bool add_apiconf(ApiConfiguration* ac);
-	ApiConfiguration* get_new_apiconf(const char* conf_name);
-	bool commit_changes();
 };
 
 inline ApiConfiguration* ApiConfigurationManager::get_default_configuration()
 {
 	return default_apiconf;
 }
+
+inline bool ApiConfigurationManager::are_extensions_disabled()
+{
+	return disable_extensions;
+}
+
+extern ApiConfigurationManager apiconfmgr;
 
 #endif

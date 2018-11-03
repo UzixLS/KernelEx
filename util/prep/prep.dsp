@@ -60,8 +60,8 @@ InputPath=.\Release\prep.exe
 SOURCE="$(InputPath)"
 
 "nope" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	$(OutDir)\$(TargetName) $(WkspDir)\apilibs\kexbases 
-	$(OutDir)\$(TargetName) $(WkspDir)\apilibs\kexbasen 
+	$(OutDir)\$(TargetName) "$(WkspDir)\apilibs\kexbases" 
+	$(OutDir)\$(TargetName) "$(WkspDir)\apilibs\kexbasen" 
 	
 # End Custom Build
 
@@ -97,8 +97,8 @@ InputPath=.\Debug\prep.exe
 SOURCE="$(InputPath)"
 
 "nope" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	$(OutDir)\$(TargetName) $(WkspDir)\apilibs\kexbases 
-	$(OutDir)\$(TargetName) $(WkspDir)\apilibs\kexbasen 
+	$(OutDir)\$(TargetName) "$(WkspDir)\apilibs\kexbases" 
+	$(OutDir)\$(TargetName) "$(WkspDir)\apilibs\kexbasen" 
 	
 # End Custom Build
 

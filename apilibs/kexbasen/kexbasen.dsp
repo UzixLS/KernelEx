@@ -47,13 +47,13 @@ RSC=rc.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
-# ADD RSC /l 0x415 /d "NDEBUG"
+# ADD RSC /l 0x415 /i "../../common" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib /nologo /dll /map /machine:I386 /nodefaultlib /OPT:NOWIN98
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /machine:I386 /nodefaultlib /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "KernelEx Base NonShared - Win32 Debug"
@@ -74,13 +74,13 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
-# ADD RSC /l 0x415 /d "_DEBUG"
+# ADD RSC /l 0x415 /i "../../common" /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /pdbtype:sept /OPT:NOWIN98
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /pdbtype:sept /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -173,6 +173,10 @@ SOURCE=.\comdlg32\_comdlg32_apilist.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\comdlg32\openfilename_fix.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\comdlg32\unicomdlg32.c
 # End Source File
 # End Group
@@ -208,6 +212,38 @@ SOURCE=.\shell32\SHGetFolderPath.c
 SOURCE=.\shell32\unishell32.c
 # End Source File
 # End Group
+# Begin Group "rpcrt4"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\rpcrt4\_rpcrt4_apilist.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\rpcrt4\_rpcrt4_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\rpcrt4\unirpcrt4.c
+# End Source File
+# End Group
+# Begin Group "winspool"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\winspool\_winspool_apilist.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\winspool\_winspool_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\winspool\DefaultPrinter.c
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\common.c
@@ -215,52 +251,10 @@ SOURCE=.\common.c
 # Begin Source File
 
 SOURCE=.\kexbasen.def
-
-!IF  "$(CFG)" == "KernelEx Base NonShared - Win32 Release"
-
-# Begin Custom Build
-OutDir=.\Release
-ProjDir=.
-InputPath=.\kexbasen.def
-
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\shell32ord.def /OUT:$(OutDir)\shell32ord.lib
-
-"$(OutDir)\shell32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\shell32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "KernelEx Base NonShared - Win32 Debug"
-
-# Begin Custom Build
-OutDir=.\Debug
-ProjDir=.
-InputPath=.\kexbasen.def
-
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\shell32ord.def /OUT:$(OutDir)\shell32ord.lib
-
-"$(OutDir)\shell32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\shell32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-# End Custom Build
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
 SOURCE=.\main.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\shell32ord.def
-# PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
@@ -270,10 +264,6 @@ SOURCE=.\unifwd.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=.\auxdecl.h
-# End Source File
 # Begin Source File
 
 SOURCE=.\common.h

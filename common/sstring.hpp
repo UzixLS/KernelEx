@@ -24,6 +24,7 @@
 
 #include <string.h>
 
+/** Simple string container class. */
 class sstring
 {
 public:
@@ -55,12 +56,21 @@ public:
 		return *this;
 	}
 	
+	sstring& operator=(const char* src)
+	{
+		len = strlen(src);
+		delete [] storage;
+		storage = new char[len + 1];
+		strcpy(storage, src);
+		return *this;
+	}
+
 	bool operator<(const sstring& a) const
 	{
 		return strcmp(storage, a.storage) < 0;
 	}
 	
-	const char* get() const
+	operator const char*() const
 	{
 		return storage;
 	}

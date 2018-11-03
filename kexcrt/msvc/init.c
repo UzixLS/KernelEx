@@ -65,8 +65,15 @@ int atexit(_PVFV func)
     return -1;
 }
 
+static int exit_done;
+
 void __exit(void)
 {
+	if (exit_done)
+		return;
+	
+	exit_done = 1;
+	
 	// do pre-terminators
     _initterm(__xp_a, __xp_z);
     // do terminators

@@ -672,6 +672,8 @@ void work()
 
 int main(int argc, char* argv[])
 {
+	cout << "KernelEx source preparser by Xeno86" << endl;
+
 	if (argc > 2)
 	{
 		cout << "Invalid parameters!" << endl;
@@ -679,11 +681,14 @@ int main(int argc, char* argv[])
 	}
 	
 	if (argc == 2)
+	{
+		cout << "Processing project at: " << argv[1] << endl;
 		if (!SetCurrentDirectory(argv[1]))
 		{
 			cout << "Failed to change directory" << endl;
 			return 1;
 		}
+	}
 	
 	try
 	{

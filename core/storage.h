@@ -19,11 +19,18 @@
  *
  */
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __STORAGE_H
+#define __STORAGE_H
 
-#define VERSION_STR      "4.0 RC 2"
-#define VERSION_CODE     0x0400000C
-#define RCVERSION        4, 0, 1, 2
+class storage
+{
+public:
+	int size;
+	void* data[1]; //dummy table
+	
+	static const int storage_size;
+	static storage* get_storage(bool alloc);
+	static void return_storage();
+};
 
 #endif

@@ -20,7 +20,6 @@
  */
 
 #include <windows.h>
-#include "auxdecl.h"
 
 /* special structure used internally to save some space */
 typedef struct 

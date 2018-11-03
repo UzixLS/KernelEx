@@ -27,7 +27,7 @@
 
 void kexDbgDumpConfigurations(void)
 {
-	ApiConfigurationManager::dump_configurations();
+	apiconfmgr.dump_configurations();
 }
 
 void kexDbgDumpImtes(void)

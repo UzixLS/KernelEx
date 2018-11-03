@@ -61,6 +61,7 @@ private:
 	SettingsDB();
 	void parse_configs();
 	void parse_flags();
+	void add_apilib_excludes();
 };
 
 #endif

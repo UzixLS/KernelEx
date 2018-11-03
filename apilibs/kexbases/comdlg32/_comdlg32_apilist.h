@@ -22,7 +22,6 @@
 #ifndef _COMDLG32_APILIST_H
 #define _COMDLG32_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
 
 BOOL init_comdlg32();

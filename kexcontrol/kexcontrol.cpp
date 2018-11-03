@@ -21,8 +21,57 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <tlhelp32.h>
 #include "kexcoresdk.h"
 #include "debugproto.h"
+
+bool kill_all_referents()
+{
+	bool kill = false;
+
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (h == INVALID_HANDLE_VALUE)
+		return false;
+
+	PROCESSENTRY32 pe;
+	pe.dwSize = sizeof(pe);
+	BOOL ret = Process32First(h, &pe);
+	while (ret)
+	{
+		if (pe.th32ProcessID != GetCurrentProcessId())
+		{
+			HANDLE m = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, pe.th32ProcessID);
+			if (m != INVALID_HANDLE_VALUE)
+			{
+				MODULEENTRY32 me;
+				me.dwSize = sizeof(me);
+				BOOL ret = Module32First(m, &me);
+				while (ret)
+				{
+					if (!strcmp(me.szModule, "KERNELEX.DLL"))
+					{
+						kill = true;
+						break;
+					}
+					ret = Module32Next(m, &me);
+				}
+				CloseHandle(m);
+			}
+			if (kill)
+			{
+				kill = false;
+				HANDLE p = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+				TerminateProcess(p, 0);
+				CloseHandle(p);
+			}
+		}
+
+		ret = Process32Next(h, &pe);
+	}
+
+	CloseHandle(h);
+	return true;
+}
 
 int menu()
 {
@@ -32,6 +81,7 @@ int menu()
 	printf("2. dump imtes\n");
 	printf("3. dump application settings\n");
 	printf("4. flush application settings\n");
+	printf("9. kill all depending processes\n");
 	printf("0. exit\n");
 	printf("\nyour choice: ");
 	int ch;
@@ -61,6 +111,9 @@ int main()
 			break;
 		case 4:
 			kexFlushAppSettings();
+			break;
+		case 9:
+			kill_all_referents();
 			break;
 		default:
 			printf("Invalid option!\n");

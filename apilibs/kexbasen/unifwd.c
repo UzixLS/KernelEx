@@ -20,6 +20,7 @@
  */
 
 #include <windows.h>
+#include <float.h>
 #include "unifwd.h"
 #include "kexcoresdk.h"
 #include "common.h"
@@ -28,9 +29,21 @@ static HMODULE hUnicows;
 
 int unifwd_init(void)
 {
+	DWORD lasterror = GetLastError();
 	hUnicows = GetModuleHandle("UNICOWS.DLL");
 	if (!hUnicows)
+	{
+		//Some DLLs that are loaded in conjunction with
+		//unicows.dll may blow the FPU's control word.
+		//Save it here...
+		unsigned int fpu_cw;
+		fpu_cw = _control87(0, 0);
 		hUnicows = LoadLibrary("UNICOWS.DLL");
+		//...and restore afterwards
+		if (_control87(0, 0) != fpu_cw)
+			_control87(fpu_cw, 0xfffff);
+	}
+	SetLastError(lasterror);
 	return (hUnicows != NULL);
 }
 

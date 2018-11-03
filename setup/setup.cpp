@@ -235,6 +235,30 @@ void Setup::mod_imte_alloc()
 	set_pattern(found_loc, after, length);
 }
 
+void Setup::mod_pdb_alloc()
+{
+	static const short pattern[] = {
+		0x53,0x56,0x57,0x6A,0x06,0x68,0xC4,0x00,0x00,0x00,0xE8
+	};
+	static const short after[] = {
+		0x53,0x56,0x57,0x6A,0x06,0x68,0xC8,0x00,0x00,0x00,0xE8
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size, pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "mod_pdb_alloc");
+		else ShowError(IDS_MULPAT, "mod_pdb_alloc");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "mod_pdb_alloc",
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	set_pattern(found_loc, after, length);
+}
+
 void Setup::find_ExportFromX()
 {
 	static const short pattern[] = {
@@ -397,6 +421,7 @@ void Setup::install()
 	disable_platform_check();
 	disable_resource_check();
 	mod_imte_alloc();
+	mod_pdb_alloc();
 
 	KernelEx_codeseg* cseg;
 	KernelEx_dataseg* dseg;

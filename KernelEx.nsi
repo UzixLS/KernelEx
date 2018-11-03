@@ -1,4 +1,4 @@
-  !define VERSION '4.0 RC 2'
+  !define VERSION '4.0 Final'
 
 ;--------------------------------
 ;Includes
@@ -6,6 +6,7 @@
   !include "MUI2.nsh"
   !include "UpdateDLL.nsh"
   !include "WinVer.nsh"
+  !include "nsDialogs.nsh"
 
 ;--------------------------------
 ;General
@@ -15,13 +16,19 @@
   ;Name and file
   Name "KernelEx"
   Caption "KernelEx ${VERSION} Setup"
-  OutFile "..\KernelEx-${VERSION}.exe"
+  OutFile "..\KernelEx-dev.exe"
 
   ;Default installation folder
   InstallDir "$WINDIR\KernelEx"
 
   ;Get installation folder from registry if available
   InstallDirRegKey HKLM "Software\KernelEx" "InstallDir"
+
+;--------------------------------
+;Variables
+
+  Var ENABLEBUTTON
+  Var WARNING_TEXT
 
 ;--------------------------------
 ;Interface Settings
@@ -36,6 +43,7 @@
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "License.txt"
   !insertmacro MUI_PAGE_INSTFILES
+  Page custom PageDefConfig PageLeaveDefConfig
   !insertmacro MUI_PAGE_FINISH
 
   !insertmacro MUI_UNPAGE_WELCOME
@@ -65,7 +73,58 @@
   LangString ERROR_PRODUCT_FATAL ${LANG_ENGLISH} "A fatal error occurred during the installation$\n\
     of the $(DESC_SHORTPRODUCT)."
   LangString DESC_SETTINGS_PRESERVE ${LANG_ENGLISH} "Do you want to preserve custom settings?"
+
+;--------------------------------
+;Functions
+
+Function PageDefConfig
+
+  nsDialogs::Create /NOUNLOAD 1018
+  Pop $0
+
+  !insertmacro MUI_HEADER_TEXT "Default configuration" "Choose default configuration of KernelEx."
+  nsDialogs::CreateItem /NOUNLOAD STATIC ${WS_VISIBLE}|${WS_CHILD}|${WS_CLIPSIBLINGS} 0 0 0 100% 40 "You can choose default KernelEx configuration here. This configuration will be used for all applications for which no other configuration is specified."
+  Pop $R0
   
+  nsDialogs::CreateItem /NOUNLOAD BUTTON ${BS_AUTORADIOBUTTON}|${BS_VCENTER}|${BS_MULTILINE}|${WS_VISIBLE}|${WS_CHILD}|${WS_CLIPSIBLINGS}|${WS_GROUP}|${WS_TABSTOP} 0 10 75 100% 30 "Enable KernelEx extensions for all applications (recommended)"
+  Pop $ENABLEBUTTON
+  ${NSD_OnClick} $ENABLEBUTTON ToggleWarning
+  
+  nsDialogs::CreateItem /NOUNLOAD BUTTON ${BS_AUTORADIOBUTTON}|${BS_TOP}|${BS_MULTILINE}|${WS_VISIBLE}|${WS_CHILD}|${WS_CLIPSIBLINGS} 0 10 105 100% 30 "Disable KernelEx extensions"
+  Pop $R0
+  ${NSD_OnClick} $R0 ToggleWarning
+  
+  nsDialogs::CreateItem /NOUNLOAD STATIC ${WS_CHILD}|${WS_CLIPSIBLINGS} 0 0 175 100% 40 "If you choose to disable KernelEx extensions, programs you run won't get extended API functions by default. You will have to enable KernelEx extensions individually for applications which require newer Windows versions. This choice is better if you're paranoid."
+  Pop $WARNING_TEXT
+
+  SendMessage $ENABLEBUTTON ${BM_SETCHECK} 1 0
+
+  nsDialogs::Show
+
+FunctionEnd
+
+Function PageLeaveDefConfig
+
+  SendMessage $ENABLEBUTTON ${BM_GETCHECK} 0 0 $R0
+  ${If} $R0 == 1
+	WriteRegDWORD HKLM "Software\KernelEx" "DisableExtensions" 0
+  ${Else}
+	WriteRegDWORD HKLM "Software\KernelEx" "DisableExtensions" 1
+  ${EndIf}
+
+FunctionEnd
+
+Function ToggleWarning
+
+	Pop $R0
+	${If} $R0 == $ENABLEBUTTON
+		ShowWindow $WARNING_TEXT ${SW_HIDE}
+	${Else}
+		ShowWindow $WARNING_TEXT ${SW_SHOW}
+	${EndIf}
+
+FunctionEnd
+
 ;--------------------------------
 ;Installer Section
 
@@ -244,7 +303,14 @@ Section "Install"
   ;Store uninstaller key
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\KernelEx" "DisplayName" "KernelEx ${VERSION}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\KernelEx" "UninstallString" '"$INSTDIR\uninstall.exe"'
-
+  
+  ;Write verifier
+  SetOverWrite on
+  File verify\Release\verify.exe
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" \
+    "KexVerify" "$INSTDIR\verify.exe"
+  SetOverwrite lastused
+  
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
@@ -285,6 +351,9 @@ Section "Uninstall"
   DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "UXTHEME"
   Delete /REBOOTOK "$INSTDIR\wtsapi32.dll"
   DeleteRegValue HKLM "System\CurrentControlSet\Control\SessionManager\KnownDLLs" "WTSAPI32"
+  
+  Delete "$INSTDIR\verify.exe"
+  DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "KexVerify"
 
   Delete "$INSTDIR\Uninstall.exe"
 

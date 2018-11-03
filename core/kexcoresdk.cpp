@@ -33,6 +33,15 @@ unsigned long kexGetKEXVersion()
 	return VERSION_CODE;
 }
 
+int kexIsDebugCore()
+{
+#ifdef _DEBUG
+	return 1;
+#else
+	return 0;
+#endif
+}
+
 void kexDebugPrint(const char* format, ...)
 {
 #ifdef _DEBUG
@@ -68,7 +77,7 @@ void kexGetModuleSettings(const char* module,
 {
 	appsetting as = SettingsDB::instance.get_appsetting(module);
 	if (!as.conf)
-		strcpy(conf_name, "default");
+		conf_name[0] = '\0';
 	else
 		strncpy(conf_name, as.conf->get_name(), 256);
 	*ldr_flags = as.flags;

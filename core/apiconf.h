@@ -72,12 +72,9 @@ private:
 	ModuleApi* api_tables;
 	unsigned short api_tables_count;
 	char* conf_name;
-	const ApiLibrary** used_apilibs;
-	int used_apilibs_count;
 	bool initialized;
 
 	bool prepare(const char* name);
-	bool add_to_used_apilibs(const ApiLibrary* apilib);
 };
 
 inline bool ApiConfiguration::NamedApi::operator<(const NamedApi& a) const

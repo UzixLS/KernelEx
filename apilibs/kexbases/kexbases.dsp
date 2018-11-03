@@ -47,7 +47,7 @@ RSC=rc.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
-# ADD RSC /l 0x415 /d "NDEBUG"
+# ADD RSC /l 0x415 /i "../../common" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -74,7 +74,7 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
-# ADD RSC /l 0x415 /d "_DEBUG"
+# ADD RSC /l 0x415 /i "../../common" /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
@@ -157,6 +157,34 @@ SOURCE=.\Kernel32\KEXVersion.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\locale.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_casemap.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_collation.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_fold.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_sortkey.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_unicode.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\locale_wctype.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\LockFileEx.c
 # End Source File
 # Begin Source File
@@ -202,6 +230,14 @@ SOURCE=.\Kernel32\version.c
 # Begin Source File
 
 SOURCE=.\Kernel32\VirtualAllocEx.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\volume.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\widecharconv.c
 # End Source File
 # End Group
 # Begin Group "user32"
@@ -253,6 +289,10 @@ SOURCE=.\User32\LockWorkStation.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\User32\lstr.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\User32\MapVirtualKey_fix.c
 # End Source File
 # Begin Source File
@@ -290,6 +330,10 @@ SOURCE=.\Gdi32\_gdi32_stubs.c
 # Begin Source File
 
 SOURCE=.\Gdi32\FontResourceExA.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Gdi32\gdi9x.h
 # End Source File
 # Begin Source File
 
@@ -406,45 +450,38 @@ SOURCE=.\common.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\kernel32ord.def
-# PROP Exclude_From_Build 1
-# End Source File
-# Begin Source File
-
 SOURCE=.\kexbases.def
 
 !IF  "$(CFG)" == "KernelEx Base Shared - Win32 Release"
 
 # Begin Custom Build
 OutDir=.\Release
-ProjDir=.
+WkspDir=.
 InputPath=.\kexbases.def
 
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\kernel32ord.def /OUT:$(OutDir)\kernel32ord.lib
-
-"$(OutDir)\kernel32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\kernel32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
+"$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
 # End Custom Build
 
 !ELSEIF  "$(CFG)" == "KernelEx Base Shared - Win32 Debug"
 
 # Begin Custom Build
 OutDir=.\Debug
-ProjDir=.
+WkspDir=.
 InputPath=.\kexbases.def
 
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\kernel32ord.def /OUT:$(OutDir)\kernel32ord.lib
-
-"$(OutDir)\kernel32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\kernel32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
+"$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
 # End Custom Build
 
 !ENDIF 
@@ -460,11 +497,16 @@ SOURCE=.\main.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\auxdecl.h
+SOURCE=.\common.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\common.h
+SOURCE=..\..\common\k32ord.def
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\k32ord.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

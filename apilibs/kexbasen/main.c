@@ -28,9 +28,11 @@
 #include "advapi32/_advapi32_apilist.h"
 #include "comdlg32/_comdlg32_apilist.h"
 #include "shell32/_shell32_apilist.h"
+#include "rpcrt4/_rpcrt4_apilist.h"
+#include "winspool/_winspool_apilist.h"
 //#include "/__apilist.h"
 
-static apilib_api_table api_table[7];
+static apilib_api_table api_table[9];
 
 static void fill_apitable()
 {
@@ -40,6 +42,8 @@ static void fill_apitable()
 	api_table[3] = apitable_advapi32;
 	api_table[4] = apitable_comdlg32;
 	api_table[5] = apitable_shell32;
+	api_table[6] = apitable_rpcrt4;
+	api_table[7] = apitable_winspool;
 	//last entry is null terminator
 }
 
@@ -48,15 +52,12 @@ __declspec(dllexport)
 const apilib_api_table* get_api_table()
 {
 	fill_apitable();
-	//check if unicows is available
-	if (!unifwd_init())
-		return NULL;
 	return api_table;
 }
 
 BOOL init()
 {
-	return common_init() && init_kernel32() && init_gdi32() && init_user32() && init_advapi32() && init_comdlg32() && init_shell32();
+	return common_init() && init_kernel32() && init_gdi32() && init_user32() && init_advapi32() && init_comdlg32() && init_shell32() && init_rpcrt4() && init_winspool();
 }
 
 BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, BOOL load_static)

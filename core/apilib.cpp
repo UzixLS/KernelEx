@@ -32,36 +32,40 @@ using namespace std;
 
 #define ALLOC_CAPACITY 10
 
-ApiLibrary** ApiLibraryManager::apilib_ptrs = NULL;
-int ApiLibraryManager::apilib_cnt = 0;
-
-int          overridden_module_count;
 const char** overridden_module_names;
-const char** new_overridden_mod_nms;
-int          new_overridden_mod_cnt;
+int          overridden_module_count;
+
+ApiLibraryManager apilibmgr;
+
+void ApiLibrary::get_dll_path(char* out)
+{
+	strcpy(out, kernelex_dir);
+	strcat(out, apilib_name);
+	strcat(out, ".DLL");
+}
 
 ApiLibraryManager::ApiLibraryManager()
 {
-	new_apilib_ptrs = NULL;
-	new_apilib_cnt = 0;
-	new_overridden_mod_nms = NULL;
-	new_overridden_mod_cnt = 0;
-	initialized = false;
+	apilib_ptrs = NULL;
+	apilib_cnt = 0;
+	overridden_module_names = NULL;
+	overridden_module_count = 0;
+
+	initialized = initialize();
 }
 
 ApiLibraryManager::~ApiLibraryManager()
 {
-	rollback_changes();
 }
 
 bool ApiLibraryManager::initialize()
 {
-	ApiLibrary* std_apilib;
+	ApiLibrary* std_apilib = NULL;
 
-	new_apilib_cnt = 0;
-	new_apilib_ptrs = (ApiLibrary**) malloc(ALLOC_CAPACITY * sizeof(ApiLibrary*));
+	apilib_cnt = 0;
+	apilib_ptrs = (ApiLibrary**) malloc(ALLOC_CAPACITY * sizeof(ApiLibrary*));
 
-	if (!new_apilib_ptrs)
+	if (!apilib_ptrs)
 		goto __error;
 
 	std_apilib = (ApiLibrary*) malloc(sizeof(ApiLibrary) + strlen("STD"));
@@ -74,54 +78,30 @@ bool ApiLibraryManager::initialize()
 	std_apilib->api_tables = NULL;
 	std_apilib->index = 0;
 
-	//copy previous STD api library tables and overridden module names
-	if (overridden_module_count)
-	{
-		int size = (overridden_module_count / ALLOC_CAPACITY + 1) * ALLOC_CAPACITY;
-		
-		std_apilib->api_tables = (apilib_api_table*) 
-				malloc((size + 1) * sizeof(apilib_api_table));
+	apilib_ptrs[apilib_cnt++] = std_apilib;
 
-		if (!std_apilib->api_tables)
-			goto __error;
-
-		apilib_api_table* prev_std_tab = apilib_ptrs[0]->api_tables;
-		copy(prev_std_tab, prev_std_tab + size + 1, std_apilib->api_tables);
-
-		new_overridden_mod_nms = (const char**) malloc(size * sizeof(char*));
-
-		if (!new_overridden_mod_nms)
-			goto __error;
-
-		copy(overridden_module_names, overridden_module_names + size,
-				new_overridden_mod_nms);
-
-		new_overridden_mod_cnt = overridden_module_count;
-	}
-
-	new_apilib_ptrs[new_apilib_cnt++] = std_apilib;
-
-	initialized = true;
 	return true;
 
 __error:
-	free(new_overridden_mod_nms);
 	if (std_apilib)
 		free(std_apilib->api_tables);
 	free(std_apilib);
-	free(new_apilib_ptrs);
+	free(apilib_ptrs);
 	return false;
 }
 
 bool ApiLibraryManager::load_apilib(const char* apilib_name)
 {
-	if (!initialized && !initialize())
+	IMTE** pmteModTable;
+	MODREF* mr;
+
+	if (!initialized)
 	{
 		DBGPRINTF(("Failed to initialize api library manager\n"));
 		return false;
 	}
 
-	if (new_apilib_cnt >= 0xff)
+	if (apilib_cnt >= 0xff)
 	{
 		DBGPRINTF(("Too many api libraries loaded\n"));
 		return false;
@@ -132,89 +112,72 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 		return true;
 	
 	//check if library wasn't loaded in this instance
-	for (int i = 0 ; i < new_apilib_cnt ; i++)
-		if (!strcmp(new_apilib_ptrs[i]->apilib_name, apilib_name))
+	for (int i = 0 ; i < apilib_cnt ; i++)
+		if (!strcmp(apilib_ptrs[i]->apilib_name, apilib_name))
 			return true;
 
-	ApiLibrary* apilib;
-	bool already_loaded = false;
+	ApiLibrary* apilib = NULL;
 
 	DBGPRINTF(("Loading api library: %s... ", apilib_name));
 
-	//check if library wasn't previously loaded
-	for (int i = 0 ; i < apilib_cnt ; i++)
+	char dllpath[MAX_PATH];
+	int size = sizeof(ApiLibrary) + strlen(apilib_name);
+
+	apilib = (ApiLibrary*) malloc(size);
+
+	if (!apilib)
+		goto __error;
+
+	strcpy(apilib->apilib_name, apilib_name);
+
+	apilib->get_dll_path(dllpath);
+	apilib->mod_handle = LoadLibrary(dllpath);
+
+	if (!apilib->mod_handle)
 	{
-		if (!strcmp(apilib_ptrs[i]->apilib_name, apilib_name))
-		{
-			DBGPRINTF(("already loaded... "));
-			apilib = apilib_ptrs[i];
-			already_loaded = true;
-		}
+		DBGPRINTF(("Failed to load api library\n"));
+		goto __error;
 	}
 
-	//if it wasn't loaded
-	if (!already_loaded)
+	fgat_t get_api_table;
+	get_api_table = (fgat_t) GetProcAddress(
+			apilib->mod_handle, "get_api_table");
+
+	if (!get_api_table)
 	{
-		char dllpath[MAX_PATH];
-		int size = sizeof(ApiLibrary) + strlen(apilib_name);
-
-		apilib = (ApiLibrary*) malloc(size);
-
-		if (!apilib)
-			goto __error;
-
-		strcpy(apilib->apilib_name, apilib_name);
-
-		strcpy(dllpath, kernelex_dir.get());
-		strcat(dllpath, apilib_name);
-		apilib->mod_handle = LoadLibrary(dllpath);
-
-		if (!apilib->mod_handle)
-		{
-			DBGPRINTF(("Failed to load api library\n"));
-			goto __error;
-		}
-
-		fgat_t get_api_table;
-		get_api_table = (fgat_t) GetProcAddress(
-				apilib->mod_handle, "get_api_table");
-
-		if (!get_api_table)
-		{
-			DBGPRINTF(("Failed to get api library entry point\n"));
-			goto __error;
-		}
-
-		const apilib_api_table* file_api_tables;
-		file_api_tables = get_api_table();
-
-		if (!file_api_tables)
-		{
-			DBGPRINTF(("Failed to get api tables\n"));
-			goto __error;
-		}
-
-		apilib->api_tables = make_shared_api_tables(file_api_tables);
-
-		if (!apilib->api_tables)
-		{
-			DBGPRINTF(("Failed to create shared api tables\n"));
-			goto __error;
-		}
-
-		DBGPRINTF(("loaded @ 0x%08x... ", (DWORD) apilib->mod_handle));
+		DBGPRINTF(("Failed to get api library entry point\n"));
+		goto __error;
 	}
+
+	const apilib_api_table* file_api_tables;
+	file_api_tables = get_api_table();
+
+	if (!file_api_tables)
+	{
+		DBGPRINTF(("Failed to get api tables\n"));
+		goto __error;
+	}
+
+	apilib->api_tables = make_shared_api_tables(file_api_tables);
+
+	if (!apilib->api_tables)
+	{
+		DBGPRINTF(("Failed to create shared api tables\n"));
+		goto __error;
+	}
+
+	DBGPRINTF(("loaded @ 0x%08x... ", (DWORD) apilib->mod_handle));
 
 	//allocate space for new ApiLibraries
-	if (new_apilib_cnt % ALLOC_CAPACITY == 0)
+	if (apilib_cnt % ALLOC_CAPACITY == 0)
 	{
-		void* new_block = realloc(new_apilib_ptrs,
-				(new_apilib_cnt + ALLOC_CAPACITY) * sizeof(ApiLibrary*));
+		void* new_block = realloc(apilib_ptrs,
+				(apilib_cnt + ALLOC_CAPACITY) * sizeof(ApiLibrary*));
 
 		if (!new_block)
 			goto __error;
 
-		new_apilib_ptrs = (ApiLibrary**) new_block;
+		apilib_ptrs = (ApiLibrary**) new_block;
 	}
 
 //	DBGPRINTF(("Listing modules overridden by api library:\n"));
@@ -228,18 +191,23 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 		}
 	}
 
-	//set or update index value which is used by encode_address() 
-	//and to update mod_index in commit_changes()
-	apilib->index = new_apilib_cnt;
+	//set index value which is used by encode_address()
+	apilib->index = apilib_cnt;
+
+	//set mod_index for newly loaded api libraries
+	pmteModTable = *ppmteModTable;
+	mr = MRFromHLib(apilib->mod_handle);
+	DBGASSERT(mr);
+	((IMTE_KEX*) pmteModTable[mr->mteIndex])->mod_index = 0xff00 + apilib->index;
 
 	//add to table of new ApiLibraries
-	new_apilib_ptrs[new_apilib_cnt++] = apilib;
+	apilib_ptrs[apilib_cnt++] = apilib;
 
 	DBGPRINTF(("ok\n"));
 	return true;
 
 __error:
-	if (!already_loaded && apilib)
+	if (apilib)
 	{
 		if (apilib->mod_handle)
 			FreeLibrary(apilib->mod_handle);
@@ -250,16 +218,16 @@ __error:
 	return false;
 }
 
-ApiLibrary* ApiLibraryManager::get_new_apilib(const char* apilib_name)
+ApiLibrary* ApiLibraryManager::get_apilib(const char* apilib_name)
 {
-	for (int i = 0 ; i < new_apilib_cnt ; i++)
-		if (!strcmp(new_apilib_ptrs[i]->apilib_name, apilib_name))
-			return new_apilib_ptrs[i];
+	for (int i = 0 ; i < apilib_cnt ; i++)
+		if (!strcmp(apilib_ptrs[i]->apilib_name, apilib_name))
+			return apilib_ptrs[i];
 	DBGPRINTF(("Api library %s not found\n", apilib_name));
 	return NULL;
 }
 
-ApiLibrary* ApiLibraryManager::get_apilib(int index)
+ApiLibrary* ApiLibraryManager::get_apilib_by_index(int index)
 {
 	if (index < 0 || index >= apilib_cnt)
 		return NULL;
@@ -284,7 +252,7 @@ bool ApiLibraryManager::are_api_tables_sorted(const apilib_api_table* tab)
 
 apilib_api_table* ApiLibraryManager::make_shared_api_tables(const apilib_api_table* in)
 {
-	bool copy_strings = (size_t) in < 0x80000000 ? true : false;
+	bool copy_strings = IS_SHARED(in) ? false : true;
 	bool sorted = are_api_tables_sorted(in);
 	
 	if (!sorted)
@@ -398,28 +366,28 @@ int ApiLibraryManager::required_api_table_space(const apilib_api_table* tab, boo
 
 bool ApiLibraryManager::add_overridden_module(const char* mod)
 {
-	apilib_api_table*& std_api_table =  new_apilib_ptrs[0]->api_tables;
+	apilib_api_table*& std_api_table =  apilib_ptrs[0]->api_tables;
 
 	//ensure that module isn't already on list
-	for (int i = 0 ; i < new_overridden_mod_cnt ; i++)
+	for (int i = 0 ; i < overridden_module_count ; i++)
 	{
-		if (!strcmpi(new_overridden_mod_nms[i], mod))
+		if (!strcmpi(overridden_module_names[i], mod))
 			return true;
 	}
 
 	//allocate space for new overridden modules
-	if (new_overridden_mod_cnt % ALLOC_CAPACITY == 0)
+	if (overridden_module_count % ALLOC_CAPACITY == 0)
 	{
-		void* new_block = realloc(new_overridden_mod_nms,
-				(new_overridden_mod_cnt + ALLOC_CAPACITY) * sizeof(char*));
+		void* new_block = realloc(overridden_module_names,
+				(overridden_module_count + ALLOC_CAPACITY) * sizeof(char*));
 		
 		if (!new_block)
 			return false;
 
-		new_overridden_mod_nms = (const char**) new_block;
+		overridden_module_names = (const char**) new_block;
 
 		new_block = realloc(std_api_table,
-				(new_overridden_mod_cnt + 1 + ALLOC_CAPACITY) * sizeof(apilib_api_table));
+				(overridden_module_count + 1 + ALLOC_CAPACITY) * sizeof(apilib_api_table));
 			//+ 1 because api_tables are NULL terminated
 
 		if (!new_block)
@@ -428,18 +396,18 @@ bool ApiLibraryManager::add_overridden_module(const char* mod)
 		std_api_table = (apilib_api_table*) new_block;
 	}
 
-	if (!parse_system_dll(mod, &std_api_table[new_overridden_mod_cnt]))
+	if (!parse_system_dll(mod, &std_api_table[overridden_module_count]))
 	{
 		DBGPRINTF(("Failed to parse system DLL: %s\n", mod));
 		return false;
 	}
 
 	//add to table of overridden modules
-	new_overridden_mod_nms[new_overridden_mod_cnt] 
-			= std_api_table[new_overridden_mod_cnt].target_library;
-	new_overridden_mod_cnt++;
+	overridden_module_names[overridden_module_count] 
+			= std_api_table[overridden_module_count].target_library;
+	overridden_module_count++;
 
-	memset(&std_api_table[new_overridden_mod_cnt], 0, sizeof(apilib_api_table));
+	memset(&std_api_table[overridden_module_count], 0, sizeof(apilib_api_table));
 
 	return true;
 }
@@ -481,9 +449,21 @@ bool ApiLibraryManager::parse_system_dll(const char* dll_name, apilib_api_table*
 	DWORD* Names = (DWORD*) pemod.RvaToPointer(Exports->AddressOfNames);
 	WORD* OrdinalTable = (WORD*) pemod.RvaToPointer(Exports->AddressOfNameOrdinals);
 	DWORD* FunctionTable = (DWORD*) pemod.RvaToPointer(Exports->AddressOfFunctions);
-
-	unsigned long offset = PEh->OptionalHeader.ImageBase >= 0x80000000
-			? PEh->OptionalHeader.ImageBase : 0;
+	
+	//offset for shared libraries
+	unsigned long offset = 0;
+	
+	if (!mem_dll)
+	{
+		//check if we deal with shared library but it is not loaded yet
+		if (IS_SHARED(PEh->OptionalHeader.ImageBase))
+			offset = (unsigned long) LoadLibrary(dll_name);
+	}
+	else
+	{
+		if (IS_SHARED(mem_dll))
+			offset = (unsigned long) mem_dll;
+	}
 
 	//calculate required space
 	int space = 0;
@@ -556,134 +536,5 @@ bool ApiLibraryManager::parse_system_dll(const char* dll_name, apilib_api_table*
 	api_tab->target_library = new_mod;
 
 	return true;
-}
-
-void ApiLibraryManager::rollback_changes()
-{
-	if (!initialized)
-		return;
-
-	//STD api library case
-	//unload new system module override tables <overridden_mod_cnt;new_overridden_mod_cnt)
-	for (apilib_api_table* p = &new_apilib_ptrs[0]->api_tables
-			[overridden_module_count] ; p->target_library ; p++)
-		free((void*) p->named_apis); //consistent with parse_system_dll
-	free(new_apilib_ptrs[0]->api_tables);
-	free(new_apilib_ptrs[0]);
-
-	//other api libraries
-	for (int i = 1 ; i < new_apilib_cnt ; i++)
-	{
-		if (apilib_ptrs)
-		{
-			int j;
-
-			for (j = 1 ; j < apilib_cnt ; j++)
-				if (new_apilib_ptrs[i] == apilib_ptrs[j])
-					break;
-
-			if (j != apilib_cnt)
-				continue;
-		}
-		FreeLibrary(new_apilib_ptrs[i]->mod_handle);
-		free(new_apilib_ptrs[i]->api_tables);
-		free(new_apilib_ptrs[i]);
-	}
-
-	free(new_apilib_ptrs);
-	new_apilib_ptrs = NULL;
-	new_apilib_cnt = 0;
-
-	for (int i = overridden_module_count ; i < new_overridden_mod_cnt ; i++)
-		free((void*) new_overridden_mod_nms[i]);
-	
-	free(new_overridden_mod_nms);
-	new_overridden_mod_nms = NULL;
-	new_overridden_mod_cnt = 0;
-
-	initialized = false;
-}
-
-void ApiLibraryManager::commit_changes()
-{
-	if (!initialized)
-		return;
-
-	ApiLibrary** old_apilib_ptrs = apilib_ptrs;
-	int old_apilib_cnt = apilib_cnt;
-
-	//LOCK ALL CRITICAL SECTIONS!
-	apilib_ptrs = new_apilib_ptrs;
-	apilib_cnt = new_apilib_cnt;
-	if (overridden_module_names)
-		free(overridden_module_names);
-	overridden_module_names = new_overridden_mod_nms;
-	overridden_module_count = new_overridden_mod_cnt;
-
-	//update old api library mod_index values to new
-	//set all non-overridden modules to 'not checked'
-	WORD imteMax = *pimteMax;
-	IMTE** pmteModTable = *ppmteModTable;
-	for (WORD i = 0 ; i < imteMax ; i++)
-	{
-		IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
-		if (imte)
-		{
-			WORD index = imte->mod_index;
-			if (index >= 0xff00 && index < 0xffff)
-			{
-				int api_lib_num = index & 0xff;
-				DBGASSERT(api_lib_num != 0); //reserved for STD apilib
-				DBGASSERT(api_lib_num >= old_apilib_cnt);
-				imte->mod_index = old_apilib_ptrs[api_lib_num]->index + 0xff00;
-			}
-			else if (index == 0xffff)
-				imte->mod_index = 0;
-		}
-	}
-
-	//set mod_index for newly loaded api libraries
-	for (int i = 1 ; i < apilib_cnt ; i++)
-	{
-		ApiLibrary* apilib = apilib_ptrs[i];
-		MODREF* mr = MRFromHLib(apilib->mod_handle);
-		DBGASSERT(mr);
-		((IMTE_KEX*) pmteModTable[mr->mteIndex])->mod_index = 0xff00 + i;
-	}
-	//UNLOCK ALL CRITICAL SECTIONS!
-
-	new_overridden_mod_nms = NULL;
-	new_overridden_mod_cnt = 0;
-	new_apilib_ptrs = NULL;
-	new_apilib_cnt = 0;
-
-	//STD api library case
-	if (old_apilib_cnt > 0)
-	{
-		free(old_apilib_ptrs[0]->api_tables);
-		free(old_apilib_ptrs[0]);
-	}
-
-	//other api libraries
-	for (int i = 1 ; i < old_apilib_cnt ; i++)
-	{
-		int j;
-
-		for (j = 1 ; j < apilib_cnt ; j++)
-			if (old_apilib_ptrs[i] == apilib_ptrs[j])
-				break;
-
-		if (j != apilib_cnt)
-			continue;
-
-		FreeLibrary(old_apilib_ptrs[i]->mod_handle);
-		free(old_apilib_ptrs[i]->api_tables);
-		free(old_apilib_ptrs[i]);
-	}
-
-	if (old_apilib_ptrs)
-		free(old_apilib_ptrs);
-
-	initialized = false;
 }
 

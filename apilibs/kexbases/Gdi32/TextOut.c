@@ -26,11 +26,224 @@
  */
 
 #include <windows.h>
-#include "auxdecl.h"
+#include <malloc.h>
+
+#include "gdi9x.h"
+#include "k32ord.h"
+
+#ifdef _MSC_VER
+#ifdef __cplusplus
+extern "C"
+#endif
+__declspec(selectany) int _fltused=1;
+#endif
 
 #ifndef ETO_PDY
 #define ETO_PDY 0x2000
 #endif
+
+static DWORD g_GdiBase;
+#define REBASEGDI(x) ( g_GdiBase + (DWORD)(x) ) 
+
+
+
+/* MAKE_EXPORT GetFontUnicodeRanges_new=GetFontUnicodeRanges */
+DWORD WINAPI GetFontUnicodeRanges_new(
+  HDC hdc,
+  LPGLYPHSET lpgs
+)
+{
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return 0;
+}
+
+/* On 9x fallback to system function */
+/* MAKE_EXPORT SetGraphicsMode_NT=SetGraphicsMode */
+int WINAPI SetGraphicsMode_NT(
+  HDC hdc,    // handle to device context
+  int iMode   // graphics mode
+)
+{
+	return GM_COMPATIBLE;
+}
+
+/* MAKE_EXPORT SetWorldTransform_9x=SetWorldTransform */
+BOOL WINAPI SetWorldTransform_9x(
+  HDC hdc,               // handle to device context
+  CONST XFORM *lpXform   // transformation data
+)
+{
+	return FALSE;
+}
+
+/* MAKE_EXPORT GetRandomRgn_NT=GetRandomRgn */
+int WINAPI GetRandomRgn_NT(
+  HDC  hdc,    // handle to DC
+  HRGN hrgn,   // handle to region
+  INT  iNum    // must be SYSRGN
+)
+{
+	int result = GetRandomRgn(hdc,hrgn,iNum);
+	if (result)
+	{
+		POINT pt;
+		GetDCOrgEx(hdc,&pt);
+		OffsetRgn(hrgn,pt.x,pt.y);
+	}
+	return result;
+}
+
+PDCOBJ GetDCObj( HDC hDC )
+{	
+	PDCOBJ retobj;
+	PLHENTRY entry;
+	if (!hDC) return NULL;
+	if (!g_GdiBase) g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
+	entry = (PLHENTRY)REBASEGDI(LOWORD(hDC));
+	if ( !entry->wBlock || entry->bFlags == LHE_FREEHANDLE ) return NULL;
+	if ( entry->bFlags & LHE_DISCARDED )
+	{
+		if ( entry->wBlock & 3 ) return NULL; //32-bit handles have to divide by 4
+		DWORD* highDC = (DWORD*)REBASEGDI( 0x10000 + entry->wBlock );
+		if ( IsBadReadPtr(highDC,sizeof(DWORD)) ) return NULL; //oops dead handle
+		retobj = (PDCOBJ)REBASEGDI(*highDC);
+		if ( IsBadReadPtr(retobj,sizeof(DCOBJ)) ) return NULL; //oops?!
+	}
+	else
+		retobj = (PDCOBJ)REBASEGDI(entry->wBlock);
+	WORD checktype = (retobj->wType & GDI_OBJTYPE_MASK);
+	if ( checktype != GDI_OBJTYPE_DC && checktype != GDI_OBJTYPE_DC_NO ) return NULL;
+	return retobj;
+}
+
+void floattofrac( float f, int* m, int* d)
+{
+	float absf = f > 0 ? f : -f;
+	if ( absf < 1 )
+	{
+		*m = 1;
+		*d = (int) (1 / f);
+	}
+	else
+	{
+		*m = (int)f;
+		*d = 1;
+	}
+}
+
+#define almostzero(x) ( x > -0.0001 && x < 0.0001  )
+
+/* MAKE_EXPORT SetWorldTransform_NT=SetWorldTransform */
+BOOL WINAPI SetWorldTransform_NT(
+  HDC hdc,               // handle to device context
+  CONST XFORM *lpXform   // transformation data
+)
+{
+	PDCOBJ dcobj = GetDCObj(hdc);
+	WORD savemapmode;
+	int wx;
+	int wy;
+	int vx;
+	int vy;
+	if ( !dcobj || !lpXform || !almostzero(lpXform->eM12) || !almostzero(lpXform->eM21)
+		|| almostzero(lpXform->eM11) || almostzero(lpXform->eM22) )
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE; //no rotating for you
+	}
+	floattofrac( lpXform->eM11, &vx, &wx );
+	floattofrac( lpXform->eM22, &vy, &wy );
+	//hack DC mode to anisotropic to make Set*ExtEx work
+	savemapmode = dcobj->mapmode;
+	dcobj->mapmode = MM_ANISOTROPIC;
+	SetWindowExtEx(hdc,wx,wy,NULL);
+	SetViewportExtEx(hdc,vx,vy,NULL);
+	SetViewportOrgEx(hdc,(int)lpXform->eDx,(int)lpXform->eDy,NULL);
+	//set it back
+	dcobj->mapmode = savemapmode;
+	return TRUE;
+}
+
+/************************************************************************/
+/* Those hacks shouldn't hurt anybody.	                                */
+/************************************************************************/
+
+/* MAKE_EXPORT SetMapMode_NT=SetMapMode */
+int WINAPI SetMapMode_NT( 
+  HDC hdc,        // handle to device context
+  int fnMapMode   // new mapping mode
+)
+{
+	
+	if ( fnMapMode == MM_TEXT && GetMapMode(hdc) == MM_TEXT ) return MM_TEXT;
+	return SetMapMode( hdc, fnMapMode );
+}
+
+/* MAKE_EXPORT GetTextMetricsA_NT=GetTextMetricsA */
+BOOL WINAPI GetTextMetricsA_NT(
+  HDC hdc,            // handle to DC
+  LPTEXTMETRIC lptm   // text metrics
+)
+{
+	PDCOBJ dcobj = GetDCObj(hdc);
+	int saved = 0;
+	BOOL retval;
+	if ( !dcobj ) return FALSE;
+	if ( dcobj->ViewportExtX != 1 || dcobj->ViewportExtY != 1 || dcobj->WindowExtX != 1 || dcobj->WindowExtY != 1 )
+	{
+		saved = SaveDC(hdc);
+		ResetMapMode(hdc);
+	}
+	retval = GetTextMetricsA(hdc,lptm);
+	if ( saved ) RestoreDC(hdc,-1);
+	return retval;
+}
+
+/* MAKE_EXPORT GetWorldTransform_NT=GetWorldTransform */
+BOOL WINAPI GetWorldTransform_NT(
+  HDC hdc,         // handle to device context
+  LPXFORM lpXform  // transformation
+)
+{
+	SIZE v;
+	SIZE w;
+	POINT org;
+	if ( !lpXform ) return FALSE;
+	GetWindowExtEx(hdc,&w);
+	GetViewportExtEx(hdc,&v);
+	GetViewportOrgEx(hdc,&org);
+	lpXform->eM11 = (float)v.cx/w.cx;
+	lpXform->eM12 = 0;
+	lpXform->eM21 = 0;
+	lpXform->eM22 = (float)v.cy/w.cy;
+	lpXform->eDx = (float)org.x;
+	lpXform->eDy = (float)org.y;
+	return TRUE;
+}
+
+/* MAKE_EXPORT ModifyWorldTransform_NT=ModifyWorldTransform */
+BOOL WINAPI ModifyWorldTransform_NT(
+  HDC hdc,               // handle to device context
+  CONST XFORM *lpXform,  // transformation data
+  DWORD iMode            // modification mode
+)
+{
+	//we accept only 'reset world' scenario
+	XFORM x;
+	if ( iMode != MWT_IDENTITY ) return FALSE;
+	x.eDx = 0;
+	x.eDy = 0;
+	x.eM11 = 1;
+	x.eM12 = 0;
+	x.eM21 = 0;
+	x.eM22 = 1;
+	return SetWorldTransform_NT(hdc,&x);
+}
+
+/************************************************************************/
+/* Text out API fixes                                                   */
+/************************************************************************/
+
 
 static void WINAPI MakeDxFromDxDy(const int* lpDx, int* newlpDx, UINT cbCount)
 {
@@ -59,9 +272,9 @@ BOOL WINAPI ExtTextOutA_new(
 )
 {
 	BOOL result;
-	int* buffer = 0;
+	int* buffer = NULL;
 	
-	if ((UINT)lpString>0xFFFFu)
+	if ( HIWORD(lpString) )
 	{
 		if (cbCount>8192) cbCount = 8192;
 		if (fuOptions & ETO_PDY)	//win9x can't understand it and messes up other flags
@@ -69,19 +282,21 @@ BOOL WINAPI ExtTextOutA_new(
 			fuOptions = fuOptions & ~ETO_PDY; 
 			if (lpDx)				//we have to make array which contains dx values only
 			{	
-				buffer = (int*)HeapAlloc(GetProcessHeap(),0,cbCount*sizeof(int));
-				if (!buffer)		//you've managed to ruin everything
-				{
-					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				if ( cbCount>128 )
+					buffer = (int*)HeapAlloc(GetProcessHeap(),0,cbCount*sizeof(int));
+				else
+					buffer = (int*)alloca(cbCount*sizeof(int));
+				
+				if (!buffer) 
 					return FALSE;
-				}
 				MakeDxFromDxDy(lpDx,buffer, cbCount);
 				lpDx = buffer;
 			}
 		}
 	}
 	result = ExtTextOutA(hdc,X,Y,fuOptions,lprc,lpString,cbCount,lpDx);
-	if (buffer) HeapFree (GetProcessHeap(),0,buffer);
+	if ( buffer && cbCount>128 )
+		HeapFree(GetProcessHeap(),0,buffer);
 	return result;
 }
 
@@ -99,50 +314,43 @@ BOOL WINAPI ExtTextOutW_new(
 )
 {
 	BOOL result;
-	BOOL optimized = FALSE;
-	int* buffer = 0;
-	char english[128];
+	int* buffer = NULL;
+	PDCOBJ dcobj = GetDCObj( hdc );
+	WORD savemapmode = 0;
 	
-	if ((UINT)lpString>0xFFFFu)
+	if ( HIWORD(lpString) )
 	{
 		if (cbCount>8192) cbCount = 8192;
-		if (fuOptions & ETO_PDY)
+		if (fuOptions & ETO_PDY)	//win9x can't understand it and messes up other flags
 		{
 			fuOptions = fuOptions & ~ETO_PDY; 
-			if (lpDx)
+			if (lpDx)				//we have to make array which contains dx values only
 			{	
-				buffer = (int*)HeapAlloc(GetProcessHeap(),0,cbCount*sizeof(int));
-				if (!buffer)
-				{
-					SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				if ( cbCount>128 )
+					buffer = (int*)HeapAlloc(GetProcessHeap(),0,cbCount*sizeof(int));
+				else
+					buffer = (int*)alloca(cbCount*sizeof(int));
+				
+				if (!buffer) 
 					return FALSE;
-				}
 				MakeDxFromDxDy(lpDx,buffer,cbCount);
 				lpDx = buffer;
 			}
 		}
-		//now, common case optimization (English short string)
-		if (!(fuOptions & ETO_GLYPH_INDEX || cbCount>128 || *lpString>0x7Fu))
-		{
-			UINT i;
-			LPCWSTR uString = lpString;
-			for (i = 0; i< cbCount; i++)
-			{
-				if (*uString>0x7Fu) break; else english[i]=(char)*uString;
-				uString++;
-			}
-			optimized = (i == cbCount);
-		}
-		else
-			optimized = FALSE;		
 	}
-		
-	if (optimized)
-		result = ExtTextOutA(hdc,X,Y,fuOptions,lprc,english,cbCount,lpDx);
-	else
-		result = ExtTextOutW(hdc,X,Y,fuOptions,lprc,lpString,cbCount,lpDx);
-		
-	if (buffer) HeapFree (GetProcessHeap(),0,buffer);
+	if ( dcobj && dcobj->mapmode == MM_TEXT && 
+		( dcobj->ViewportExtX!=1 || dcobj->ViewportExtY!=1
+		|| dcobj->WindowExtX!=1 || dcobj->WindowExtY!=1) )
+	{
+		savemapmode = dcobj->mapmode;
+		dcobj->mapmode = MM_ANISOTROPIC;
+	}
+	result = ExtTextOutW(hdc,X,Y,fuOptions,lprc,lpString,cbCount,lpDx);
+	if ( savemapmode )
+		dcobj->mapmode = savemapmode;
+
+	if ( buffer && cbCount>128 )
+		HeapFree(GetProcessHeap(),0,buffer);
 	return result;
 }
 
@@ -172,59 +380,4 @@ BOOL WINAPI PolyTextOutW_new( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
         if (!ExtTextOutW_new (hdc, pptxt->x, pptxt->y, pptxt->uiFlags, &pptxt->rcl, pptxt->lpstr, pptxt->n, pptxt->pdx ))
             return FALSE;
     return TRUE;
-}
-
-/* MAKE_EXPORT GetFontUnicodeRanges_new=GetFontUnicodeRanges */
-DWORD WINAPI GetFontUnicodeRanges_new(
-  HDC hdc,
-  LPGLYPHSET lpgs
-)
-{
-	SetLastError(ERROR_NOT_SUPPORTED);
-	return 0;
-}
-
-/* On 9x fallback to system function */
-/* MAKE_EXPORT SetGraphicsMode_NT=SetGraphicsMode */
-int WINAPI SetGraphicsMode_NT(
-  HDC hdc,    // handle to device context
-  int iMode   // graphics mode
-)
-{
-	return GM_COMPATIBLE;
-}
-
-/* MAKE_EXPORT SetWorldTransform_9x=SetWorldTransform */
-BOOL WINAPI SetWorldTransform_9x(
-  HDC hdc,               // handle to device context
-  CONST XFORM *lpXform   // transformation data
-)
-{
-	return FALSE;
-}
-
-/* MAKE_EXPORT SetWorldTransform_NT=SetWorldTransform */
-BOOL WINAPI SetWorldTransform_NT(
-  HDC hdc,               // handle to device context
-  CONST XFORM *lpXform   // transformation data
-)
-{
-	return TRUE;
-}
-
-/* MAKE_EXPORT GetRandomRgn_NT=GetRandomRgn */
-int WINAPI GetRandomRgn_NT(
-  HDC  hdc,    // handle to DC
-  HRGN hrgn,   // handle to region
-  INT  iNum    // must be SYSRGN
-)
-{
-	int result = GetRandomRgn(hdc,hrgn,iNum);
-	if (result)
-	{
-		POINT pt;
-		GetDCOrgEx(hdc,&pt);
-		OffsetRgn(hrgn,pt.x,pt.y);
-	}
-	return result;
 }

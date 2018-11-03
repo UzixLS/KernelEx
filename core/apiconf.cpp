@@ -39,17 +39,6 @@ ApiConfiguration::ApiConfiguration(const char* new_name, const ApiConfiguration&
 	if (!prepare(new_name))
 		goto __error;
 
-	if (src.used_apilibs)
-	{
-		void* mem = malloc(src.used_apilibs_count * sizeof(ApiLibrary*));
-		if (!mem)
-			goto __error;
-
-		used_apilibs = (const ApiLibrary**) mem;
-		copy(src.used_apilibs, src.used_apilibs + src.used_apilibs_count, used_apilibs);
-		used_apilibs_count = src.used_apilibs_count;
-	}
-
 	for (int i = 0 ; i < src.api_tables_count ; i++)
 	{
 		void* mem;
@@ -91,7 +80,6 @@ ApiConfiguration::~ApiConfiguration()
 	}
 	free(conf_name);
 	free(api_tables);
-	free(used_apilibs);
 }
 
 bool ApiConfiguration::prepare(const char* name)
@@ -103,31 +91,11 @@ bool ApiConfiguration::prepare(const char* name)
 
 	strcpy(conf_name, name);
 
-	api_tables = (ModuleApi*) calloc(new_overridden_mod_cnt, sizeof(ModuleApi));
+	api_tables = (ModuleApi*) calloc(overridden_module_count, sizeof(ModuleApi));
 	if (!api_tables)
 		return false;
 
-	api_tables_count = new_overridden_mod_cnt;
-	used_apilibs = NULL;
-	used_apilibs_count = 0;
-	return true;
-}
-
-bool ApiConfiguration::add_to_used_apilibs(const ApiLibrary* apilib)
-{
-	for (int i = 0 ; i < used_apilibs_count ; i++)
-	{
-		if (used_apilibs[i] == apilib)
-			return true;
-	}
-
-	//not found => add to list
-	void* mem = realloc(used_apilibs, (used_apilibs_count + 1) * sizeof(ApiLibrary*));
-	if (!mem)
-		return false;
-
-	used_apilibs = (const ApiLibrary**) mem;
-	used_apilibs[used_apilibs_count++] = apilib;
+	api_tables_count = overridden_module_count;
 	return true;
 }
 
@@ -136,23 +104,20 @@ bool ApiConfiguration::merge(const ApiLibrary* apilib)
 	if (!apilib)
 		return false;
 	
-	if (!add_to_used_apilibs(apilib))
-		return false;
-	
-	for (int i = 0 ; i < new_overridden_mod_cnt ; i++)
+	for (int i = 0 ; i < overridden_module_count ; i++)
 	{
 		const apilib_api_table* psrc = apilib->api_tables;
 		while (psrc->target_library)
 		{
-			if (!strcmpi(psrc->target_library, new_overridden_mod_nms[i]))
+			if (!strcmpi(psrc->target_library, overridden_module_names[i]))
 			{
 				if (i >= api_tables_count)
 				{
-					void* mem = recalloc(api_tables, new_overridden_mod_cnt * sizeof(ModuleApi));
+					void* mem = recalloc(api_tables, overridden_module_count * sizeof(ModuleApi));
 					if (!mem)
 						return false;
 					api_tables = (ModuleApi*) mem;
-					api_tables_count = new_overridden_mod_cnt;
+					api_tables_count = overridden_module_count;
 				}
 				ModuleApi* pdst = api_tables + i;
 
@@ -319,23 +284,20 @@ bool ApiConfiguration::merge(const char* module, unsigned short ordinal,
 		return false;
 
 	int i;
-	for (i = 0 ; i < new_overridden_mod_cnt ; i++)
-		if (!strcmpi(module, new_overridden_mod_nms[i]))
+	for (i = 0 ; i < overridden_module_count ; i++)
+		if (!strcmpi(module, overridden_module_names[i]))
 			break;
 
-	if (i == new_overridden_mod_cnt)
-		return false;
-
-	if (!add_to_used_apilibs(apilib))
+	if (i == overridden_module_count)
 		return false;
 
 	if (api_tables_count <= i)
 	{
-		void* mem = recalloc(api_tables, new_overridden_mod_cnt * sizeof(ModuleApi));
+		void* mem = recalloc(api_tables, overridden_module_count * sizeof(ModuleApi));
 		if (!mem)
 			return false;
 		api_tables = (ModuleApi*) mem;
-		api_tables_count = new_overridden_mod_cnt;
+		api_tables_count = overridden_module_count;
 	}
 
 	ModuleApi* pdst = api_tables + i;
@@ -388,23 +350,20 @@ bool ApiConfiguration::merge(const char* module, const char* api_name,
 		return false;
 
 	int i;
-	for (i = 0 ; i < new_overridden_mod_cnt ; i++)
-		if (!strcmpi(module, new_overridden_mod_nms[i]))
+	for (i = 0 ; i < overridden_module_count ; i++)
+		if (!strcmpi(module, overridden_module_names[i]))
 			break;
 
-	if (i == new_overridden_mod_cnt)
+	if (i == overridden_module_count)
 		return false;
 
-	if (!add_to_used_apilibs(apilib))
-		return false;
-	
 	if (api_tables_count <= i)
 	{
-		void* mem = recalloc(api_tables, new_overridden_mod_cnt * sizeof(ModuleApi));
+		void* mem = recalloc(api_tables, overridden_module_count * sizeof(ModuleApi));
 		if (!mem)
 			return false;
 		api_tables = (ModuleApi*) mem;
-		api_tables_count = new_overridden_mod_cnt;
+		api_tables_count = overridden_module_count;
 	}
 
 	ModuleApi* pdst = api_tables + i;
@@ -446,11 +405,11 @@ bool ApiConfiguration::merge(const char* module, const char* api_name,
 bool ApiConfiguration::erase(const char* module, unsigned short ordinal)
 {
 	int i;
-	for (i = 0 ; i < new_overridden_mod_cnt ; i++)
-		if (!strcmpi(module, new_overridden_mod_nms[i]))
+	for (i = 0 ; i < overridden_module_count ; i++)
+		if (!strcmpi(module, overridden_module_names[i]))
 			break;
 
-	if (i == new_overridden_mod_cnt || i >= api_tables_count)
+	if (i == overridden_module_count || i >= api_tables_count)
 		return false;
 
 	ModuleApi* pdst = api_tables + i;
@@ -467,11 +426,11 @@ bool ApiConfiguration::erase(const char* module, unsigned short ordinal)
 bool ApiConfiguration::erase(const char* module, const char* api_name)
 {
 	int i;
-	for (i = 0 ; i < new_overridden_mod_cnt ; i++)
-		if (!strcmpi(module, new_overridden_mod_nms[i]))
+	for (i = 0 ; i < overridden_module_count ; i++)
+		if (!strcmpi(module, overridden_module_names[i]))
 			break;
 
-	if (i == new_overridden_mod_cnt || i >= api_tables_count)
+	if (i == overridden_module_count || i >= api_tables_count)
 		return false;
 
 	ModuleApi* pdst = api_tables + i;

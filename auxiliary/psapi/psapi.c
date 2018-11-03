@@ -155,12 +155,6 @@ BOOL WINAPI EnumProcessModules(
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPPROCESS,pid);
 	if (hSnap == INVALID_HANDLE_VALUE) return FALSE;	
 	ProcessModuleID = FindProcessMID(hSnap,pid);
-	if ( !ProcessModuleID )
-	{
-		CloseHandle(hSnap);
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}			
 	onemodule.dwSize = sizeof(MODULEENTRY32);
 	lRet = Module32First(hSnap, &onemodule);
 	*lpcbNeeded = 0;

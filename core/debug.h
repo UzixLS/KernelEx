@@ -22,6 +22,8 @@
 #ifndef __DEBUG_H
 #define __DEBUG_H
 
+#define DEBUGMSG_MAXLEN 256
+
 #ifndef _DEBUG
 
 #define DBGPRINTF(x) do { } while (0)
@@ -42,16 +44,9 @@
 #endif
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void dbgvprintf(const char* format, void* _argp);
 void dbgprintf(const char* format, ...);
-
-#ifdef __cplusplus
-}; /* extern "C" */
-#endif
+PROC create_log_stub(const char* caller, const char* target, const char* api, PROC orig);
 
 
 #endif

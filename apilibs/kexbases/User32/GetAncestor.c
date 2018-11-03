@@ -21,7 +21,6 @@
  */
 
 #include <windows.h>
-#include "auxdecl.h"
 
 //MAKE_EXPORT GetAncestor_fix=GetAncestor
 HWND APIENTRY GetAncestor_fix(HWND hwnd, UINT gaFlags)

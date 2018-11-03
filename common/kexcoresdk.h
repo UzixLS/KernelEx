@@ -106,6 +106,13 @@ typedef const apilib_api_table* (* fgat_t)();
 _KEXCOREIMP unsigned long kexGetKEXVersion();
 
 
+/** kexIsDebugCore - determine release/debug KernelEx Core version
+ *
+ * @return Zero if release Core, one if debug Core.
+ */
+_KEXCOREIMP int kexIsDebugCore();
+
+
 /** kexDebugPrint - output debug information
  *
  * Parameters are compatible with printf command, 
@@ -169,7 +176,7 @@ _KEXCOREIMP void kexFlushAppSettings(void);
 
 
 #ifdef __cplusplus
-}; /* extern "C" */
+} /* extern "C" */
 #endif
 
 

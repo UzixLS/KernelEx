@@ -23,11 +23,9 @@
 #include "kexcoresdk.h"
 #include "_shell32_apilist.h"
 
-extern BOOL init_shfolder(void);
-
 BOOL init_shell32()
 {
-	return init_shfolder();
+	return TRUE;
 }
 
 static const apilib_named_api shell32_named_apis[] = 

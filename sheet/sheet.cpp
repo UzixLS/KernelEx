@@ -303,12 +303,14 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				{
 					EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), FALSE);
 					EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
+					EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
 				}
 				else
 				{
 					EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), TRUE);
 					EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), 
 							IsDlgButtonChecked(hwnd, IDC_COMPAT));
+					EnableWindow(GetDlgItem(hwnd, IDC_LOG), TRUE);
 				}
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
@@ -318,6 +320,7 @@ BOOL CALLBACK KexShlExt::DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			case IDC_SYSTEM:
+			case IDC_LOG:
 				PropSheet_Changed(GetParent(hwnd), hwnd);
 				break;
 			}
@@ -336,10 +339,11 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	for (it = KexLinkage::instance.confs.begin() ; 
 			it != KexLinkage::instance.confs.end() ; it++)	
 		SendMessage(GetDlgItem(hwnd, IDC_SYSTEM), CB_ADDSTRING, 
-				0, (LPARAM) it->desc.get());
+				0, (LPARAM) (const char*) it->desc);
 
-	if (KexLinkage::instance.default_index >= 0 
-			&& KexLinkage::instance.default_index < KexLinkage::instance.confs.size())
+	bool default_index_valid = KexLinkage::instance.default_index >= 0 
+			&& KexLinkage::instance.default_index < KexLinkage::instance.confs.size();
+	if (default_index_valid)
 		SendMessage(GetDlgItem(hwnd, IDC_SYSTEM), CB_SETCURSEL,
 				KexLinkage::instance.default_index, 0);
 	else
@@ -348,25 +352,36 @@ void KexShlExt::OnInitDialog(HWND hwnd, ModuleSetting* ms)
 	KexLinkage::instance.m_kexGetModuleSettings(ms->file, ms->conf, &ms->flags);
 	
 	for (int i = 0 ; i < KexLinkage::instance.confs.size() ; i++)
-		if (!strcmp(ms->conf, KexLinkage::instance.confs[i].name.get()))
+		if (!strcmp(ms->conf, KexLinkage::instance.confs[i].name))
 		{
 			CheckDlgButton(hwnd, IDC_COMPAT, BST_CHECKED);
 			EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), TRUE);
 			SendMessage(GetDlgItem(hwnd, IDC_SYSTEM), CB_SETCURSEL, i, 0);
 			break;
 		}
+	if (!(ms->flags & 128) && (KexLinkage::instance.disable_extensions || !default_index_valid))
+		ms->flags |= 1;
 	if (ms->flags & 1)
 	{
 		CheckDlgButton(hwnd, IDC_DISABLE, BST_CHECKED);
 		EnableWindow(GetDlgItem(hwnd, IDC_COMPAT), FALSE);
 		EnableWindow(GetDlgItem(hwnd, IDC_SYSTEM), FALSE);
+		EnableWindow(GetDlgItem(hwnd, IDC_LOG), FALSE);
+	}
+	if (ms->flags & 4)
+	{
+		CheckDlgButton(hwnd, IDC_LOG, BST_CHECKED);
 	}
 
 	//set KernelEx version
 	unsigned long ver = KexLinkage::instance.m_kexGetKEXVersion();
+	int debug = KexLinkage::instance.m_kexIsDebugCore();
 	char ver_s[32];
-	sprintf(ver_s, "KernelEx Core v%d.%d.%d", ver>>24, (ver>>16) & 0xff, ver & 0xffff);
+	sprintf(ver_s, "KernelEx Core v%d.%d.%d %s", 
+			ver>>24, (ver>>16) & 0xff, ver & 0xffff, debug ? "DEBUG" : "");
 	SendMessage(GetDlgItem(hwnd, IDC_KEXVER), WM_SETTEXT, 0, (LPARAM) ver_s);
+
+	ShowWindow(GetDlgItem(hwnd, IDC_LOG), debug ? SW_SHOW : SW_HIDE);
 }
 
 
@@ -374,12 +389,14 @@ void KexShlExt::OnApply(HWND hwnd)
 {
 	ModuleSetting* ms = (ModuleSetting*) GetWindowLong(hwnd, GWL_USERDATA);
 	BYTE flags = 0;
-	const char* conf = "default";
+	const char* conf = "";
 	if (IsDlgButtonChecked(hwnd, IDC_DISABLE))
 		flags |= 1;
 	if (IsDlgButtonChecked(hwnd, IDC_COMPAT))
 		conf = KexLinkage::instance.confs[SendMessage(
-				GetDlgItem(hwnd, IDC_SYSTEM), CB_GETCURSEL, 0, 0)].name.get();
+				GetDlgItem(hwnd, IDC_SYSTEM), CB_GETCURSEL, 0, 0)].name;
+	if (IsDlgButtonChecked(hwnd, IDC_LOG))
+		flags |= 4;
 
 	if (flags != ms->flags || strcmp(conf, ms->conf) != 0)
 		KexLinkage::instance.m_kexSetModuleSettings(ms->file, conf, flags);

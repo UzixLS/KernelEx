@@ -1,3 +1,42 @@
+KernelEx v4.0 Final by Xeno86
+2009-07-23
+
+added option to select between enabling KernelEx extensions for all applications and disabling them
+added KernelEx installation verifier
+migration to PSDK 2003, compilation on MSVC 6 without PSDK not possible
+change: delay-load usp10.dll, comdlg32.dll, shell32.dll and winspool.drv in kexbasen
+fix: loading Unicows.dll altered FPU flags and caused certain programs to crash on first start
+added option to kexcontrol to kill all processes depending on KernelEx
+disable api override for shared modules
+change: services have disabled extended api by default - this should hopefully fix shutdown problems
+change: shared api libraries are now referenced by all processes that reference any of non-shared api libraries
+change: Core's critical sections are now global - it should continue to function even after hosting process is terminated
+removed all process lock during initialization
+don't load MSLU on initialization
+remember and restore last error on MSLU load
+enable overrides for MSVCRT.DLL
+disable overrides for SPOOL32.DLL process
+fix: preload not yet loaded shared system DLLs
+GetOpenFileName / GetSaveFileName fix for 98 shell - file choose dialog in flash applets should work now
+remove check in psapi.EnumProcessModules that conflicts with debuggers
+change: accept CP_THREAD_ACP flag for MultiByteToWideChar and WideCharToMultiByte
+added api logging window (in debug Core) - based on listview, filtering, saving log to file
+added kexIsDebugCore api to sdk
+change: compatibility tab shows api log checkbox under debug Core
+
+implemented worldtransform APIs for GTK+ Cairo (thanks Tihiy)
+implemented RPCRT4.RpcStringFreeW, UuidFromStringW, UuidToStringW
+replaced buggy Unicows GDI32.EnumFontFamiliesExW, EnumFontFamiliesW with custom implementation
+implemented KERNEL32.GetVolumePathNameA/W (semi-stub)
+implemented WINSPOOL.GetDefaultPrinterA/W
+replaced Unicows kernel32.CompareStringW, GetStringTypeExW, GetStringTypeW, LCMapStringW, lstrcmpW, lstrcmpiW with Wine implementation
+replaced Unicows kernel32.GetAtomNameW, GetModuleFileNameW, GetModuleHandleW, LoadLibraryExW, LoadLibraryW with custom implementation
+replaced Unicows user32.CharLowerBuffW, CharLowerW, CharNextW, CharPrevW, CharToOemBuffW, CharToOemW, CharUpperBuffW, CharUpperW, IsCharAlphaNumericW, IsCharAlphaW, IsCharLowerW, IsCharUpperW, OemToCharBuffW, OemToCharW with Wine implementation
+added kernel32.FoldStringA, FoldStringW from Wine
+fixed not-working kernel32.GetSystemWindowsDirectoryW, CommandLineToArgvW
+
+---------------------------------------
+
 KernelEx v4.0 RC 2 by Xeno86
 2009-03-21
 

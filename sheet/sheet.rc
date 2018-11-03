@@ -15,7 +15,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Polish resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PLK)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_POL)
 #ifdef _WIN32
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 #pragma code_page(1250)
@@ -54,8 +54,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,2
- PRODUCTVERSION 1,0,0,2
+ FILEVERSION 1,0,0,3
+ PRODUCTVERSION 1,0,0,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -73,14 +73,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "Xeno86\0"
             VALUE "FileDescription", "sheet\0"
-            VALUE "FileVersion", "1, 0, 0, 2\0"
+            VALUE "FileVersion", "1, 0, 0, 3\0"
             VALUE "InternalName", "sheet\0"
             VALUE "LegalCopyright", "Copyright © 2009, Xeno86\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "sheet.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "KernelEx\0"
-            VALUE "ProductVersion", "1, 0, 0, 2\0"
+            VALUE "ProductVersion", "1, 0, 0, 3\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -128,6 +128,8 @@ BEGIN
                     IDC_TCOMPAT,7,7,175,22
     CONTROL         "",IDC_HORIZ1,"Static",SS_BLACKFRAME | SS_SUNKEN,7,109,
                     176,1
+    CONTROL         "Enable api logging",IDC_LOG,"Button",BS_AUTOCHECKBOX | 
+                    NOT WS_VISIBLE | WS_TABSTOP,15,96,74,10
 END
 
 

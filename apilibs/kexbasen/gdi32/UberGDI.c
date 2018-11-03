@@ -27,117 +27,7 @@
 #include <malloc.h>
 #include <windows.h>
 #include "common.h"
-//#include <usp10.h>
-
-typedef void *SCRIPT_CACHE;
-typedef struct {
-  int   cBytes; 
-  WORD  wgBlank; 
-  WORD  wgDefault; 
-  WORD  wgInvalid; 
-  WORD  wgKashida; 
-  int   iKashidaWidth; 
-} SCRIPT_FONTPROPERTIES;
-
-
-typedef HRESULT (WINAPI *PFNSCRIPTGETCMAP) (
-	  HDC hdc, 
-	  SCRIPT_CACHE *psc, 
-	  const WCHAR *pwcInChars, 
-	  int cChars, 
-	  DWORD dwFlags, 
-	  WORD *pwOutGlyphs);
-typedef HRESULT (WINAPI *PFNSFC) (SCRIPT_CACHE *psc);
-typedef HRESULT (WINAPI *PFNCGH) ( HDC hdc, SCRIPT_CACHE *psc, long *tmHeight );
-typedef HRESULT (WINAPI *PFNGFP) ( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp );
-typedef HRESULT (WINAPI *PFNGETGABCWIDTH) ( HDC hdc, SCRIPT_CACHE *psc, WORD wGlyph, ABC *pABC);
-
-static HRESULT WINAPI ScriptGetCMap_dld(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars, int cChars, DWORD dwFlags, WORD *pwOutGlyphs);
-static HRESULT WINAPI ScriptFreeCache_dld(SCRIPT_CACHE *psc);
-static HRESULT WINAPI ScriptCacheGetHeight_dld(HDC hdc, SCRIPT_CACHE *psc, long *tmHeight);
-static HRESULT WINAPI ScriptGetFontProperties_dld(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp);
-
-static PFNSCRIPTGETCMAP ScriptGetCMap_pfn = ScriptGetCMap_dld;
-static PFNSFC ScriptFreeCache_pfn = ScriptFreeCache_dld;
-static PFNCGH ScriptCacheGetHeight_pfn = ScriptCacheGetHeight_dld;
-static PFNGFP ScriptGetFontProperties_pfn = ScriptGetFontProperties_dld;
-static PFNGETGABCWIDTH ScriptGetGlyphABCWidth_pfn = NULL;
-
-/* delay-loaded Uniscribe start */
-static const char c_szUsp10[]="usp10.dll";
-
-static FARPROC WINAPI LoadUniscribeProc(LPCSTR proc)
-{
-	static HMODULE usp10;
-	FARPROC ret;
-	DWORD lasterr = GetLastError();
-	
-	if (!usp10)
-	{
-		usp10 = GetModuleHandleA(c_szUsp10);
-		if (!usp10) usp10 = LoadLibraryA(c_szUsp10);
-		if (!usp10)
-			fatal_error("kexbasen: Failed to load Uniscribe!");
-	}
-	ret = GetProcAddress(usp10,proc);
-	SetLastError(lasterr);
-	return ret;
-}
-
-static HRESULT WINAPI ScriptGetCMap_dld(
-  HDC hdc, 
-  SCRIPT_CACHE *psc, 
-  const WCHAR *pwcInChars, 
-  int cChars, 
-  DWORD dwFlags, 
-  WORD *pwOutGlyphs
-)
-{
-	PFNSCRIPTGETCMAP pfn;
-	pfn = (PFNSCRIPTGETCMAP)LoadUniscribeProc("ScriptGetCMap");
-	if ( !pfn ) return E_FAIL;
-	ScriptGetCMap_pfn = pfn;
-	return pfn (hdc,psc,pwcInChars,cChars,dwFlags,pwOutGlyphs);
-}
-
-static HRESULT WINAPI ScriptFreeCache_dld(
-  SCRIPT_CACHE *psc 
-)
-{
-	PFNSFC pfn;
-	pfn = (PFNSFC)LoadUniscribeProc("ScriptFreeCache");
-	if ( !pfn ) return E_FAIL;
-	ScriptFreeCache_pfn = pfn;
-	return pfn (psc);
-}
-
-static HRESULT WINAPI ScriptCacheGetHeight_dld(
-  HDC hdc, 
-  SCRIPT_CACHE *psc, 
-  long *tmHeight 
-)
-{
-	PFNCGH pfn;
-	pfn = (PFNCGH)LoadUniscribeProc("ScriptCacheGetHeight");
-	if ( !pfn ) return E_FAIL;
-	ScriptCacheGetHeight_pfn = pfn;
-	return pfn (hdc,psc,tmHeight);
-}
-
-static HRESULT WINAPI ScriptGetFontProperties_dld(
-  HDC hdc, 
-  SCRIPT_CACHE *psc, 
-  SCRIPT_FONTPROPERTIES *sfp 
-)
-{
-	PFNGFP pfn;
-	pfn = (PFNGFP)LoadUniscribeProc("ScriptGetFontProperties");
-	if ( !pfn ) return E_FAIL;
-	ScriptGetFontProperties_pfn = pfn;
-	return pfn (hdc,psc,sfp);
-}
-
-/* delay-loaded Uniscribe END */
+#include <usp10.h>
 
 /* MAKE_EXPORT GetGlyphIndicesW_new=GetGlyphIndicesW */
 int WINAPI GetGlyphIndicesW_new(
@@ -151,7 +41,7 @@ int WINAPI GetGlyphIndicesW_new(
 	HRESULT result;
 	SCRIPT_CACHE cache = 0;
 	if (!hdc || !pgi || (UINT)lpstr<0xFFFFu || !c) return GDI_ERROR;
-	result = ScriptGetCMap_pfn(hdc,&cache,lpstr,c,0,pgi);
+	result = ScriptGetCMap(hdc,&cache,lpstr,c,0,pgi);
 	if ( !( result == S_OK || result == S_FALSE ) ) return GDI_ERROR;
 	if ( fl && result == S_FALSE)
 	{		
@@ -159,14 +49,14 @@ int WINAPI GetGlyphIndicesW_new(
 		int i;
 		SCRIPT_FONTPROPERTIES fpr;
 		fpr.cBytes = sizeof(SCRIPT_FONTPROPERTIES);
-		if (FAILED(ScriptGetFontProperties_pfn(hdc,&cache,&fpr))) return GDI_ERROR;
+		if (FAILED(ScriptGetFontProperties(hdc,&cache,&fpr))) return GDI_ERROR;
 		for (i = 0; i < c; i++)
 		{
 			if (*checkglyph == fpr.wgDefault) *checkglyph = 0xFFFF;
 			checkglyph++;
 		}
 	}
-	ScriptFreeCache_pfn(&cache);
+	ScriptFreeCache(&cache);
 	return c;
 }
 
@@ -234,9 +124,7 @@ BOOL WINAPI GetTextExtentExPointI_new(
 	int glyphwidth;
 	BOOL unfit = FALSE;
 	
-	if (!ScriptGetGlyphABCWidth_pfn) 
-		ScriptGetGlyphABCWidth_pfn = (PFNGETGABCWIDTH)LoadUniscribeProc("ScriptGetGlyphABCWidth");
-	if ( !hdc || !pgiIn || cgi<=0 || !lpSize || !ScriptGetGlyphABCWidth_pfn)
+	if ( !hdc || !pgiIn || cgi<=0 || !lpSize)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -245,7 +133,7 @@ BOOL WINAPI GetTextExtentExPointI_new(
 	//so let's compute the info ourselves
 	for (i = 0; i < cgi; i++)
 	{
-		if ( ScriptGetGlyphABCWidth_pfn(hdc,&cache,*glyph,&abc) != S_OK ) break;
+		if ( ScriptGetGlyphABCWidth(hdc,&cache,*glyph,&abc) != S_OK ) break;
 		glyphwidth = abc.abcA + abc.abcB + abc.abcC;
 		sum += glyphwidth;		
 		if ( !unfit )
@@ -257,8 +145,8 @@ BOOL WINAPI GetTextExtentExPointI_new(
 		glyph++;
 	}
 	lpSize->cx = sum;	
-	ScriptCacheGetHeight_pfn(hdc,&cache,&lpSize->cy);
-	ScriptFreeCache_pfn(&cache);
+	ScriptCacheGetHeight(hdc,&cache,&lpSize->cy);
+	ScriptFreeCache(&cache);
 	return TRUE;
 }
 
@@ -286,9 +174,7 @@ BOOL WINAPI GetCharWidthI_new(
 	ABC abc;
 	WORD glyph;
 	
-	if (!ScriptGetGlyphABCWidth_pfn) 
-		ScriptGetGlyphABCWidth_pfn = (PFNGETGABCWIDTH)LoadUniscribeProc("ScriptGetGlyphABCWidth");
-	if ( !hdc || !lpBuffer || cgi<=0 || !ScriptGetGlyphABCWidth_pfn)
+	if ( !hdc || !lpBuffer || cgi<=0)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -297,7 +183,7 @@ BOOL WINAPI GetCharWidthI_new(
 	{
 		for ( glyph = giFirst; glyph < giFirst+cgi; glyph++)
 		{
-			ScriptGetGlyphABCWidth_pfn(hdc,&cache,glyph,&abc);
+			ScriptGetGlyphABCWidth(hdc,&cache,glyph,&abc);
 			*lpBuffer = abc.abcA + abc.abcB + abc.abcC;
 			lpBuffer++;
 		}
@@ -306,13 +192,13 @@ BOOL WINAPI GetCharWidthI_new(
 	{
 		for ( glyph = 0; glyph < cgi; glyph++)
 		{
-			ScriptGetGlyphABCWidth_pfn(hdc,&cache,*pgi,&abc);
+			ScriptGetGlyphABCWidth(hdc,&cache,*pgi,&abc);
 			*lpBuffer = abc.abcA + abc.abcB + abc.abcC;
 			pgi++;
 			lpBuffer++;
 		}		
 	}
-	ScriptFreeCache_pfn(&cache);
+	ScriptFreeCache(&cache);
 	return TRUE;
 }
 
@@ -328,6 +214,13 @@ DWORD WINAPI GetGlyphOutlineW_new(
 )
 {
 	UINT glyph = 0;
+	//GetGlyphOutlineW must receive same fix GetGlyphOutlineA received since apilibs interlinking changed
+	MAT2 matr;
+	if ( lpmat2 ) 
+	{
+		memcpy( &matr, lpmat2, sizeof(MAT2) );
+		lpmat2 = &matr;
+	}
 	if (uFormat & GGO_GLYPH_INDEX)
 		return GetGlyphOutlineA( hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, lpmat2 );
 	GetGlyphIndicesW_new( hdc, (LPWSTR)&uChar, 1, (LPWORD)&glyph, 0 );

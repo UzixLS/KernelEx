@@ -34,6 +34,10 @@ DWORD WINAPI GetGlyphOutlineA_fix(
 {
 	//last parameter must point to writeable memory
 	MAT2 matr;
-	memcpy( &matr, lpmat2, sizeof(MAT2) );
-	return GetGlyphOutlineA( hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, &matr );
+	if (lpmat2)
+	{
+		memcpy( &matr, lpmat2, sizeof(MAT2) );
+		lpmat2 = &matr;
+	}
+	return GetGlyphOutlineA( hdc, uChar, uFormat, lpgm, cbBuffer, lpvBuffer, lpmat2 );
 }

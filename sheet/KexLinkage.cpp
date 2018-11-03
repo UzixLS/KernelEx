@@ -28,6 +28,7 @@ KexLinkage KexLinkage::instance;
 
 KexLinkage::KexLinkage()
 {
+	disable_extensions = false;
 	m_ready = Prepare();
 }
 
@@ -44,7 +45,8 @@ bool KexLinkage::Prepare()
 	char core_conf_file[MAX_PATH];
 	HKEY key;
 	DWORD type;
-	DWORD len = sizeof(core_conf_file);
+	DWORD len;
+	DWORD data;
 
 	hKernelEx = LoadLibrary("KERNELEX.DLL");
 	if (!hKernelEx)
@@ -56,8 +58,11 @@ bool KexLinkage::Prepare()
 			"kexSetModuleSettings");
 	m_kexGetKEXVersion = (kexGetKEXVersion_t) GetProcAddress(hKernelEx,
 			"kexGetKEXVersion");
+	m_kexIsDebugCore = (kexIsDebugCore_t) GetProcAddress(hKernelEx,
+			"kexIsDebugCore");
 
-	if (!m_kexGetModuleSettings || !m_kexSetModuleSettings || !m_kexGetKEXVersion)
+	if (!m_kexGetModuleSettings || !m_kexSetModuleSettings 
+			|| !m_kexGetKEXVersion || !m_kexIsDebugCore)
 		return false;
 
 	//read config file location from registry
@@ -66,11 +71,20 @@ bool KexLinkage::Prepare()
 	if (result != ERROR_SUCCESS)
 		return false;
 
+	len = sizeof(data);
+	result = RegQueryValueEx(key, "DisableExtensions", NULL, &type, 
+			(BYTE*) &data, &len);
+	if (result == ERROR_SUCCESS && type == REG_DWORD && len == sizeof(data) && data == 1)
+		disable_extensions = true;
+
+	len = sizeof(core_conf_file);
 	result = RegQueryValueEx(key, "InstallDir", NULL, &type, 
 			(BYTE*)core_conf_file, &len);
+
 	RegCloseKey(key);
 	if (result != ERROR_SUCCESS || type != REG_SZ || len == 0)
 		return false;
+
 	strcat(core_conf_file, "\\core.ini");
 	if (GetFileAttributes(core_conf_file) == 0xffffffff)
 		return false;

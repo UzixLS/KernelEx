@@ -32,6 +32,7 @@ SettingsDB SettingsDB::instance;
 SettingsDB::SettingsDB()
 {
 	InitializeCriticalSection(&cs);
+	MakeCriticalSectionGlobal(&cs);
 }
 
 SettingsDB::~SettingsDB()
@@ -55,6 +56,7 @@ void SettingsDB::flush_all()
 	clear();
 	parse_configs();
 	parse_flags();
+	add_apilib_excludes();
 	LeaveCriticalSection(&cs);
 }
 
@@ -92,7 +94,7 @@ void SettingsDB::parse_configs()
 		if (type != REG_SZ)
 			continue;
 		name[sizeof(name) - 1] = '\0';
-		as.conf = ApiConfigurationManager::get_api_configuration(name);
+		as.conf = apiconfmgr.get_api_configuration(name);
 		if (!as.conf)
 			continue;
 		
@@ -161,6 +163,20 @@ void SettingsDB::parse_flags()
 	RegCloseKey(key);
 }
 
+void SettingsDB::add_apilib_excludes()
+{
+	ApiLibrary* lib;
+	int i = 1;
+	appsetting as;
+	as.flags = LDR_KEX_DISABLE;
+	while ((lib = apilibmgr.get_apilib_by_index(i++)) != NULL)
+	{
+		char path[MAX_PATH];
+		lib->get_dll_path(path);
+		db[path] = as;
+	}
+}
+
 appsetting SettingsDB::get_appsetting(const char* path)
 {
 	map<sstring,appsetting>::const_iterator it;
@@ -173,7 +189,7 @@ appsetting SettingsDB::get_appsetting(const char* path)
 		//then try wildcard matching
 		for (it = db_wild.begin() ; it != db_wild.end() ; it++)
 		{
-			if (wildcmp(it->first.get(), path))
+			if (wildcmp(it->first, path))
 				break;
 		}
 	}
@@ -181,7 +197,13 @@ appsetting SettingsDB::get_appsetting(const char* path)
 	bool atend = it == db.end() || it == db_wild.end();
 	LeaveCriticalSection(&cs);
 	if (!atend)
-		return it->second;
+	{
+		appsetting as = it->second;
+		as.flags |= LDR_VALID_FLAG;
+		if (!as.conf && !(as.flags & LDR_KEX_DISABLE))
+			as.conf = apiconfmgr.get_default_configuration();
+		return as;
+	}
 	else
 		return appsetting();
 }
@@ -198,7 +220,7 @@ void SettingsDB::write_single(const char* path, const char* conf_name, BYTE flag
 	strupr(path2);
 
 	//check if configuration name is valid
-	as.conf = ApiConfigurationManager::get_api_configuration(conf_name);
+	as.conf = apiconfmgr.get_api_configuration(conf_name);
 	as.flags = flags;
 
 	//write config
@@ -206,9 +228,8 @@ void SettingsDB::write_single(const char* path, const char* conf_name, BYTE flag
 			"Software\\KernelEx\\AppSettings\\Configs", 0, KEY_WRITE, &key);
 	if (result == ERROR_SUCCESS)
 	{
-		if (!as.conf || as.conf == ApiConfigurationManager::get_default_configuration())
-			RegSetValueEx(key, path, 0, REG_SZ, (const BYTE*) "default",
-					sizeof("default"));
+		if (!as.conf)
+			RegDeleteValue(key, path);
 		else
 			RegSetValueEx(key, path, 0, REG_SZ, (const BYTE*) conf_name, 
 					strlen(conf_name) + 1);
@@ -241,7 +262,7 @@ void SettingsDB::dump_db()
 	for (it = db.begin() ; it != db.end() ; it++)
 	{
 		ApiConfiguration* conf = it->second.conf;
-		dbgprintf("%-40s %-10s %02x\n", it->first.get(), 
+		dbgprintf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
 				conf ? conf->get_name() : "unknown", it->second.flags);
 	}
 
@@ -249,7 +270,7 @@ void SettingsDB::dump_db()
 	for (it = db_wild.begin() ; it != db_wild.end() ; it++)
 	{
 		ApiConfiguration* conf = it->second.conf;
-		dbgprintf("%-40s %-10s %02x\n", it->first.get(), 
+		dbgprintf("%-40s %-10s %02x\n", static_cast<const char*>(it->first), 
 				conf ? conf->get_name() : "unknown", it->second.flags);
 	}
 }

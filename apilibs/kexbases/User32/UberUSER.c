@@ -104,10 +104,10 @@ BOOL WINAPI GetMessageW_new(
 	result = GetMessageA(lpMsg,hWnd,wMsgFilterMin,wMsgFilterMax);
 	if (lpMsg && lpMsg->message == WM_CHAR && lpMsg->wParam > 0x7Fu && lpMsg->wParam <= 0xFFu && IsWindow(lpMsg->hwnd) && GetPropA(lpMsg->hwnd,c_szUnicowsProp))
 	{
-		WORD unichar;
+		WCHAR unichar;
 		char ansichar = lpMsg->wParam;
 		MultiByteToWideChar(GetCPFromLocale((LCID)GetKeyboardLayout(GetCurrentThreadId())),0,&ansichar,1,&unichar,1);
-		lpMsg->wParam = unichar;
+		lpMsg->wParam = (WORD) unichar;
 	}
 	return result;
 }

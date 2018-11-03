@@ -47,13 +47,13 @@ RSC=rc.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
-# ADD RSC /l 0x415 /d "NDEBUG"
+# ADD RSC /l 0x415 /i "../common" /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib advapi32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /entry:"PreDllMain@12" /dll /map /machine:I386 /nodefaultlib /out:"Release/KernelEx.dll" /implib:"../common/KernelEx.lib" /ignore:4092 /OPT:NOWIN98
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib advapi32.lib comctl32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /entry:"PreDllMain@12" /dll /map /machine:I386 /nodefaultlib /out:"Release/KernelEx.dll" /implib:"../common/KernelEx.lib" /ignore:4092 /OPT:NOWIN98
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "Core - Win32 Debug"
@@ -74,13 +74,13 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
-# ADD RSC /l 0x415 /d "_DEBUG"
+# ADD RSC /l 0x415 /i "../common" /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib advapi32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /entry:"PreDllMain@12" /dll /incremental:no /map /debug /machine:I386 /nodefaultlib /out:"Debug/KernelEx.dll" /implib:"../common/KernelEx.lib" /ignore:4092 /OPT:NOWIN98
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib advapi32.lib comctl32.lib ..\kexcrt\kexcrt.lib libc.lib /nologo /entry:"PreDllMain@12" /dll /incremental:no /map /debug /machine:I386 /nodefaultlib /out:"Debug/KernelEx.dll" /implib:"../common/KernelEx.lib" /ignore:4092 /OPT:NOWIN98
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -106,40 +106,51 @@ SOURCE=.\apilib.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\apilog.cpp
+
+!IF  "$(CFG)" == "Core - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "Core - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\core.def
 
 !IF  "$(CFG)" == "Core - Win32 Release"
 
 # Begin Custom Build
 OutDir=.\Release
-ProjDir=.
+WkspDir=.
 InputPath=.\core.def
 
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\k32ord.def /OUT:$(OutDir)\k32ord.lib
-
 "$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\k32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
 # End Custom Build
 
 !ELSEIF  "$(CFG)" == "Core - Win32 Debug"
 
 # Begin Custom Build
 OutDir=.\Debug
-ProjDir=.
+WkspDir=.
 InputPath=.\core.def
 
-BuildCmds= \
-	link /LIB /NOLOGO /MACHINE:IX86 /DEF:$(ProjDir)\k32ord.def /OUT:$(OutDir)\k32ord.lib
-
 "$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
-
-"$(OutDir)\k32ord.exp" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-   $(BuildCmds)
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
 # End Custom Build
 
 !ENDIF 
@@ -173,12 +184,20 @@ SOURCE=.\debugproto.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\internals.cpp
+SOURCE=.\DebugWindow.cpp
+
+!IF  "$(CFG)" == "Core - Win32 Release"
+
+# PROP Exclude_From_Build 1
+
+!ELSEIF  "$(CFG)" == "Core - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\k32ord.def
-# PROP Exclude_From_Build 1
+SOURCE=.\internals.cpp
 # End Source File
 # Begin Source File
 
@@ -206,6 +225,10 @@ SOURCE=.\sharedmem.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\storage.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\thunks.cpp
 # End Source File
 # Begin Source File
@@ -230,6 +253,10 @@ SOURCE=.\apilib.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\apilog.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\debug.h
 # End Source File
 # Begin Source File
@@ -238,7 +265,24 @@ SOURCE=.\debugproto.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\DebugWindow.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\internals.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\common\is_sorted.hpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\common\k32ord.def
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=..\common\k32ord.h
 # End Source File
 # Begin Source File
 
@@ -262,6 +306,14 @@ SOURCE=.\sharedmem.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\common\sstring.hpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\storage.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\structs.h
 # End Source File
 # Begin Source File
@@ -270,7 +322,7 @@ SOURCE=.\thunks.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\version.h
+SOURCE=..\common\version.h
 # End Source File
 # Begin Source File
 

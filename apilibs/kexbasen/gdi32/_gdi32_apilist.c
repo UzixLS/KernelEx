@@ -41,8 +41,6 @@ static const apilib_named_api gdi32_named_apis[] =
 	DECL_API("CreateICW", CreateICW_fwd),
 	DECL_API("CreateMetaFileW", CreateMetaFileW_fwd),
 	DECL_API("CreateScalableFontResourceW", CreateScalableFontResourceW_fwd),
-	DECL_API("EnumFontFamiliesExW", EnumFontFamiliesExW_fwd),
-	DECL_API("EnumFontFamiliesW", EnumFontFamiliesW_fwd),
 	DECL_API("EnumFontsW", EnumFontsW_fwd),
 	DECL_API("EnumICMProfilesW", EnumICMProfilesW_fwd),
 	DECL_API("GetCharABCWidthsW", GetCharABCWidthsW_fwd),

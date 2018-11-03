@@ -58,6 +58,10 @@ SOURCE=.\_vsnprintf.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\abort.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\msvc\argcargv.c
 # End Source File
 # Begin Source File
@@ -83,6 +87,10 @@ SOURCE=.\ctypes.c
 # Begin Source File
 
 SOURCE=.\msvc\dllcrt0.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\exit.c
 # End Source File
 # Begin Source File
 
@@ -262,6 +270,10 @@ SOURCE=.\strtok.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\strtok_r.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\strtol.c
 # End Source File
 # Begin Source File
@@ -311,6 +323,10 @@ SOURCE=.\vsscanf.c
 # Begin Source File
 
 SOURCE=.\msvc\wincrt0.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\write.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

@@ -1,7 +1,5 @@
 #include "resource.h"
 #include "version.h"
-#define _QUOTEME(x) #x
-#define QUOTEME(x) _QUOTEME(x)
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -41,7 +39,7 @@ END
 /////////////////////////////////////////////////////////////////////////////
 // Polish resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PLK)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_POL)
 #ifdef _WIN32
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 #pragma code_page(1250)
@@ -98,7 +96,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Xeno86\0"
             VALUE "FileDescription", "KernelEx Core\0"
-            VALUE "FileVersion", QUOTEME(RCVERSION) "\0"
+            VALUE "FileVersion", _RCVERSION_ "\0"
             VALUE "InternalName", "KernelEx\0"
             VALUE "LegalCopyright", "Copyright © 2009, Xeno86\0"
             VALUE "OriginalFilename", "KernelEx.dll\0"
@@ -114,9 +112,73 @@ END
 
 #endif    // !_MAC
 
+#ifdef _DEBUG
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DEBUG DIALOG DISCARDABLE  0, 0, 186, 100
+STYLE WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "KernelEx Debug Console"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "",IDC_LOG,"SysListView32",LVS_REPORT | WS_TABSTOP,0,0,
+                    185,100
+END
+
+IDD_DEBUGFILTER DIALOG DISCARDABLE  0, 0, 177, 90
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Filter settings"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,65,70,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,120,70,50,14
+    EDITTEXT        IDC_DFINCLUDE,5,15,165,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_DFEXCLUDE,5,45,165,14,ES_AUTOHSCROLL
+    LTEXT           "Include:",IDC_STATIC,5,5,26,8
+    LTEXT           "Exclude:",IDC_STATIC,5,35,28,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_LOGMENU MENU DISCARDABLE 
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Save to file",                IDM_TOFILE
+        MENUITEM "Clear",                       IDM_CLEAR
+        MENUITEM "Filter",                      IDM_FILTER
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DEBUGFILTER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 170
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
 #endif    // Polish resources
 /////////////////////////////////////////////////////////////////////////////
-
+#endif    // _DEBUG
 
 
 #ifndef APSTUDIO_INVOKED

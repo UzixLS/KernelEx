@@ -29,38 +29,31 @@
 
 #define ALLOC_CAPACITY 10
 
-ApiConfiguration** ApiConfigurationManager::curr_apiconf_ptrs = NULL;
-int ApiConfigurationManager::curr_apiconf_cnt = 0;
-ApiConfiguration** ApiConfigurationManager::prev_apiconf_ptrs = NULL;
-int ApiConfigurationManager::prev_apiconf_cnt = 0;
-ApiConfiguration* ApiConfigurationManager::default_apiconf = NULL;
-
-//TODO: I should check if new ApiConfiguration is identical to existing one
-//and deallocate it if this is true
+ApiConfigurationManager apiconfmgr;
 
 ApiConfigurationManager::ApiConfigurationManager()
 {
-	new_apiconf_ptrs = NULL;
-	new_apiconf_cnt = 0;
-	strcpy(core_conf_file, kernelex_dir.get());
-	strcat(core_conf_file, "core.ini");
+	apiconf_ptrs = NULL;
+	apiconf_cnt = 0;
+	default_apiconf = NULL;
+	disable_extensions = false;
 }
 
 ApiConfigurationManager::~ApiConfigurationManager()
 {
-	for (int i = 0 ; i < new_apiconf_cnt ; i++)
-		delete new_apiconf_ptrs[i];
-	if (new_apiconf_ptrs)
-		free(new_apiconf_ptrs);
+	for (int i = 0 ; i < apiconf_cnt ; i++)
+		delete apiconf_ptrs[i];
+	if (apiconf_ptrs)
+		free(apiconf_ptrs);
 }
 
 bool ApiConfigurationManager::add_apiconf(ApiConfiguration* ac)
 {
 	//allocate space for new ApiConfigurations
-	if (new_apiconf_cnt % ALLOC_CAPACITY == 0)
+	if (apiconf_cnt % ALLOC_CAPACITY == 0)
 	{
-		void* new_block = realloc(new_apiconf_ptrs, 
-				(new_apiconf_cnt + ALLOC_CAPACITY) * sizeof(ApiConfiguration*));
+		void* new_block = realloc(apiconf_ptrs, 
+				(apiconf_cnt + ALLOC_CAPACITY) * sizeof(ApiConfiguration*));
 		
 		if (!new_block)
 		{
@@ -68,38 +61,42 @@ bool ApiConfigurationManager::add_apiconf(ApiConfiguration* ac)
 			return false;
 		}
 
-		new_apiconf_ptrs = (ApiConfiguration**) new_block;
+		apiconf_ptrs = (ApiConfiguration**) new_block;
 	}
 
 	//add to table of new ApiConfigurations
-	new_apiconf_ptrs[new_apiconf_cnt++] = ac;
+	apiconf_ptrs[apiconf_cnt++] = ac;
 	return true;
-}
-
-ApiConfiguration* ApiConfigurationManager::get_new_apiconf(const char* conf_name)
-{
-	for (int i = 0 ; i < new_apiconf_cnt ; i++)
-		if (!strcmp(new_apiconf_ptrs[i]->conf_name, conf_name))
-			return new_apiconf_ptrs[i];
-	return NULL;
 }
 
 ApiConfiguration* ApiConfigurationManager::get_api_configuration(const char* conf_name)
 {
-	if (!strcmp("default", conf_name))
-		return get_default_configuration();
-	
-	for (int i = 0 ; i < curr_apiconf_cnt ; i++)
-		if (!strcmp(curr_apiconf_ptrs[i]->conf_name, conf_name))
-			return curr_apiconf_ptrs[i];
+	for (int i = 0 ; i < apiconf_cnt ; i++)
+		if (!strcmp(apiconf_ptrs[i]->conf_name, conf_name))
+			return apiconf_ptrs[i];
 	return NULL;
 }
 
-void ApiConfigurationManager::reload_api_configurations()
+bool ApiConfigurationManager::load_api_configurations()
 {
-	DBGPRINTF(("Reloading api configurations\n"));
+	strcpy(core_conf_file, kernelex_dir);
+	strcat(core_conf_file, "core.ini");
+
+	DBGPRINTF(("Loading api configurations\n"));
+
+	HKEY key;
+	LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+			"Software\\KernelEx", 0, KEY_WRITE, &key);
+	if (result == ERROR_SUCCESS)
+	{
+		DWORD type, data, size = sizeof(data);
+		RegQueryValueEx(key, "DisableExtensions", NULL, &type, (BYTE*) &data, &size);
+		if (result == ERROR_SUCCESS && type == REG_DWORD && size == sizeof(data) && data == 1)
+			disable_extensions = true;
+		RegCloseKey(key);
+	}
 	
-	default_apiconf_index = GetPrivateProfileInt(
+	int default_apiconf_index = GetPrivateProfileInt(
 			"ApiConfigurations", "default", 0, core_conf_file);
 
 	for (int i = 0 ; i < 65536 ; i++)
@@ -116,7 +113,7 @@ void ApiConfigurationManager::reload_api_configurations()
 			if (i <= default_apiconf_index)
 			{
 				DBGPRINTF(("Failed to load default api configuration - aborting\n"));
-				return;
+				return false;
 			}
 			break;
 		}
@@ -132,7 +129,7 @@ void ApiConfigurationManager::reload_api_configurations()
 		}
 		else
 		{
-			ApiConfiguration* src_conf = get_new_apiconf(buf);
+			ApiConfiguration* src_conf = get_api_configuration(buf);
 			if (!src_conf)
 			{
 				DBGPRINTF(("Cannot inherit: %s. Configuration not found\n", buf));
@@ -159,40 +156,33 @@ __error:
 		if (i == default_apiconf_index)
 		{
 			DBGPRINTF(("Failed to load default api configuration - aborting\n"));
-			return;
+			return false;
 		}
 	} //for loop
 
 	DBGPRINTF(("No more api configurations\n"));
 
-	FullCritLock();
-	
-	if (commit_changes())
-	{
-		DBGPRINTF(("Re-add api libraries for previous api configurations\n"));
-		for (int i = 0 ; i < prev_apiconf_cnt ; i++)
-			for (int j = 0 ; j < prev_apiconf_ptrs[i]->used_apilibs_count ; j++)
-				if (!libmgr.load_apilib(prev_apiconf_ptrs[i]->used_apilibs[j]->apilib_name))
-					DBGPRINTF(("Error\n"));
-
-		libmgr.commit_changes();
-	}
+	//set default apiconf
+	if (default_apiconf_index >= 0)
+		default_apiconf = apiconf_ptrs[default_apiconf_index];
 	else
-		DBGPRINTF(("Bailing out\n"));
+	{
+		DBGPRINTF(("Failed to load default api configuration - aborting\n"));
+		return false;
+	}
 
-	FullCritUnlock();
+	DBGPRINTF(("Default api configuration is: %s\n", default_apiconf->get_name()));
+	DBGPRINTF(("API extensions are by default: %s\n", 
+			disable_extensions ? "disabled" : "enabled"));
+	return true;
 }
 
 bool ApiConfigurationManager::join_apilibs(ApiConfiguration* apiconf)
 {
 	char buf[256];
 
-	if (!GetPrivateProfileString(apiconf->get_name(), "contents", "", 
-			buf, sizeof(buf), core_conf_file) || !strcmpi(buf, "none"))
-	{
-		DBGPRINTF(("No contents found\n"));
-	}
-	else
+	if (GetPrivateProfileString(apiconf->get_name(), "contents", "", 
+			buf, sizeof(buf), core_conf_file) && strcmpi(buf, "none") != 0)
 	{
 		char buf2[256];
 
@@ -201,7 +191,7 @@ bool ApiConfigurationManager::join_apilibs(ApiConfiguration* apiconf)
 		char* lib = strtok(buf, ",");
 		while (lib)
 		{
-			if (!libmgr.load_apilib(lib))
+			if (!apilibmgr.load_apilib(lib))
 			{
 				DBGPRINTF(("Failed to load api library: %s\n", lib));
 				return false;
@@ -214,7 +204,7 @@ bool ApiConfigurationManager::join_apilibs(ApiConfiguration* apiconf)
 		lib = strtok(buf2, ",");
 		while (lib)
 		{
-			if (!apiconf->merge(libmgr.get_new_apilib(lib)))
+			if (!apiconf->merge(apilibmgr.get_apilib(lib)))
 			{
 				DBGPRINTF(("Failed to merge api library: %s\n", lib));
 				return false;
@@ -313,7 +303,7 @@ bool ApiConfigurationManager::parse_overrides(ApiConfiguration* apiconf)
 			else
 			{
 				if (!apiconf->merge(module, api_name, 
-						libmgr.get_new_apilib(apilib_name), id))
+						apilibmgr.get_apilib(apilib_name), id))
 				{
 					DBGPRINTF(("Failed to merge named api overrides\n"));
 					return false;
@@ -411,7 +401,7 @@ bool ApiConfigurationManager::parse_overrides(ApiConfiguration* apiconf)
 			else 
 			{
 				if (!apiconf->merge(module, (WORD) ordinal, 
-					libmgr.get_new_apilib(apilib_name), id))
+					apilibmgr.get_apilib(apilib_name), id))
 				{
 					DBGPRINTF(("Failed to merge ordinal api overrides\n"));
 					return false;
@@ -422,113 +412,14 @@ bool ApiConfigurationManager::parse_overrides(ApiConfiguration* apiconf)
 	return true;
 }
 
-bool ApiConfigurationManager::commit_changes()
-{
-	DBGPRINTF(("Updating api configuration list\n"));
-
-	//calculate number of apiconf in use
-	WORD imteMax = *pimteMax;
-	IMTE** pmteModTable = *ppmteModTable;
-	int used = 0;
-	for (int j = 0 ; j < curr_apiconf_cnt ; j++)
-	{
-		for (WORD i = 0 ; i < imteMax ; i++)
-		{
-			IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
-			if (imte && imte->config == curr_apiconf_ptrs[j])
-			{
-				used++;
-				break;
-			}
-		}
-	}
-	for (int j = 0 ; j < prev_apiconf_cnt ; j++)
-	{
-		for (WORD i = 0 ; i < imteMax ; i++)
-		{
-			IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
-			if (imte && imte->config == prev_apiconf_ptrs[j])
-			{
-				used++;
-				break;
-			}
-		}
-	}
-
-	//alloc space for new_prev
-	ApiConfiguration** new_prev;
-	new_prev = (ApiConfiguration**) malloc(used * sizeof(ApiConfiguration*));
-	if (!new_prev)
-		return false;
-
-	int cnt = 0;
-
-	//move used entries from curr and prev to new_prev, free unused
-	for (int j = 0 ; j < curr_apiconf_cnt ; j++)
-	{
-		WORD i;
-		for (i = 0 ; i < imteMax ; i++)
-		{
-			IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
-			if (imte && imte->config == curr_apiconf_ptrs[j])
-			{
-				new_prev[cnt++] = curr_apiconf_ptrs[j];
-				break;
-			}
-		}
-		if (i == imteMax)
-			delete curr_apiconf_ptrs[j];
-	}
-	for (int j = 0 ; j < prev_apiconf_cnt ; j++)
-	{
-		WORD i;
-		for (i = 0 ; i < imteMax ; i++)
-		{
-			IMTE_KEX* imte = (IMTE_KEX*) pmteModTable[i];
-			if (imte && imte->config == prev_apiconf_ptrs[j])
-			{
-				new_prev[cnt++] = prev_apiconf_ptrs[j];
-				break;
-			}
-		}
-		if (i == imteMax)
-			delete curr_apiconf_ptrs[j];
-	}
-
-	//replace prev with new_prev
-	if (prev_apiconf_ptrs)
-		free(prev_apiconf_ptrs);
-	prev_apiconf_ptrs = new_prev;
-	prev_apiconf_cnt = cnt;
-
-	//replace curr with new
-	if (curr_apiconf_ptrs)
-		free(curr_apiconf_ptrs);
-	curr_apiconf_ptrs = new_apiconf_ptrs;
-	curr_apiconf_cnt = new_apiconf_cnt;
-	new_apiconf_ptrs = NULL;
-	new_apiconf_cnt = 0;
-
-	//set default apiconf
-	if (default_apiconf_index >= 0)
-		default_apiconf = curr_apiconf_ptrs[default_apiconf_index];
-	else
-		default_apiconf = NULL;
-
-	DBGPRINTF(("Default api configuration is: %s\n", 
-			default_apiconf ? default_apiconf->get_name() : "system"));
-
-	return true;
-}
-
 #ifdef _DEBUG
 
 void ApiConfigurationManager::dump_configurations()
 {
-	dbgprintf("Dumping all api configurations (count = %d) ...\n\n", curr_apiconf_cnt);
-	for (int i = 0 ; i < curr_apiconf_cnt ; i++)
+	dbgprintf("Dumping all api configurations (count = %d) ...\n\n", apiconf_cnt);
+	for (int i = 0 ; i < apiconf_cnt ; i++)
 	{
-		curr_apiconf_ptrs[i]->dump();
+		apiconf_ptrs[i]->dump();
 	}
 	dbgprintf("End dump\n\n");
 }

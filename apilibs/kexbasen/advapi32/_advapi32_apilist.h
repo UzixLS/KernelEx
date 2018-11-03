@@ -22,7 +22,6 @@
 #ifndef _ADVAPI32_APILIST_H
 #define _ADVAPI32_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
 
 BOOL init_advapi32();

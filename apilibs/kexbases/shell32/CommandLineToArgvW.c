@@ -20,6 +20,8 @@
  */
 
 #include <windows.h>
+#include "common.h"
+#include "../kernel32/_kernel32_apilist.h"
 
 /*************************************************************************
  * CommandLineToArgvW            [SHELL32.@]
@@ -69,7 +71,7 @@ LPWSTR* WINAPI CommandLineToArgvW_new(LPCWSTR lpCmdline, int* numargs)
         argv=(LPWSTR*)LocalAlloc(LMEM_FIXED, size);
         for (;;)
         {
-            len = GetModuleFileNameW(0, (LPWSTR)(argv+1), (size-sizeof(LPWSTR))/sizeof(WCHAR));
+            len = GetModuleFileNameW_new(0, (LPWSTR)(argv+1), (size-sizeof(LPWSTR))/sizeof(WCHAR));
             if (!len)
             {
                 LocalFree(argv);

@@ -19,7 +19,7 @@
  *
  */
 
-#include "auxdecl.h"
+#include <windows.h>
 
 /* MAKE_EXPORT PrintDlgEx_new=PrintDlgExA
  * MAKE_EXPORT PrintDlgEx_new=PrintDlgExW 

@@ -28,31 +28,31 @@ typedef HRESULT (WINAPI *SHGetFolderPathW_t)(HWND, int, HANDLE, DWORD, LPWSTR);
 static SHGetFolderPathA_t SHGetFolderPathA_pfn = (SHGetFolderPathA_t)-1;
 static SHGetFolderPathW_t SHGetFolderPathW_pfn = (SHGetFolderPathW_t)-1;
 
-BOOL init_shfolder(void)
-{
-	DWORD lasterr = GetLastError();
-	HMODULE hShell32 = GetModuleHandle("SHELL32.DLL");
-	PROC pfn = kexGetProcAddress(hShell32, "SHGetFolderPathA");
-	if (pfn)
-		SHGetFolderPathA_pfn = (SHGetFolderPathA_t) pfn;
-	pfn = kexGetProcAddress(hShell32, "SHGetFolderPathW");
-	if (pfn)
-		SHGetFolderPathW_pfn = (SHGetFolderPathW_t) pfn;
-	SetLastError(lasterr);
-	return TRUE;
-}
-
 static PROC LoadShfolderProc(const char* proc)
 {
 	static const char ShfolderFn[] = "SHFOLDER.DLL";
+	static const char Shell32Fn[] = "SHELL32.DLL";
 	static HMODULE hShfolder;
+	static HMODULE hShell32;
 	PROC ret = NULL;
 	DWORD lasterr = GetLastError();
 	
-	if (!hShfolder)
+	//first try with shell32
+	if (!hShell32)
 	{
-		hShfolder = GetModuleHandle(ShfolderFn);
-		if (!hShfolder) hShfolder = LoadLibrary(ShfolderFn);
+		hShell32 = GetModuleHandle(Shell32Fn);
+		if (!hShell32) hShell32 = LoadLibrary(Shell32Fn);
+	}
+	if (hShell32) ret = kexGetProcAddress(hShell32, proc);
+	
+	//fallback to shfolder
+	if (!ret)
+	{
+		if (!hShfolder)
+		{
+			hShfolder = GetModuleHandle(ShfolderFn);
+			if (!hShfolder) hShfolder = LoadLibrary(ShfolderFn);
+		}
 		if (hShfolder) ret = kexGetProcAddress(hShfolder, proc);
 	}
 	SetLastError(lasterr);

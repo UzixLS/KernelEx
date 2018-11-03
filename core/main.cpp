@@ -25,6 +25,7 @@
 #include "debug.h"
 #include "apiconfmgr.h"
 #include "internals.h"
+#include "DebugWindow.h"
 
 extern int internals_init();
 extern void internals_uninit();
@@ -33,15 +34,11 @@ extern void resolver_uninit();
 extern void resolver_hook();
 extern void resolver_unhook();
 
+extern BOOL resolver_process_attach();
+
 static int init_count = 0;
 
-static void prepare()
-{
-	ApiConfigurationManager acm;
-	acm.reload_api_configurations();
-}
-
-//these should be visible only in debug builds
+//these should be visible externally only in debug builds
 #ifdef _DEBUG
 extern "C" _KEXCOREIMP
 #endif
@@ -56,12 +53,17 @@ int kexInit()
 	if (!internals_init())
 		goto __error1;
 
-	prepare();
+	if (!apiconfmgr.load_api_configurations())
+		goto __error2;
 
 	if (!resolver_init())
 		goto __error2;
 
 	resolver_hook();
+	
+#ifdef _DEBUG
+	DebugWindow::create();
+#endif
 
 	DBGPRINTF(("Initialized successfully\n"));
 	return ++init_count;
@@ -73,7 +75,7 @@ __error1:
 	return 0;
 }
 
-//these should be visible only in debug builds
+//these should be visible externally only in debug builds
 #ifdef _DEBUG
 extern "C" _KEXCOREIMP
 #endif
@@ -87,6 +89,9 @@ int kexUninit()
 	DBGPRINTF(("Uninitializing\n"));
 	resolver_unhook();
 	resolver_uninit();
+#ifdef _DEBUG
+	DebugWindow::destroy();
+#endif
 	internals_uninit();
 	return --init_count;
 }
@@ -114,7 +119,7 @@ void load_MPRServices()
         RegOpenKey(hk_serv, subkey, &hk_this);
         size = sizeof(dllname);
         if (RegQueryValueEx(hk_this, "DllName", NULL, NULL, (BYTE*)dllname, &size) 
-                == ERROR_SUCCESS && strcmpi(dllname, own_path.get()) != 0)
+                == ERROR_SUCCESS && strcmpi(dllname, own_path) != 0)
         {         
             LoadLibrary(dllname);
         }
@@ -130,7 +135,7 @@ void load_MPRServices()
  */
 static bool ensure_shared_memory(DWORD addr)
 {
-	if (addr < 0x80000000)
+	if (!IS_SHARED(addr))
 	{
 		MessageBox(NULL, "KernelEx not loaded into shared memory!", 
 				"Critical Error", MB_ICONERROR | MB_OK);
@@ -187,17 +192,18 @@ BOOL APIENTRY PreDllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
 	if (reason == DLL_PROCESS_ATTACH)
 	{
-		if (!ensure_shared_memory((DWORD)instance))
-				return FALSE;
-
-		if (is_failsafe_mode())
-				return FALSE;
-
 		DisableThreadLibraryCalls(instance);
 
 		if (load_count((DWORD) instance) == 1)
 		{
+			//first reference => do init
 			hInstance = instance;
+
+			if (!ensure_shared_memory((DWORD)instance))
+				return FALSE;
+
+			if (is_failsafe_mode())
+				return FALSE;
 
 			if (detect_old_version())
 				return FALSE;
@@ -211,6 +217,11 @@ BOOL APIENTRY PreDllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 			ret = _DllMainCRTStartup(instance, reason, reserved);
 
 			get_own_path();
+		}
+		else
+		{
+			//referenced by other module => call resolver
+			ret = resolver_process_attach();
 		}
 	}
 	else if (reason == DLL_PROCESS_DETACH)
@@ -231,21 +242,14 @@ BOOL APIENTRY DllMain(HINSTANCE instance, DWORD reason, BOOL load_static)
 {
 	if (reason == DLL_PROCESS_ATTACH && GetModuleHandle("MPREXE.EXE"))
 	{
+		//auto start if loaded by MPREXE
+
 		//load all other MPR services before further execution
 		load_MPRServices();
 
 		//initialize
 		if (!kexInit())
 			return FALSE;
-
-		//in case KernelEx was loaded globally we don't want to unload it ever
-		IMTE** pmteModTable = *ppmteModTable;
-		pmteModTable[MRFromHLib(hInstance)->mteIndex]->cUsage++;
-		
-		//we don't want to unload the api libraries as well
-		ApiLibrary* apilib;
-		for (int i = 1 ; apilib = ApiLibraryManager::get_apilib(i) ; i++)
-			pmteModTable[MRFromHLib(apilib->mod_handle)->mteIndex]->cUsage++;
 
 		return TRUE;
 	}

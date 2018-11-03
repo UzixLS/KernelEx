@@ -26,13 +26,16 @@
 #include "sharedmem.h"
 #include "sstring.hpp"
 #include "resource.h"
+#include "k32ord.h"
 
-/** MSVC for-loop workaround. */
+/** MSVC 6.0 for-loop workaround. */
 #ifdef _MSC_VER
 #if _MSC_VER < 1201
 #define for if (0); else for
 #endif
 #endif
+
+#define IS_SHARED(x) (((DWORD)x) >= 0x80000000)
 
 extern HINSTANCE hInstance;
 
@@ -45,8 +48,6 @@ extern WORD* pimteMax;
 extern sstring kernelex_dir;
 extern sstring own_path;
 
-void FullCritLock();
-void FullCritUnlock();
 void ShowError(UINT id, ...);
 bool isWinMe();
 
@@ -78,25 +79,5 @@ extern FLoadTreeNotify_t FLoadTreeNotify;
 extern FreeLibRemove_t FreeLibRemove;
 
 MODREF* MRfromCallerAddr(DWORD addr);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void __stdcall _EnterSysLevel(CRITICAL_SECTION*);
-void __stdcall _LeaveSysLevel(CRITICAL_SECTION*);
-
-ULONG __stdcall VxDCall1(ULONG);
-ULONG __stdcall VxDCall2(ULONG, ULONG);
-ULONG __stdcall VxDCall3(ULONG, ULONG, ULONG);
-ULONG __stdcall VxDCall4(ULONG, ULONG, ULONG, ULONG);
-ULONG __stdcall VxDCall5(ULONG, ULONG, ULONG, ULONG, ULONG);
-ULONG __stdcall VxDCall6(ULONG, ULONG, ULONG, ULONG, ULONG, ULONG);
-ULONG __stdcall VxDCall7(ULONG, ULONG, ULONG, ULONG, ULONG, ULONG, ULONG);
-ULONG __stdcall VxDCall8(ULONG, ULONG, ULONG, ULONG, ULONG, ULONG, ULONG, ULONG);
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif

@@ -23,6 +23,7 @@
 #define __DEBUG_H
 
 #ifdef _DEBUG
+#include <stdio.h>
 #define DBGPRINTF(x) printf x
 #else
 #define DBGPRINTF(x) do {} while (0)

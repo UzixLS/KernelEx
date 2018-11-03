@@ -22,7 +22,6 @@
 #ifndef _GDI32_APILIST_H
 #define _GDI32_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
 
 BOOL init_gdi32();
@@ -45,8 +44,6 @@ FWDPROC CreateFontW_fwd;
 FWDPROC CreateICW_fwd;
 FWDPROC CreateMetaFileW_fwd;
 FWDPROC CreateScalableFontResourceW_fwd;
-FWDPROC EnumFontFamiliesExW_fwd;
-FWDPROC EnumFontFamiliesW_fwd;
 FWDPROC EnumFontsW_fwd;
 FWDPROC EnumICMProfilesW_fwd;
 FWDPROC GetCharABCWidthsW_fwd;

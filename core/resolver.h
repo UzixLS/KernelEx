@@ -51,12 +51,21 @@ struct IMTE_KEX : public IMTE
 class redir_stub
 {
 public:
-	redir_stub(unsigned long target) : c_eax(0xb8), v_eax(target), c_jmp(0xe0ff) {}
+	redir_stub(unsigned long target, bool make_call = false) : c_eax(0xb8), 
+			v_eax(target), c_jmp(make_call ? 0xd0ff : 0xe0ff) {}
 
 private:
 	unsigned char c_eax;
 	unsigned long v_eax;
 	unsigned short c_jmp;
+};
+
+struct config_params
+{
+	ApiConfiguration* apiconf;
+#ifdef _DEBUG
+	bool log_apis;
+#endif
 };
 
 #pragma pack(pop)

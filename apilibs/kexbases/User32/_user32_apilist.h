@@ -22,8 +22,18 @@
 #ifndef _USER32_APILIST_H
 #define _USER32_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
+
+/* There is no GetAltTabInfoA or RealGetWindowClassA in 9x */
+#ifdef GetAltTabInfo
+#undef GetAltTabInfo
+#endif
+EXTERN_C BOOL WINAPI GetAltTabInfo(HWND,int,PVOID,LPSTR,UINT);
+#ifdef RealGetWindowClass
+#undef RealGetWindowClass
+#endif
+EXTERN_C UINT WINAPI RealGetWindowClass(HWND  hwnd, LPTSTR pszType, UINT  cchType);
+
 
 typedef BOOL (WINAPI *IsHungThread_t)(DWORD ThreadID);
 extern IsHungThread_t IsHungThread_pfn;
@@ -55,6 +65,22 @@ BOOL WINAPI GetMessageW_new(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMs
 LONG WINAPI GetWindowLongA_new(HWND hWnd, int nIndex);
 BOOL WINAPI UpdateLayeredWindow_new(HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
 STUB SetLayeredWindowAttributes_stub;
+LPWSTR WINAPI CharNextExW_new(WORD codepage, LPCWSTR ptr, DWORD flags);
+LPWSTR WINAPI CharNextW_new(LPCWSTR x);
+LPSTR WINAPI CharPrevExW_new(WORD codepage, LPCWSTR start, LPCWSTR ptr, DWORD flags);
+LPWSTR WINAPI CharPrevW_new(LPCWSTR start,LPCWSTR x);
+BOOL WINAPI CharToOemBuffW_new(LPCWSTR s, LPSTR d, DWORD len);
+BOOL WINAPI CharToOemW_new(LPCWSTR s, LPSTR d);
+BOOL WINAPI OemToCharBuffW_new(LPCSTR s, LPWSTR d, DWORD len);
+BOOL WINAPI OemToCharW_new(LPCSTR s, LPWSTR d);
+LPWSTR WINAPI CharLowerW_new(LPWSTR x);
+LPWSTR WINAPI CharUpperW_new(LPWSTR x);
+DWORD WINAPI CharLowerBuffW_new(LPWSTR str, DWORD len);
+DWORD WINAPI CharUpperBuffW_new(LPWSTR str, DWORD len);
+BOOL WINAPI IsCharLowerW_new(WCHAR x);
+BOOL WINAPI IsCharUpperW_new(WCHAR x);
+BOOL WINAPI IsCharAlphaNumericW_new(WCHAR x);
+BOOL WINAPI IsCharAlphaW_new(WCHAR x);
 BOOL WINAPI DrawCaptionTempW_new(HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont, HICON hIcon, LPCWSTR strW, UINT uFlags);
 int WINAPI LoadStringW_new(HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer, int nBufferMax);
 UINT WINAPI RealGetWindowClassW_new(HWND hwnd, LPWSTR pszTypeW, UINT cchType);

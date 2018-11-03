@@ -20,7 +20,6 @@
  */
 
 #include <windows.h>
-#include "auxdecl.h"
 
 /* MAKE_EXPORT GlobalMemoryStatusEx_new=GlobalMemoryStatusEx */
 BOOL WINAPI GlobalMemoryStatusEx_new(LPMEMORYSTATUSEX lpmemex)

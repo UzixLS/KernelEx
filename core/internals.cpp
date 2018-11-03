@@ -22,7 +22,6 @@
 #include <windows.h>
 #include <cstdio>
 #include "internals.h"
-#include <tlhelp32.h>
 #include "resolver.h"
 #include "debug.h"
 #include "pemanip.h"
@@ -46,67 +45,6 @@ FreeLibRemove_t FreeLibRemove = NULL;
 
 sstring kernelex_dir("");
 sstring own_path("");
-
-HANDLE fullcritlock_hndl = NULL;
-
-//FIXME: CreateToolhelp32Snapshot + Process32First/Next should be replaced by
-//       plstPdb + PnodGetLstElem() + SetLstCurElem() (see DumpProcesses())
-void FullCritLock()
-{
-	PROCESSENTRY32 pe;
-	BOOL result;
-
-	DBGPRINTF(("FullCritLock\n"));
-	if (fullcritlock_hndl)
-	{
-		DBGPRINTF(("Error: lock already acquired\n"));
-		return;
-	}
-
-	_EnterSysLevel(krnl32lock);
-	fullcritlock_hndl = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	DBGASSERT(fullcritlock_hndl != INVALID_HANDLE_VALUE);
-
-	pe.dwSize = sizeof(pe);
-	result = Process32First(fullcritlock_hndl, &pe);
-	DBGASSERT(result != FALSE);
-	do
-	{
-		PDB98* pdb;
-		pdb = PIDtoPDB(pe.th32ProcessID);
-		_EnterSysLevel(&pdb->CriticalSection);
-	}
-	while (Process32Next(fullcritlock_hndl, &pe));
-}
-
-void FullCritUnlock()
-{
-	PROCESSENTRY32 pe;
-	BOOL result;
-
-	if (!fullcritlock_hndl)
-	{
-		DBGPRINTF(("Error: not locked\n"));
-		return;
-	}
-
-	pe.dwSize = sizeof(pe);
-	result = Process32First(fullcritlock_hndl, &pe);
-	DBGASSERT(result != FALSE);
-	do
-	{
-		PDB98* pdb;
-		pdb = PIDtoPDB(pe.th32ProcessID);
-		_LeaveSysLevel(&pdb->CriticalSection);
-	}
-	while (Process32Next(fullcritlock_hndl, &pe));
-
-	CloseHandle(fullcritlock_hndl);
-	fullcritlock_hndl = NULL;
-
-	_LeaveSysLevel(krnl32lock);
-	DBGPRINTF(("FullCritUnlock\n"));
-}
 
 bool isWinMe()
 {
@@ -233,7 +171,7 @@ static CRITICAL_SECTION* find_krnl32lock()
 	short pat[] = {0x55,0xA1,-2,-2,-2,-2,0x8B,0xEC,0x56,0x57,0x33,0xF6,0x50,0xE8};
 	int pat_len = sizeof(pat) / sizeof(short);
 
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, "VirtualQueryEx"), pat_len, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "VirtualQueryEx"), pat_len, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -251,7 +189,7 @@ static PDB98** find_curPDB()
 	short pat[] = {0xA1,-2,-2,-2,-2,0xFF,0x30,0xE8,-1,-1,-1,-1,0xC3};
 	int pat_len = sizeof(pat) / sizeof(short);
 
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, "GetCurrentProcessId"), pat_len, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "GetCurrentProcessId"), pat_len, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -269,7 +207,7 @@ static IMTE*** find_mod_table()
 	short pat[] = {0x8B,0x0D,-2,-2,-2,-2};
 	int pat_len = sizeof(pat) / sizeof(short);
 
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
 	
 	ret = (IMTE***)*res;
 	DBGPRINTF(("%s @ 0x%08x\n", pat_name, ret));
@@ -284,7 +222,7 @@ static MRFromHLib_t find_MRFromHLib()
 	short pat[] = {0xE8,-2,-2,-2,-2};
 	int pat_len = sizeof(pat) / sizeof(short);
 
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -343,7 +281,7 @@ static PIDtoPDB_t find_PIDtoPDB()
 	short pat[] = {0xFF,0x74,0x24,0x0C,0xE8,-2,-2,-2,-2};
 	int pat_len = sizeof(pat) / sizeof(short);
 	
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, "OpenProcess"), pat_len, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "OpenProcess"), pat_len, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -381,7 +319,7 @@ static FreeLibTree_t find_FreeLibTree()
 	short pat[] = {0x75,0x09,0x6A,0x06,0xE8,-1,-1,-1,-1,0xEB,0x08,0x50,0xE8,-2,-2,-2,-2,0x8B,0xF0};
 	int pat_len = sizeof(pat) / sizeof(short);
 	
-	DWORD* res = find_unique_pattern(iGetProcAddress(h_kernel32, "FreeLibrary"), 0x80, pat, pat_len, pat_name);
+	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "FreeLibrary"), 0x80, pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
 
@@ -471,7 +409,7 @@ static bool find_kernelex_install_dir()
 
 	DBGPRINTF(("KernelEx directory: %s\n", path));
 	strcat(path, "\\");
-	kernelex_dir = path;
+	kernelex_dir = strupr(path);
 	return true;
 }
 

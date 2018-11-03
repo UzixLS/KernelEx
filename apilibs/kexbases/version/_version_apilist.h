@@ -22,7 +22,6 @@
 #ifndef _VERSION_APILIST_H
 #define _VERSION_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
 
 BOOL init_version();

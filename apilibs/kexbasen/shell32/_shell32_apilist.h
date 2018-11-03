@@ -22,7 +22,6 @@
 #ifndef _SHELL32_APILIST_H
 #define _SHELL32_APILIST_H
 
-#include "auxdecl.h"
 #include "kexcoresdk.h"
 
 BOOL init_shell32();

@@ -30,6 +30,9 @@ struct ApiLibrary
 	HMODULE mod_handle;
 	int index;
 	char apilib_name[1]; // variable size array
+
+	bool is_shared() const { return (DWORD) mod_handle >= 0x80000000; }
+	void get_dll_path(char* out);
 };
 
 class ApiLibraryManager
@@ -38,20 +41,15 @@ public:
 	ApiLibraryManager();
 	~ApiLibraryManager();
 	bool load_apilib(const char* apilib_name);
-	ApiLibrary* get_new_apilib(const char* apilib_name);
-	static ApiLibrary* get_apilib(int index);
-	void commit_changes();
-	void rollback_changes();
+	ApiLibrary* get_apilib(const char* apilib_name);
+	ApiLibrary* get_apilib_by_index(int index);
 
 protected:
 	
 private:
 	bool initialized;
-	ApiLibrary** new_apilib_ptrs;
-	int new_apilib_cnt;
-
-	static ApiLibrary** apilib_ptrs;
-	static int apilib_cnt;
+	ApiLibrary** apilib_ptrs;
+	int apilib_cnt;
 
 	bool initialize();
 	bool are_api_tables_sorted(const apilib_api_table* tab);
@@ -61,9 +59,9 @@ private:
 	bool parse_system_dll(const char* dll_name, apilib_api_table* api_tab);
 };
 
-extern int          overridden_module_count;
+extern ApiLibraryManager apilibmgr;
+
 extern const char** overridden_module_names;
-extern const char** new_overridden_mod_nms;
-extern int          new_overridden_mod_cnt;
+extern int          overridden_module_count;
 
 #endif

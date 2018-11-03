@@ -54,6 +54,7 @@ private:
 	void disable_platform_check();
 	void disable_resource_check();
 	void mod_imte_alloc();
+	void mod_pdb_alloc();
 	void find_ExportFromX();
 	DWORD find_ExportFromOrdinal();
 	DWORD find_ExportFromName();

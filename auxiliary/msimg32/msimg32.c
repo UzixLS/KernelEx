@@ -37,6 +37,10 @@
 #define GRADIENT_FILL_TRIANGLE 0x02
 #define GRADIENT_FILL_OP_FLAG 0xff
 #endif
+
+#ifndef AC_SRC_ALPHA
+#define AC_SRC_ALPHA 0x01
+#endif
 	
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {

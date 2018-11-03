@@ -19,32 +19,20 @@
  *
  */
 
-#include "debug.h"
-#include <stdio.h>
 #include <stdarg.h>
 #include <windows.h>
-
-#define BUFLEN 256
+#include "debug.h"
 
 extern "C"
 int vsnprintf(char *buffer, size_t n, const char *format, va_list ap);
 
 void dbgvprintf(const char* format, void* _argp)
 {
-	char msg[BUFLEN];
+	char msg[DEBUGMSG_MAXLEN];
 	va_list argp = (va_list) _argp;
-	HANDLE console_out = GetStdHandle(STD_OUTPUT_HANDLE);
 	int cnt = vsnprintf(msg, sizeof(msg), format, argp);
 
-	if (console_out == INVALID_HANDLE_VALUE)
-	{
-		OutputDebugString(msg);
-	}
-	else
-	{
-		DWORD dummy;
-		WriteFile(console_out, msg, cnt < 0 ? BUFLEN - 1 : cnt, &dummy, NULL);
-	}
+	OutputDebugString(msg);
 }
 
 void dbgprintf(const char* format, ...)
@@ -54,3 +42,4 @@ void dbgprintf(const char* format, ...)
 	dbgvprintf(format, argp);
 	va_end(argp);
 }
+
