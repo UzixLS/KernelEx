@@ -41,6 +41,8 @@ HRESULT WINAPI SHGetSpecialFolderLocation_fix(HWND hwndOwner, int nFolder, LPVOI
 BOOL WINAPI SHGetSpecialFolderPathA_new(HWND hwndOwner, LPSTR lpszPath, int nFolder, BOOL fCreate);
 BOOL WINAPI SHGetSpecialFolderPathW_new(HWND hwndOwner, LPWSTR lpszPathW, int nFolder, BOOL fCreate);
 HRESULT WINAPI SHParseDisplayName_new(PCWSTR pszName, IBindCtx *pbc, LPITEMIDLIST *ppidl, SFGAOF sfgaoIn, SFGAOF *psfgaoOut);
+HRESULT WINAPI SHPathPrepareForWriteA_new(HWND hwnd, IUnknown *punkEnableModless, LPCSTR pszPathA, DWORD dwFlags);
+HRESULT WINAPI SHPathPrepareForWriteW_new(HWND hwnd, IUnknown *punkEnableModless, LPCWSTR pszPathW, DWORD dwFlags);
 FWDPROC ExtractIconExW_fwd;
 FWDPROC ExtractIconW_fwd;
 FWDPROC FindExecutableW_fwd;

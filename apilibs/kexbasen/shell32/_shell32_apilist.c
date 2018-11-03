@@ -56,6 +56,8 @@ static const apilib_named_api shell32_named_apis[] =
 	DECL_API("SHGetSpecialFolderPathA", SHGetSpecialFolderPathA_new),
 	DECL_API("SHGetSpecialFolderPathW", SHGetSpecialFolderPathW_new),
 	DECL_API("SHParseDisplayName", SHParseDisplayName_new),
+	DECL_API("SHPathPrepareForWriteA", SHPathPrepareForWriteA_new),
+	DECL_API("SHPathPrepareForWriteW", SHPathPrepareForWriteW_new),
 	DECL_API("ShellAboutW", ShellAboutW_fwd),
 	DECL_API("ShellExecuteExW", ShellExecuteExW_fwd),
 	DECL_API("ShellExecuteW", ShellExecuteW_fwd),

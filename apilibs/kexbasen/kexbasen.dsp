@@ -253,6 +253,10 @@ SOURCE=.\shell32\SHParseDisplayName.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\shell32\SHPathPrepareForWrite.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\shell32\unishell32.c
 # End Source File
 # End Group
