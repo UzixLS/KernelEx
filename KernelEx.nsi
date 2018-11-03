@@ -1,5 +1,5 @@
-  !define _VERSION '4.5.2'
-  !define _VERSION_CODE 0x04050078
+  !define _VERSION '4.5.3'
+  !define _VERSION_CODE 0x04050079
   
   !ifndef _DEBUG
     !define FLAVOUR 'Release'
