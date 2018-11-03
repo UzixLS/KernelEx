@@ -63,8 +63,9 @@ BOOL WINAPI GetDefaultPrinterW(LPWSTR bufW, LPDWORD sizeW)
 	if (ret)
 	{
 		*sizeW = ABUFtoW(buf, sizeA, *sizeW);
-		if (!ret)
-			*sizeW = ABUFtoW(buf, sizeA, 0);
+		if (*sizeW)
+			return TRUE;
+		*sizeW = ABUFtoW(buf, sizeA, 0);
 	}
 	return FALSE;
 }

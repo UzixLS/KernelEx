@@ -23,9 +23,24 @@
 #include "kexcoresdk.h"
 #include "_kernel32_apilist.h"
 
+extern BOOL init_jemalloc();
+extern BOOL init_exttls();
+extern void uninit_jemalloc();
+extern void detach_exttls();
+
 BOOL init_kernel32()
 {
-	return TRUE;
+	return init_jemalloc() && init_exttls();
+}
+
+void uninit_kernel32()
+{
+	uninit_jemalloc();
+}
+
+void detach_kernel32()
+{
+	detach_exttls();
 }
 
 static const apilib_named_api kernel32_named_apis[] = 
@@ -42,6 +57,7 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("CreateProcessW", CreateProcessW_fwd),
 	DECL_API("CreateSemaphoreW", CreateSemaphoreW_fwd),
 	DECL_API("CreateWaitableTimerW", CreateWaitableTimerW_fwd),
+	DECL_API("DelayLoadFailureHook", DelayLoadFailureHook_new),
 	DECL_API("EnumCalendarInfoExW", EnumCalendarInfoExW_fwd),
 	DECL_API("EnumCalendarInfoW", EnumCalendarInfoW_fwd),
 	DECL_API("EnumDateFormatsExW", EnumDateFormatsExW_fwd),
@@ -75,6 +91,12 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("GetProfileStringW", GetProfileStringW_fwd),
 	DECL_API("GetTimeFormatW", GetTimeFormatW_fwd),
 	DECL_API("GetVolumeInformationW", GetVolumeInformationW_fwd),
+	DECL_API("HeapAlloc", HeapAlloc_new),
+	DECL_API("HeapCreate", HeapCreate_new),
+	DECL_API("HeapDestroy", HeapDestroy_new),
+	DECL_API("HeapFree", HeapFree_new),
+	DECL_API("HeapReAlloc", HeapReAlloc_new),
+	DECL_API("HeapSize", HeapSize_new),
 	DECL_API("IsBadStringPtrW", IsBadStringPtrW_fwd),
 	DECL_API("OpenEventW", OpenEventW_fwd),
 	DECL_API("OpenFileMappingW", OpenFileMappingW_fwd),
@@ -83,10 +105,13 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("OpenWaitableTimerW", OpenWaitableTimerW_fwd),
 	DECL_API("PeekConsoleInputW", PeekConsoleInputW_fwd),
 	DECL_API("QueryDosDeviceW", QueryDosDeviceW_fwd),
+	DECL_API("QueueUserWorkItem", QueueUserWorkItem_new),
 	DECL_API("ReadConsoleInputW", ReadConsoleInputW_fwd),
 	DECL_API("ReadConsoleOutputCharacterW", ReadConsoleOutputCharacterW_fwd),
 	DECL_API("ReadConsoleOutputW", ReadConsoleOutputW_fwd),
 	DECL_API("ReadConsoleW", ReadConsoleW_fwd),
+	DECL_API("RegisterWaitForSingleObject", RegisterWaitForSingleObject_new),
+	DECL_API("RegisterWaitForSingleObjectEx", RegisterWaitForSingleObjectEx_new),
 	DECL_API("ScrollConsoleScreenBufferW", ScrollConsoleScreenBufferW_fwd),
 	DECL_API("SetCalendarInfoW", SetCalendarInfoW_fwd),
 	DECL_API("SetComputerNameW", SetComputerNameW_fwd),
@@ -94,6 +119,12 @@ static const apilib_named_api kernel32_named_apis[] =
 	DECL_API("SetEnvironmentVariableW", SetEnvironmentVariableW_fwd),
 	DECL_API("SetLocaleInfoW", SetLocaleInfoW_fwd),
 	DECL_API("SetVolumeLabelW", SetVolumeLabelW_fwd),
+	DECL_API("TlsAlloc", TlsAlloc_new),
+	DECL_API("TlsFree", TlsFree_new),
+	DECL_API("TlsGetValue", TlsGetValue_new2),
+	DECL_API("TlsSetValue", TlsSetValue_new2),
+	DECL_API("UnregisterWait", UnregisterWait_new),
+	DECL_API("UnregisterWaitEx", UnregisterWaitEx_new),
 	DECL_API("WaitNamedPipeW", WaitNamedPipeW_fwd),
 	DECL_API("WriteConsoleInputW", WriteConsoleInputW_fwd),
 	DECL_API("WriteConsoleOutputCharacterW", WriteConsoleOutputCharacterW_fwd),

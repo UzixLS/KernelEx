@@ -1,4 +1,12 @@
-  !define VERSION '4.0 Final 2'
+  !define _VERSION '4.5 Beta 1'
+  
+  !ifndef _DEBUG
+    !define FLAVOUR 'Release'
+    !define VERSION '${_VERSION}'
+  !else
+    !define FLAVOUR 'Debug'
+    !define VERSION '${_VERSION} Debug'
+  !endif
 
 ;--------------------------------
 ;Includes
@@ -66,8 +74,6 @@
   LangString DESC_INSTALLING ${LANG_ENGLISH} "Installing"
   LangString DESC_DOWNLOADING1 ${LANG_ENGLISH} "Downloading"
   LangString DESC_DOWNLOADFAILED ${LANG_ENGLISH} "Download Failed:"
-  LangString DESC_PRODUCT_TIMEOUT ${LANG_ENGLISH} "The installation of the $(DESC_SHORTPRODUCT) \
-    has timed out."
   LangString ERROR_PRODUCT_INVALID_PATH ${LANG_ENGLISH} "The $(DESC_SHORTPRODUCT) Installation$\n\
     was not found in the following location:$\n"
   LangString ERROR_PRODUCT_FATAL ${LANG_ENGLISH} "A fatal error occurred during the installation$\n\
@@ -159,8 +165,7 @@ Section "MSLU" SECPRODUCT
   DetailPrint "$(DESC_INSTALLING) $(DESC_SHORTPRODUCT)..."
   Banner::show /NOUNLOAD "$(DESC_INSTALLING) $(DESC_SHORTPRODUCT)..."
   CreateDirectory "$INSTDIR\MSLU"
-  nsExec::Exec '"$TEMP\unicows.exe" /t:$INSTDIR\MSLU'
-  Pop $0
+  ExecWait '"$TEMP\unicows.exe" /t:$INSTDIR\MSLU' $0
   Banner::destroy
   Delete "$TEMP\unicows.exe"
    
@@ -169,16 +174,10 @@ Section "MSLU" SECPRODUCT
   ; it will return "error"
   ; If the process timed out it will return "timeout"
   ; else it will return the return code from the executed process.
-  StrCmp $0 "" lbl_NoError
+  StrCmp $0 "" lbl_Error
   StrCmp $0 "0" lbl_NoError
-  StrCmp $0 "error" lbl_Error
-  StrCmp $0 "timeout" lbl_TimeOut
   ; all others are fatal
   DetailPrint "$(ERROR_PRODUCT_FATAL)[$0]"
-  Goto lbl_commonError
- 
-  lbl_TimeOut:
-  DetailPrint "$(DESC_PRODUCT_TIMEOUT)"
   Goto lbl_commonError
  
   lbl_Error:
@@ -200,14 +199,28 @@ SectionEnd
 Section "Install"
 
   SetDetailsView show
+
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
+  IfErrors +5
+    DetailPrint "Detected unfinished previous installation."
+    DetailPrint "You have to restart the system in order to complete it before you can proceed."
+    MessageBox MB_ICONSTOP|MB_OK "You have to restart the system first."
+    Abort
+
   SetOutPath "$INSTDIR"
     
   SetOverwrite on
-  File setup\Release\setupkex.exe
+  File setup\${FLAVOUR}\setupkex.exe
   SetOverwrite lastused
   
+!ifdef _DEBUG
   nsExec::ExecToLog '"$INSTDIR\setupkex.exe" "$INSTDIR\kernel32.bak"'
   Pop $0
+!else
+  ExecWait '"$INSTDIR\setupkex.exe" "$INSTDIR\kernel32.bak"' $0
+  StrCmp $0 "" 0 +2
+    StrCpy $0 "error"
+!endif
   DetailPrint "    setup returned: $0"
   Delete "$INSTDIR\setupkex.exe"
   StrCmp $0 "0" +3
@@ -219,33 +232,40 @@ Section "Install"
   ;UpdateDLL_Func params:
   ;$R4 - target; $R5 - tempdir; $R6 - register?; $R7 - source
   GetTempFileName $0 "$INSTDIR"
-  File /oname=$0 "Core\Release\KernelEx.dll"
+  File /oname=$0 "Core\${FLAVOUR}\KernelEx.dll"
   StrCpy $R4 "$INSTDIR\KernelEx.dll"
   StrCpy $R6 "0"
   StrCpy $R7 $0
   Call UpgradeDLL_Func
   
   GetTempFileName $0 "$INSTDIR"
-  File /oname=$0 "apilibs\kexbases\Release\kexbases.dll"
+  File /oname=$0 "apilibs\kexbases\${FLAVOUR}\kexbases.dll"
   StrCpy $R4 "$INSTDIR\kexbases.dll"
   StrCpy $R6 "0"
   StrCpy $R7 $0
   Call UpgradeDLL_Func
   
   GetTempFileName $0 "$INSTDIR"
-  File /oname=$0 "apilibs\kexbasen\Release\kexbasen.dll"
+  File /oname=$0 "apilibs\kexbasen\${FLAVOUR}\kexbasen.dll"
   StrCpy $R4 "$INSTDIR\kexbasen.dll"
   StrCpy $R6 "0"
   StrCpy $R7 $0
   Call UpgradeDLL_Func
   
   GetTempFileName $0 "$INSTDIR"
-  File /oname=$0 "sheet\Release\sheet.dll"
+  File /oname=$0 "sheet\${FLAVOUR}\sheet.dll"
   StrCpy $R4 "$INSTDIR\sheet.dll"
   StrCpy $R6 "1"
   StrCpy $R7 $0
   Call UpgradeDLL_Func
   
+  GetTempFileName $0 "$INSTDIR"
+  File /oname=$0 "kexCOM\${FLAVOUR}\kexCOM.dll"
+  StrCpy $R4 "$INSTDIR\kexCOM.dll"
+  StrCpy $R6 "1"
+  StrCpy $R7 $0
+  Call UpgradeDLL_Func
+
   SetOverwrite on
   
   File apilibs\core.ini
@@ -287,6 +307,13 @@ Section "Install"
   WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
     "WTSAPI32" "WTSAPI32.DLL"
   
+  GetTempFileName $0 "$INSTDIR"
+  File /oname=$0 auxiliary\userenv.dll
+  Delete "$INSTDIR\userenv.dll"
+  Rename /REBOOTOK $0  "$INSTDIR\userenv.dll"
+  WriteRegStr HKLM "Software\KernelEx\KnownDLLs" \
+    "USERENV" "USERENV.DLL"
+  
   SetOverwrite lastused
   
   ExecWait '"$WINDIR\regedit.exe" /s "$INSTDIR\settings.reg"'
@@ -306,7 +333,7 @@ Section "Install"
   
   ;Write verifier
   SetOverWrite on
-  File verify\Release\verify.exe
+  File verify\${FLAVOUR}\verify.exe
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" \
     "KexVerify" "$INSTDIR\verify.exe"
   SetOverwrite lastused
@@ -314,6 +341,7 @@ Section "Install"
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot" ""
   SetRebootFlag true
 
 SectionEnd
@@ -324,21 +352,29 @@ SectionEnd
 Section "Uninstall"
 
   SetDetailsView show
-  
-  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "$(DESC_SETTINGS_PRESERVE)" IDYES +2 IDNO 0
-    DeleteRegKey HKLM "Software\KernelEx"
-  
-  DeleteRegKey HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx"
-  DeleteRegKey /ifempty HKLM "System\CurrentControlSet\Control\MPRServices"
+
+  ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot"
+  IfErrors +5
+    DetailPrint "Detected unfinished previous installation."
+    DetailPrint "You have to restart the system in order to complete it before you can proceed."
+    MessageBox MB_ICONSTOP|MB_OK "You have to restart the system first."
+    Abort
   
   ;Files to uninstall
-  Rename /REBOOTOK "$INSTDIR\kernel32.bak" "$SYSDIR\kernel32.dll"
+  IfFileExists "$INSTDIR\kernel32.bak" 0 +5
+    GetTempFileName $0 "$SYSDIR"
+    Delete $0
+    Rename "$INSTDIR\kernel32.bak" $0
+    Rename /REBOOTOK $0 "$SYSDIR\kernel32.dll"
+
   Delete /REBOOTOK "$INSTDIR\KernelEx.dll"
   Delete /REBOOTOK "$INSTDIR\kexbases.dll"
   Delete /REBOOTOK "$INSTDIR\kexbasen.dll"
   Delete "$INSTDIR\core.ini"
   UnRegDLL "$INSTDIR\sheet.dll"
   Delete /REBOOTOK "$INSTDIR\sheet.dll"
+  UnRegDLL "$INSTDIR\kexCOM.dll"
+  Delete /REBOOTOK "$INSTDIR\kexCOM.dll"
   Delete "$INSTDIR\license.txt"
   
   Delete /REBOOTOK "$INSTDIR\msimg32.dll"
@@ -351,6 +387,8 @@ Section "Uninstall"
   DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "UXTHEME"
   Delete /REBOOTOK "$INSTDIR\wtsapi32.dll"
   DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "WTSAPI32"
+  Delete /REBOOTOK "$INSTDIR\userenv.dll"
+  DeleteRegValue HKLM "Software\KernelEx\KnownDLLs" "USERENV"
   
   Delete "$INSTDIR\verify.exe"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "KexVerify"
@@ -360,8 +398,15 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\MSLU"
   WriteINIStr $WINDIR\wininit.ini Rename DIRNUL $INSTDIR
 
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "$(DESC_SETTINGS_PRESERVE)" IDYES +2 IDNO 0
+    DeleteRegKey HKLM "Software\KernelEx"
+  
+  DeleteRegKey HKLM "System\CurrentControlSet\Control\MPRServices\KernelEx"
+  DeleteRegKey /ifempty HKLM "System\CurrentControlSet\Control\MPRServices"
+  
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\KernelEx"
   
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "KexNeedsReboot" ""
   SetRebootFlag true
 
 SectionEnd

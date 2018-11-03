@@ -24,7 +24,9 @@
 UNIMPL_FUNC(CreateHardLinkA, 3);
 UNIMPL_FUNC(CreateHardLinkW, 3);
 UNIMPL_FUNC(IsValidLanguageGroup, 2);
-UNIMPL_FUNC(QueueUserWorkItem, 3);
 UNIMPL_FUNC(ReplaceFileA, 6);
 UNIMPL_FUNC(ReplaceFileW, 6);
 UNIMPL_FUNC(FindFirstFileExW, 6);
+UNIMPL_FUNC(HeapSetInformation, 4);
+UNIMPL_FUNC(GetProcessIoCounters, 2);
+UNIMPL_FUNC(RtlCaptureStackBackTrace, 4);

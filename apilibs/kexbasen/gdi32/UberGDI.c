@@ -202,6 +202,46 @@ BOOL WINAPI GetCharWidthI_new(
 	return TRUE;
 }
 
+//NOTE: usp10 is probing for that function, don't forget to exclude it
+
+/* MAKE_EXPORT GetCharABCWidthsI_new=GetCharABCWidthsI */
+BOOL WINAPI GetCharABCWidthsI_new(
+  HDC hdc,         // handle to DC
+  UINT giFirst,    // first glyph index in range
+  UINT cgi,        // count of glyph indices in range
+  LPWORD pgi,      // array of glyph indices
+  LPABC lpabc      // array of character widths
+)
+{
+	SCRIPT_CACHE cache = 0;
+	WORD glyph;
+	
+	if ( !hdc || !lpabc || cgi<=0)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+	if ( !pgi ) //cgi glyphs starting giFirst
+	{
+		for ( glyph = giFirst; glyph < giFirst+cgi; glyph++)
+		{
+			ScriptGetGlyphABCWidth(hdc,&cache,glyph,lpabc);
+			lpabc++;
+		}
+	}
+	else
+	{
+		for ( glyph = 0; glyph < cgi; glyph++)
+		{
+			ScriptGetGlyphABCWidth(hdc,&cache,*pgi,lpabc);
+			pgi++;
+			lpabc++;
+		}		
+	}
+	ScriptFreeCache(&cache);
+	return TRUE;
+}
+
 /* MAKE_EXPORT GetGlyphOutlineW_new=GetGlyphOutlineW */
 DWORD WINAPI GetGlyphOutlineW_new(
   HDC hdc,             // handle to DC

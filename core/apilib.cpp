@@ -186,8 +186,7 @@ bool ApiLibraryManager::load_apilib(const char* apilib_name)
 //		DBGPRINTF(("  * %s\n", p->target_library));
 		if (!add_overridden_module(p->target_library))
 		{
-			DBGPRINTF(("Failed to add overridden module %s\n", p->target_library));
-			goto __error;
+			DBGPRINTF(("Failed to add overridden module %s. Skipping\n", p->target_library));
 		}
 	}
 
@@ -375,6 +374,13 @@ bool ApiLibraryManager::add_overridden_module(const char* mod)
 			return true;
 	}
 
+	apilib_api_table table;
+	if (!parse_system_dll(mod, &table))
+	{
+		DBGPRINTF(("Failed to parse system DLL: %s\n", mod));
+		return false;
+	}
+
 	//allocate space for new overridden modules
 	if (overridden_module_count % ALLOC_CAPACITY == 0)
 	{
@@ -396,11 +402,7 @@ bool ApiLibraryManager::add_overridden_module(const char* mod)
 		std_api_table = (apilib_api_table*) new_block;
 	}
 
-	if (!parse_system_dll(mod, &std_api_table[overridden_module_count]))
-	{
-		DBGPRINTF(("Failed to parse system DLL: %s\n", mod));
-		return false;
-	}
+	std_api_table[overridden_module_count] = table;
 
 	//add to table of overridden modules
 	overridden_module_names[overridden_module_count] 
@@ -529,7 +531,10 @@ bool ApiLibraryManager::parse_system_dll(const char* dll_name, apilib_api_table*
 
 	char* new_mod = (char*) malloc(strlen(dll_name) + 1);
 	if (!new_mod)
+	{
+		free(mem);
 		return false;
+	}
 
 	strcpy(new_mod, dll_name);
 	strupr(new_mod);

@@ -25,6 +25,13 @@
 #include "resolver.h"
 #include "debug.h"
 #include "pemanip.h"
+#include "ModInit.h"
+
+#ifdef _DEBUG
+#define _D(x) x
+#else
+#define _D(x) NULL
+#endif
 
 static bool is_winme;
 HINSTANCE hInstance;
@@ -39,7 +46,6 @@ MRFromHLib_t MRFromHLib = NULL;
 TIDtoTDB_t TIDtoTDB = NULL;
 MRLoadTree_t MRLoadTree = NULL;
 FreeLibTree_t FreeLibTree = NULL;
-FLoadTreeNotify_t FLoadTreeNotify = NULL;
 FreeLibRemove_t FreeLibRemove = NULL;
 AllocHandle_t AllocHandle = NULL;
 
@@ -59,7 +65,7 @@ void ShowError(UINT id, ...)
 	
 	va_start(vargs, id);
 	if (!LoadString(hInstance, id, format, sizeof(format)))
-		sprintf(out, "ERROR: Missing string resource %d", id);
+		sprintf(out, "ERROR: %d [Missing error description]", id);
 	else
 		_vsnprintf(out, sizeof(out), format, vargs);
 	va_end(vargs);
@@ -181,14 +187,32 @@ HANDLE _OpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId)
 	return ret;
 }
 
+HANDLE _GetProcessHeap()
+{
+	HANDLE hp = GetProcessHeap();
+
+	if (!hp)
+	{
+		PDB98* pdb = *pppdbCur;
+		IMAGE_NT_HEADERS* nth = (*ppmteModTable)[pdb->pExeMODREF->mteIndex]->pNTHdr;
+		//create new default heap
+		hp = pdb->DefaultHeap = HeapCreate(0, nth->OptionalHeader.SizeOfHeapCommit, 0);
+		//this will prevent the system from creating another default heap
+		nth->OptionalHeader.SizeOfHeapReserve = 0;
+	}
+
+	DBGASSERT(hp != NULL);
+	return hp;
+}
+
 /* find win32 mutex */
 static CRITICAL_SECTION* find_krnl32lock()
 {
-	CRITICAL_SECTION* ret;
+	static const char* pat_name = _D("Win32 lock");
+	static const short pat[] = {0x55,0xA1,-2,-2,-2,-2,0x8B,0xEC,0x56,0x57,0x33,0xF6,0x50,0xE8};
+	static const int pat_len = sizeof(pat) / sizeof(short);
 
-	const char* pat_name = "Win32 lock";
-	short pat[] = {0x55,0xA1,-2,-2,-2,-2,0x8B,0xEC,0x56,0x57,0x33,0xF6,0x50,0xE8};
-	int pat_len = sizeof(pat) / sizeof(short);
+	CRITICAL_SECTION* ret;
 
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "VirtualQueryEx"), pat_len, pat, pat_len, pat_name);
 	if (!res)
@@ -202,11 +226,11 @@ static CRITICAL_SECTION* find_krnl32lock()
 /* find current process PDB */
 static PDB98** find_curPDB()
 {
-	PDB98** ret;
+	static const char* pat_name = _D("pppdbCur");
+	static const short pat[] = {0xA1,-2,-2,-2,-2,0xFF,0x30,0xE8,-1,-1,-1,-1,0xC3};
+	static const int pat_len = sizeof(pat) / sizeof(short);
 
-	const char* pat_name = "pppdbCur";
-	short pat[] = {0xA1,-2,-2,-2,-2,0xFF,0x30,0xE8,-1,-1,-1,-1,0xC3};
-	int pat_len = sizeof(pat) / sizeof(short);
+	PDB98** ret;
 
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "GetCurrentProcessId"), pat_len, pat, pat_len, pat_name);
 	if (!res)
@@ -220,12 +244,12 @@ static PDB98** find_curPDB()
 /* find global module tables */
 static IMTE*** find_mod_table()
 {
+	static const char* pat_name = _D("Module table");
+	static const short pat[] = {0x8B,0x0D,-2,-2,-2,-2};
+	static const int pat_len = sizeof(pat) / sizeof(short);
+
 	IMTE*** ret;
 	
-	const char* pat_name = "Module table";
-	short pat[] = {0x8B,0x0D,-2,-2,-2,-2};
-	int pat_len = sizeof(pat) / sizeof(short);
-
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
 	
 	ret = (IMTE***)*res;
@@ -235,11 +259,11 @@ static IMTE*** find_mod_table()
 
 static MRFromHLib_t find_MRFromHLib()
 {
-	MRFromHLib_t ret;
+	static const char* pat_name = _D("MRFromHLib");
+	static const short pat[] = {0xE8,-2,-2,-2,-2};
+	static const int pat_len = sizeof(pat) / sizeof(short);
 
-	const char* pat_name = "MRFromHLib";
-	short pat[] = {0xE8,-2,-2,-2,-2};
-	int pat_len = sizeof(pat) / sizeof(short);
+	MRFromHLib_t ret;
 
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, (LPSTR)23), 0x20, pat, pat_len, pat_name);
 	if (!res)
@@ -252,16 +276,16 @@ static MRFromHLib_t find_MRFromHLib()
 
 static WORD* find_pimteMax()
 {
+	static const char* pat_name = _D("pimteMax");
+	static const short pat[] = {0x66,0x8B,0x44,0x24,0x04,0x66,-1,0x05,-2,-2,-2,-2,-1,0x17,0x8B,0x0D,-1,-1,-1,-1,0x0F,0xBF,0xC0,0x8B,0x04,0x81,0x85,0xC0,0x74,0x07,0x8B,0x40,0x04,0x85,0xC0,0x75,0x09};
+	static const int pat_len = sizeof(pat) / sizeof(short);
+	static const char* sec_name = ".text";
+
 	WORD* ret;
 	PEmanip pe(h_kernel32);
 	if (!pe.HasTarget())
 		return NULL;
 	
-	const char* pat_name = "pimteMax";
-	short pat[] = {0x66,0x8B,0x44,0x24,0x04,0x66,-1,0x05,-2,-2,-2,-2,-1,0x17,0x8B,0x0D,-1,-1,-1,-1,0x0F,0xBF,0xC0,0x8B,0x04,0x81,0x85,0xC0,0x74,0x07,0x8B,0x40,0x04,0x85,0xC0,0x75,0x09};
-	int pat_len = sizeof(pat) / sizeof(short);
-	const char* sec_name = ".text";
-
 	DWORD* res = find_unique_pattern(pe.GetSectionByName(sec_name), pe.GetSectionSize(sec_name), pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
@@ -273,16 +297,16 @@ static WORD* find_pimteMax()
 
 static TIDtoTDB_t find_TIDtoTDB()
 {
+	static const char* pat_name = _D("TIDtoTDB");
+	static const short pat[] = {0x89,-1,0xFF,0x75,0xFC,0xFF,0x77,0x14,0xE8,-2,-2,-2,-2,0x50};
+	static const int pat_len = sizeof(pat) / sizeof(short);
+	static const char* sec_name = ".text";
+	
 	TIDtoTDB_t ret;
 	PEmanip pe(h_kernel32);
 	if (!pe.HasTarget())
 		return NULL;
 
-	const char* pat_name = "TIDtoTDB";
-	short pat[] = {0x89,-1,0xFF,0x75,0xFC,0xFF,0x77,0x14,0xE8,-2,-2,-2,-2,0x50};
-	int pat_len = sizeof(pat) / sizeof(short);
-	const char* sec_name = ".text";
-	
 	DWORD* res = find_unique_pattern(pe.GetSectionByName(sec_name), pe.GetSectionSize(sec_name), pat, pat_len, pat_name);
 	if (!res)
 		return NULL;
@@ -294,15 +318,15 @@ static TIDtoTDB_t find_TIDtoTDB()
 
 static MRLoadTree_t find_MRLoadTree()
 {
+	static const char* pat_name = _D("MRLoadTree");
+	static const short pat[] = {0x33,0xF6,0xE8,-1,-1,-1,-1,0x39,0x35,-1,-1,-1,-1,0x74,0x11,0xA1,-1,-1,-1,-1,0x50,0xE8,-1,-1,-1,-1,0x89,0x35,-1,-1,-1,-1,0xFF,0x74,0x24,0x14,0xE8,-2,-2,-2,-2,0x8B,0xF0,0x85,0xF6};
+	static const int pat_len = sizeof(pat) / sizeof(short);
+	static const char* sec_name = ".text";
+
 	MRLoadTree_t ret;
 	PEmanip pe(h_kernel32);
 	if (!pe.HasTarget())
 		return NULL;
-
-	const char* pat_name = "MRLoadTree";
-	short pat[] = {0x33,0xF6,0xE8,-1,-1,-1,-1,0x39,0x35,-1,-1,-1,-1,0x74,0x11,0xA1,-1,-1,-1,-1,0x50,0xE8,-1,-1,-1,-1,0x89,0x35,-1,-1,-1,-1,0xFF,0x74,0x24,0x14,0xE8,-2,-2,-2,-2,0x8B,0xF0,0x85,0xF6};
-	int pat_len = sizeof(pat) / sizeof(short);
-	const char* sec_name = ".text";
 
 	DWORD* res = find_unique_pattern(pe.GetSectionByName(sec_name), pe.GetSectionSize(sec_name), pat, pat_len, pat_name);
 	if (!res)
@@ -315,11 +339,11 @@ static MRLoadTree_t find_MRLoadTree()
 
 static FreeLibTree_t find_FreeLibTree()
 {
-	FreeLibTree_t ret;
+	static const char* pat_name = _D("FreeLibTree");
+	static const short pat[] = {0x75,0x09,0x6A,0x06,0xE8,-1,-1,-1,-1,0xEB,0x08,0x50,0xE8,-2,-2,-2,-2,0x8B,0xF0};
+	static const int pat_len = sizeof(pat) / sizeof(short);
 	
-	const char* pat_name = "FreeLibTree";
-	short pat[] = {0x75,0x09,0x6A,0x06,0xE8,-1,-1,-1,-1,0xEB,0x08,0x50,0xE8,-2,-2,-2,-2,0x8B,0xF0};
-	int pat_len = sizeof(pat) / sizeof(short);
+	FreeLibTree_t ret;
 	
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "FreeLibrary"), 0x80, pat, pat_len, pat_name);
 	if (!res)
@@ -330,38 +354,17 @@ static FreeLibTree_t find_FreeLibTree()
 	return ret;
 }
 
-static FLoadTreeNotify_t find_FLoadTreeNotify()
-{
-	FLoadTreeNotify_t ret;
-	PEmanip pe(h_kernel32);
-	if (!pe.HasTarget())
-		return NULL;
-
-	const char* pat_name = "FLoadTreeNotify";
-	short pat[] = {0x56,0xA1,-1,-1,-1,-1,0x6A,0x01,0x8B,0x08,0xFF,0xB1,0x98,0x00,0x00,0x00,0xE8,-2,-2,-2,-2,0x83,0xF8,0x01,0x1B,0xF6,0xF7,0xDE,0x85,0xF6};
-	int pat_len = sizeof(pat) / sizeof(short);
-	const char* sec_name = ".text";
-
-	DWORD* res = find_unique_pattern(pe.GetSectionByName(sec_name), pe.GetSectionSize(sec_name), pat, pat_len, pat_name);
-	if (!res)
-		return NULL;
-
-	ret = (FLoadTreeNotify_t)decode_calljmp(res);
-	DBGPRINTF(("%s @ 0x%08x\n", pat_name, ret));
-	return ret;
-}
-
 static FreeLibRemove_t find_FreeLibRemove()
 {
+	static const char* pat_name = _D("FreeLibRemove");
+	static const short pat[] = {0x8B,0xF0,0x85,0xF6,0x75,0x05,0xE8,-2,-2,-2,-2,0xA1,-1,-1,-1,-1,0x50};
+	static const int pat_len = sizeof(pat) / sizeof(short);
+	static const char* sec_name = ".text";
+
 	FreeLibRemove_t ret;
 	PEmanip pe(h_kernel32);
 	if (!pe.HasTarget())
 		return NULL;
-
-	const char* pat_name = "FreeLibRemove";
-	short pat[] = {0x8B,0xF0,0x85,0xF6,0x75,0x05,0xE8,-2,-2,-2,-2,0xA1,-1,-1,-1,-1,0x50};
-	int pat_len = sizeof(pat) / sizeof(short);
-	const char* sec_name = ".text";
 
 	DWORD* res = find_unique_pattern(pe.GetSectionByName(sec_name), pe.GetSectionSize(sec_name), pat, pat_len, pat_name);
 	if (!res)
@@ -374,11 +377,11 @@ static FreeLibRemove_t find_FreeLibRemove()
 
 static AllocHandle_t find_AllocHandle()
 {
-	AllocHandle_t ret;
+	static const char* pat_name = _D("AllocHandle");
+	static const short pat[] = {0x83,0xD1,0xFF,0x81,0xE2,0xFF,0x0F,0x1F,0x00,0x81,0xE1,0x00,0x00,0x00,0x80,0x0B,0xCA,0x8B,0x15,-1,-1,-1,-1,0x51,0x50,0xFF,0x32,0xE8,-2,-2,-2,-2};
+	static const int pat_len = sizeof(pat) / sizeof(short);
 	
-	const char* pat_name = "AllocHandle";
-	short pat[] = {0x83,0xD1,0xFF,0x81,0xE2,0xFF,0x0F,0x1F,0x00,0x81,0xE1,0x00,0x00,0x00,0x80,0x0B,0xCA,0x8B,0x15,-1,-1,-1,-1,0x51,0x50,0xFF,0x32,0xE8,-2,-2,-2,-2};
-	int pat_len = sizeof(pat) / sizeof(short);
+	AllocHandle_t ret;
 	
 	DWORD* res = find_unique_pattern((void*) iGetProcAddress(h_kernel32, "OpenProcess"), 0x80, pat, pat_len, pat_name);
 	if (!res)
@@ -445,15 +448,16 @@ int internals_init()
 	TIDtoTDB = find_TIDtoTDB();
 	MRLoadTree = find_MRLoadTree();
 	FreeLibTree = find_FreeLibTree();
-	FLoadTreeNotify = find_FLoadTreeNotify();
 	FreeLibRemove = find_FreeLibRemove();
 	AllocHandle = find_AllocHandle();
 	bool instdir_rslt = find_kernelex_install_dir();
 	is_winme = (GetVersion() == 0xc0005a04);
+	bool modinit_rslt = ModuleInitializer_init();
 
 	if (!h_kernel32 || !ppmteModTable || !krnl32lock || !pppdbCur || !MRFromHLib
 			|| !pimteMax || !TIDtoTDB || !MRLoadTree || !FreeLibTree 
-			|| !FLoadTreeNotify || !FreeLibRemove || !AllocHandle || !instdir_rslt)
+			|| !FreeLibRemove || !AllocHandle || !instdir_rslt 
+			|| !modinit_rslt)
 		return 0;
 	return 1;
 }

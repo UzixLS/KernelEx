@@ -25,6 +25,11 @@
 #define CP_THREAD_ACP 3
 #endif
 
+#ifndef WC_ERR_INVALID_CHARS
+#define WC_ERR_INVALID_CHARS 0x0080
+#endif
+
+
 /* MAKE_EXPORT WideCharToMultiByte_new=WideCharToMultiByte */
 int WINAPI WideCharToMultiByte_new(
     UINT CodePage,
@@ -39,6 +44,8 @@ int WINAPI WideCharToMultiByte_new(
 {
 	if (CodePage == CP_THREAD_ACP)
 		CodePage = CP_ACP;
+	else if (CodePage == CP_UTF8 || CodePage == CP_UTF7)
+		dwFlags &= ~WC_ERR_INVALID_CHARS;
 	return WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, 
 		lpMultiByteStr, cchMultiByte, lpDefaultChar, lpUsedDefaultChar);
 }
@@ -55,6 +62,8 @@ int WINAPI MultiByteToWideChar_new(
 {
 	if (CodePage == CP_THREAD_ACP)
 		CodePage = CP_ACP;
+	else if (CodePage == CP_UTF8 || CodePage == CP_UTF7)
+		dwFlags &= ~MB_ERR_INVALID_CHARS;
 	return MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cchMultiByte,
 		lpWideCharStr, cchWideChar);
 }

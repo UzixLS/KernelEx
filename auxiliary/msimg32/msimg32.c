@@ -63,7 +63,7 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
   BLENDFUNCTION blendFunction  // alpha-blending function
 )
 {
-	unsigned int i, srcalpha, dstalpha;
+	unsigned int srcalpha, dstalpha;
 	BITMAPINFO bmi;
 	HBITMAP srcBM, dstBM, dcBM;
 	HDC srcDC, dstDC;
@@ -102,6 +102,7 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
 	//workwork
 	if ( !(blendFunction.AlphaFormat & AC_SRC_ALPHA) ) //no alpha channel
 	{
+		int i;
 		srcalpha = blendFunction.SourceConstantAlpha;
 		dstalpha = 255 - srcalpha;
 		for (i = 0; i < (nWidthDest*nHeightDest); i++)
@@ -116,6 +117,7 @@ BOOL WINAPI AlphaBlend_NEW( HDC hdcDest,  // handle to destination DC
 	}
 	else
 	{
+		int i;
 		unsigned int tmp;
 		srcalpha = blendFunction.SourceConstantAlpha;
 		for (i = 0; i < (nWidthDest*nHeightDest); i++)

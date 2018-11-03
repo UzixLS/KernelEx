@@ -25,72 +25,71 @@
 #include "sheet.h"
 #include "KexLinkage.h"
 
-Factory::Factory() 
+CFactory::CFactory() 
 {
-	m_RefCount = 0;
+	m_cRef = 1;
+	InterlockedIncrement(&g_LockCount);
 }
 
-
-STDMETHODIMP_(ULONG) Factory::AddRef() 
+CFactory::~CFactory()
 {
-	g_LockCount++;
-	return ++m_RefCount;
+	InterlockedDecrement(&g_LockCount);
 }
 
-
-STDMETHODIMP_(ULONG) Factory::Release() 
+STDMETHODIMP CFactory::QueryInterface(const IID& iid, void** ppv)
 {
-	g_LockCount--;
-	return --m_RefCount;
-}
-
-
-STDMETHODIMP Factory::QueryInterface(REFIID riid,LPVOID *ppv)
-{
-	if (riid==IID_IUnknown)
+	if (iid==IID_IUnknown)
 		*ppv = static_cast<IUnknown*>(this);
-	else if (riid==IID_IClassFactory)
+	else if (iid==IID_IClassFactory)
 		*ppv = static_cast<IClassFactory*>(this);
 	else
 	{
 		*ppv = NULL;
 		return E_NOINTERFACE;
 	}
-
 	AddRef();
 	return S_OK;
 }
 
-
-STDMETHODIMP Factory::LockServer(BOOL bLock)
+STDMETHODIMP_(ULONG) CFactory::AddRef() 
 {
-	if (bLock==TRUE)
-		g_LockCount++;
-	else
-		g_LockCount--;
-	return S_OK;
+	return InterlockedIncrement(&m_cRef);
 }
 
-
-STDMETHODIMP Factory::CreateInstance(IUnknown *pUnkOuter,REFIID riid, LPVOID *ppv)
+STDMETHODIMP_(ULONG) CFactory::Release() 
 {
-	*ppv = NULL;
+	if (InterlockedDecrement(&m_cRef) == 0)
+	{
+		delete this;
+		return 0;
+	}
+	return m_cRef;
+}
+
+STDMETHODIMP CFactory::CreateInstance(IUnknown* pUnkOuter, const IID& iid, void** ppv)
+{
+	HRESULT hr;
 	
 	if (pUnkOuter != NULL)
 		return CLASS_E_NOAGGREGATION;
 
 	if (!KexLinkage::instance.IsReady())
-		return E_ACCESSDENIED;
+		return E_NOINTERFACE;
 	
 	KexShlExt* pShlExt = new KexShlExt;
 	if (pShlExt == NULL)
 		return E_OUTOFMEMORY;
 	
-	HRESULT hr = pShlExt->QueryInterface(riid,ppv);
-	if (FAILED(hr))
-	{
-		delete pShlExt;
-		return E_NOINTERFACE;
-	}
+	hr = pShlExt->QueryInterface(iid, ppv);
+	pShlExt->Release();
+	return hr;
+}
+
+STDMETHODIMP CFactory::LockServer(BOOL bLock)
+{
+	if (bLock)
+		InterlockedIncrement(&g_LockCount); 
+	else
+		InterlockedDecrement(&g_LockCount);
 	return S_OK;
 }

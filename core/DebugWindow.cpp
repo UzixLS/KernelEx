@@ -27,6 +27,8 @@
 #include "internals.h"
 #include "debug.h"
 
+extern bool apilog_enabled;
+
 const unsigned short WM_KEXSTOPDEBUG = 0x6eee;
 const unsigned short WM_KEXAPPENDLOG = 0x6eef;
 
@@ -39,6 +41,8 @@ char* strtok_r(char* s, const char* delim, char** holder);
 DebugWindow::DebugWindow()
 {
 	DWORD tid;
+	DBGPRINTF(("Creating DebugWindow\n"));
+
 	hwnd = (HWND) -1;
 	
 	//we're interested in everything
@@ -50,12 +54,14 @@ DebugWindow::DebugWindow()
 	excludes.push_back("Interlocked");
 	
 	InitializeCriticalSection(&cs);
-	InitCommonControls();
+	MakeCriticalSectionGlobal(&cs);
+	LoadLibrary("COMCTL32.DLL");
 	hThread = CreateThread(NULL, 0, thread, (void*) this, 0, &tid);
 }
 
 DebugWindow::~DebugWindow()
 {
+	DBGPRINTF(("Destroying DebugWindow\n"));
 	DeleteCriticalSection(&cs);
 	SendMessage(hwnd, WM_KEXSTOPDEBUG, 0, 0);
 }
@@ -118,30 +124,25 @@ void DebugWindow::InitDialog(HWND hwnd)
 
 	LV_COLUMN col;
 	memset(&col, 0, sizeof(col));
-	col.mask = LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;
+	col.mask = LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH | LVCF_FMT;
 
 	col.cx = 20;
 	col.pszText = "Depth";
+	col.fmt = LVCFMT_RIGHT;
 	ListView_InsertColumn(hList, 0, &col);
 	col.cx = 60;
+	col.fmt = LVCFMT_LEFT;
 	col.pszText = "Thread";
 	ListView_InsertColumn(hList, 1, &col);
-	col.cx = 90;
-	col.pszText = "Source";
+	col.cx = 310;
+	col.pszText = "Info";
 	ListView_InsertColumn(hList, 2, &col);
-	col.cx = 90;
-	col.pszText = "Dest";
-	ListView_InsertColumn(hList, 3, &col);
-	col.cx = 130;
-	col.pszText = "Function";
-	ListView_InsertColumn(hList, 4, &col);
 	col.cx = 60;
-	col.mask |= LVCF_FMT;
 	col.fmt = LVCFMT_RIGHT;
 	col.pszText = "Return";
-	ListView_InsertColumn(hList, 5, &col);
+	ListView_InsertColumn(hList, 3, &col);
 
-#define NUM_COLS                 6
+#define NUM_COLS                 4
 
 	menu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_LOGMENU));
 	menu = GetSubMenu(menu, 0);
@@ -156,6 +157,10 @@ void DebugWindow::HandleMenu()
 			p.x, p.y, 0, hwnd, NULL);
 	switch (res) 
 	{
+	case IDM_ENABLE:
+		apilog_enabled = !apilog_enabled;
+		CheckMenuItem(menu, IDM_ENABLE, apilog_enabled ? MF_CHECKED : MF_UNCHECKED);
+		break;
 	case IDM_TOFILE:
 		WriteToFile();
 		break;
@@ -316,13 +321,15 @@ void DebugWindow::WriteToFile()
 	HMODULE hComDlg32;
 	BOOL (WINAPI* pGetSaveFileName)(OPENFILENAME*);
 
-	hComDlg32 = LoadLibrary("COMDLG32.DLL");
+	hComDlg32 = GetModuleHandle("COMDLG32.DLL");
+	if (!hComDlg32)
+		hComDlg32 = LoadLibrary("COMDLG32.DLL");
 	if (!hComDlg32)
 		return;
 	pGetSaveFileName = (BOOL (WINAPI*)(OPENFILENAME*)) 
 			GetProcAddress(hComDlg32, "GetSaveFileNameA");
 	if (!pGetSaveFileName)
-		goto __fini;
+		return;
 
 	filename[0] = '\0';
 	memset(&ofn, 0, sizeof(ofn));
@@ -335,11 +342,11 @@ void DebugWindow::WriteToFile()
 	ofn.nMaxFile = sizeof(filename);
 	ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 	if (!pGetSaveFileName(&ofn))
-		goto __fini;
+		return;
 
 	hFile = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
-		goto __fini;
+		return;
 
 	//write column headers
 	col.mask = LVCF_TEXT;
@@ -351,7 +358,7 @@ void DebugWindow::WriteToFile()
 		DWORD len;
 		ListView_GetColumn(hList, j, &col);
 		len = strlen(buf);
-		if (j) WriteFile(hFile, "|", 1, &wlen, NULL);
+		if (j) WriteFile(hFile, " ", 1, &wlen, NULL);
 		WriteFile(hFile, buf, len, &wlen, NULL);
 	}
 	WriteFile(hFile, "\r\n", 2, &wlen, NULL);
@@ -365,7 +372,8 @@ void DebugWindow::WriteToFile()
 			DWORD len; DWORD wlen;
 			ListView_GetItemText(hList, i, j, buf, sizeof(buf));
 			len = strlen(buf);
-			if (j) WriteFile(hFile, "|", 1, &wlen, NULL);
+			if (j == 1 || j == 2) WriteFile(hFile, " ", 1, &wlen, NULL);
+			else if (j == 3 && len) WriteFile(hFile, " = ", 3, &wlen, NULL);
 			WriteFile(hFile, buf, len, &wlen, NULL);
 		}
 		WriteFile(hFile, "\r\n", 2, &wlen, NULL);
@@ -374,9 +382,6 @@ void DebugWindow::WriteToFile()
 	CloseHandle(hFile);
 
 	MessageBox(hwnd, "File written successfully", "Information", MB_ICONINFORMATION | MB_OK);
-
-__fini:
-	FreeLibrary(hComDlg32);
 }
 
 DWORD WINAPI DebugWindow::thread(void* param)
@@ -468,4 +473,5 @@ void DebugWindow::destroy()
 {
 	if (instance)
 		delete instance;
+	instance = NULL;
 }

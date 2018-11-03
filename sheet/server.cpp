@@ -25,7 +25,7 @@
 #include "factory.h"
 #include "sheet.h"
 
-UINT g_LockCount;
+long g_LockCount;
 HMODULE g_hModule;
 
 
@@ -169,19 +169,29 @@ STDAPI DllUnregisterServer()
 }
 		
 	
-STDAPI DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID * ppv)
+STDAPI DllGetClassObject(const CLSID& clsid, const IID& iid, void** ppv)
 {
-	static Factory factory;
-	*ppv = NULL;
-	
-	if (rclsid != CLSID_KexShlExt)
-		return CLASS_E_CLASSNOTAVAILABLE;
+	HRESULT hr;
 
-	return factory.QueryInterface(riid,ppv);
+	if (clsid == CLSID_KexShlExt)
+	{
+		CFactory* factory = new CFactory;
+		if (!factory)
+			return E_OUTOFMEMORY;
+
+		hr = factory->QueryInterface(iid, ppv);
+		factory->Release();
+		return hr;
+	}
+	else
+	{	
+		*ppv = NULL;	
+		return CLASS_E_CLASSNOTAVAILABLE;
+	}
 }
 
 
-BOOL APIENTRY DllMain(HINSTANCE hModule,DWORD dwReason,LPVOID lpReserved)
+BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{

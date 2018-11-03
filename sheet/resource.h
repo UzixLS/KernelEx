@@ -2,6 +2,12 @@
 // Microsoft Developer Studio generated include file.
 // Used by sheet.rc
 //
+#define TIP_DISABLE                     1
+#define TIP_COMPAT                      2
+#define TIP_SYSTEM                      3
+#define TIP_NOINHERIT                   4
+#define TIP_OVERRIDE                    5
+#define TIP_LOG                         6
 #define IDD_PROPPAGE                    102
 #define IDC_CHECK                       1000
 #define IDC_COMPAT                      1000
@@ -12,6 +18,10 @@
 #define IDC_GCOMPAT                     1006
 #define IDC_TCOMPAT                     1007
 #define IDC_LOG                         1008
+#define IDC_NOINHERIT                   1009
+#define IDC_GADVAN                      1010
+#define IDC_CHECK1                      1011
+#define IDC_OVERRIDE                    1011
 
 // Next default values for new objects
 // 
@@ -19,7 +29,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        102
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

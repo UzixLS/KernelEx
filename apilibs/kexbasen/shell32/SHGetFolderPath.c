@@ -20,13 +20,12 @@
  */
 
 #include <windows.h>
+#include <shlobj.h>
 #include "kexcoresdk.h"
+#include "folderfix.h"
 
 typedef HRESULT (WINAPI *SHGetFolderPathA_t)(HWND, int, HANDLE, DWORD, LPSTR);
 typedef HRESULT (WINAPI *SHGetFolderPathW_t)(HWND, int, HANDLE, DWORD, LPWSTR);
-
-static SHGetFolderPathA_t SHGetFolderPathA_pfn = (SHGetFolderPathA_t)-1;
-static SHGetFolderPathW_t SHGetFolderPathW_pfn = (SHGetFolderPathW_t)-1;
 
 static PROC LoadShfolderProc(const char* proc)
 {
@@ -39,20 +38,14 @@ static PROC LoadShfolderProc(const char* proc)
 	
 	//first try with shell32
 	if (!hShell32)
-	{
-		hShell32 = GetModuleHandle(Shell32Fn);
-		if (!hShell32) hShell32 = LoadLibrary(Shell32Fn);
-	}
+		hShell32 = LoadLibrary(Shell32Fn);
 	if (hShell32) ret = kexGetProcAddress(hShell32, proc);
 	
 	//fallback to shfolder
 	if (!ret)
 	{
-		if (!hShfolder)
-		{
-			hShfolder = GetModuleHandle(ShfolderFn);
-			if (!hShfolder) hShfolder = LoadLibrary(ShfolderFn);
-		}
+		if (!hShfolder) 
+			hShfolder = LoadLibrary(ShfolderFn);
 		if (hShfolder) ret = kexGetProcAddress(hShfolder, proc);
 	}
 	SetLastError(lasterr);
@@ -62,19 +55,23 @@ static PROC LoadShfolderProc(const char* proc)
 /* MAKE_EXPORT SHGetFolderPathA_new=SHGetFolderPathA */
 HRESULT WINAPI SHGetFolderPathA_new(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwFlags, LPSTR pszPath)
 {
+	static SHGetFolderPathA_t SHGetFolderPathA_pfn = (SHGetFolderPathA_t)-1;
 	if (SHGetFolderPathA_pfn == (void*)-1)
 		SHGetFolderPathA_pfn = (SHGetFolderPathA_t) LoadShfolderProc("SHGetFolderPathA");
 	if (SHGetFolderPathA_pfn == NULL)
 		return E_NOTIMPL;
+	nFolder = folder_fix(nFolder);
 	return SHGetFolderPathA_pfn(hwndOwner, nFolder, hToken, dwFlags, pszPath);
 }
 
 /* MAKE_EXPORT SHGetFolderPathW_new=SHGetFolderPathW */
 HRESULT WINAPI SHGetFolderPathW_new(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwFlags, LPWSTR pszPath)
 {
+	static SHGetFolderPathW_t SHGetFolderPathW_pfn = (SHGetFolderPathW_t)-1;
 	if (SHGetFolderPathW_pfn == (void*)-1)
 		SHGetFolderPathW_pfn = (SHGetFolderPathW_t) LoadShfolderProc("SHGetFolderPathW");
 	if (SHGetFolderPathW_pfn == NULL)
 		return E_NOTIMPL;
+	nFolder = folder_fix(nFolder);
 	return SHGetFolderPathW_pfn(hwndOwner, nFolder, hToken, dwFlags, pszPath);
 }

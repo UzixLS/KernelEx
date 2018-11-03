@@ -39,8 +39,7 @@ __asm {
 	push dword ptr [esp+4] //return address
 	mov eax, [ebp+8]
 	mov [esp+8], eax //caller MODREF
-	lea eax, [ebp-4Ch]
-	mov dword ptr [esp+12], eax
+	mov dword ptr [esp+12], 1
 	jmp ExportFromOrdinal
 	}
 }
@@ -60,8 +59,7 @@ __asm {
 	push dword ptr [esp+4] //return address
 	mov eax, [ebp+8]
 	mov [esp+8], eax //caller MODREF
-	lea eax, [ebp-4Ch]
-	mov dword ptr [esp+12], eax
+	mov dword ptr [esp+12], 1
 	jmp ExportFromName
 	}
 }

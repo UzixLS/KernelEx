@@ -28,12 +28,7 @@
 #include "resource.h"
 #include "k32ord.h"
 
-/** MSVC 6.0 for-loop workaround. */
-#ifdef _MSC_VER
-#if _MSC_VER < 1201
-#define for if (0); else for
-#endif
-#endif
+#define countof(x) (sizeof(x)/sizeof(x[0]))
 
 #define IS_SHARED(x) (((DWORD)x) >= 0x80000000)
 
@@ -75,5 +70,6 @@ extern AllocHandle_t AllocHandle;
 
 MODREF* MRfromCallerAddr(DWORD addr);
 HANDLE _OpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId);
+HANDLE _GetProcessHeap();
 
 #endif

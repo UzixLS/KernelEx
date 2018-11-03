@@ -40,7 +40,6 @@ static const apilib_named_api advapi32_named_apis[] =
 	DECL_API("RegDeleteValueW", RegDeleteValueW_fwd),
 	DECL_API("RegEnumKeyExW", RegEnumKeyExW_fwd),
 	DECL_API("RegEnumKeyW", RegEnumKeyW_fwd),
-	DECL_API("RegEnumValueW", RegEnumValueW_fwd),
 	DECL_API("RegLoadKeyW", RegLoadKeyW_fwd),
 	DECL_API("RegOpenKeyExW", RegOpenKeyExW_fwd),
 	DECL_API("RegOpenKeyW", RegOpenKeyW_fwd),

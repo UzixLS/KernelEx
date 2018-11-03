@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KERNELEX_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /W3 /O2 /I "." /I "../common" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KEXCORE_EXPORTS" /YX /FD /GF /c
+# ADD CPP /nologo /W3 /O2 /I "." /I "../common" /FI"msvc_quirks.h" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KEXCORE_EXPORTS" /YX /FD /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "NDEBUG"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KERNELEX_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /ML /W3 /Gm /Zi /Od /I "." /I "../common" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KEXCORE_EXPORTS" /YX /FD /GZ /GF /c
+# ADD CPP /nologo /ML /W3 /Gm /Zi /Od /I "." /I "../common" /FI"msvc_quirks.h" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "KEXCORE_EXPORTS" /YX /FD /GZ /GF /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x415 /d "_DEBUG"
@@ -209,7 +209,15 @@ SOURCE=.\main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\ModInit.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\common\pemanip.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ProcessStorage.cpp
 # End Source File
 # Begin Source File
 
@@ -222,10 +230,6 @@ SOURCE=.\SettingsDB.cpp
 # Begin Source File
 
 SOURCE=.\sharedmem.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\storage.cpp
 # End Source File
 # Begin Source File
 
@@ -290,7 +294,15 @@ SOURCE=..\common\kexcoresdk.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ModInit.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\common\pemanip.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ProcessStorage.h
 # End Source File
 # Begin Source File
 
@@ -307,10 +319,6 @@ SOURCE=.\sharedmem.h
 # Begin Source File
 
 SOURCE=..\common\sstring.hpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\storage.h
 # End Source File
 # Begin Source File
 

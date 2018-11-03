@@ -28,25 +28,17 @@ struct ModuleSetting
 {
 	char file[MAX_PATH];
 	char conf[256];
-	BYTE flags;
+	DWORD flags;
 };
 
 class KexShlExt : public IShellExtInit, 
 				  public IShellPropSheetExt
 {
-protected:
-	ULONG m_RefCount;
-	ModuleSetting* ms;
-	
-	bool IsPEModule(const char* path);
-	bool ResolveShortcut(const char* shortcutPath, char* filePath);
-	static BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static UINT CALLBACK CallbackProc(HWND hwnd, UINT uMsg, LPPROPSHEETPAGE ppsp);
-	static void OnInitDialog(HWND hwnd, ModuleSetting* ms);
-	static void OnApply(HWND hwnd);
-
 public:
+	// Constructor
 	KexShlExt();
+
+	// Destructor
 	~KexShlExt();
 
 	// IUnknown
@@ -60,6 +52,21 @@ public:
     // IShellPropSheetExt
     STDMETHODIMP AddPages(LPFNADDPROPSHEETPAGE, LPARAM);
     STDMETHODIMP ReplacePage(UINT, LPFNADDPROPSHEETPAGE, LPARAM);
+
+protected:
+	ModuleSetting* ms;
+	
+	bool IsPEModule(const char* path);
+	bool ResolveShortcut(const char* shortcutPath, char* filePath);
+	static BOOL CALLBACK DlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static UINT CALLBACK CallbackProc(HWND hwnd, UINT uMsg, LPPROPSHEETPAGE ppsp);
+	static void OnInitDialog(HWND hwnd, ModuleSetting* ms);
+	static void OnApply(HWND hwnd);
+	static HWND CreateTooltipWindow(HWND parent);
+	static bool CreateTooltip(HWND hwndTip, HWND hDlg, int toolID, char* pText);
+
+private:
+	long m_cRef;
 };
 
 #endif // _SHEET_H

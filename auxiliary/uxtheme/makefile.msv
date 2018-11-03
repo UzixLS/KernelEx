@@ -1,10 +1,10 @@
 # Makefile for Microsoft Visual C++ Compiler (MSVC)
 
-OBJ = kord.lib uxtheme.obj
+OBJ = kord.lib uxtheme.obj metric.obj
 RES = 
 DEF = /DEF:uxtheme.def
 BIN = ..\uxtheme.dll
-LIBS = -nodefaultlib kernel32.lib gdi32.lib
+LIBS = -nodefaultlib kernel32.lib gdi32.lib user32.lib
 LDFLAGS = /DLL /OPT:NOWIN98 /ENTRY:DllMain@12
 CFLAGS = /W3 /O2 /Oi /FD
 CXXFLAGS = $(CFLAGS)

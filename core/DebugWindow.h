@@ -29,23 +29,23 @@
 
 using namespace std;
 
-class DebugWindow  
+class DebugWindow
 {
 public:
-	DebugWindow();
-	~DebugWindow();
-	
 	static bool create();
 	static void destroy();
 	static DebugWindow* get();
 	void append(const char* str);
 
 private:
+	DebugWindow();
+	~DebugWindow();
+
+	static DebugWindow* instance;
+	
 	HWND hwnd;
 	HWND hList;
 	HANDLE hThread;
-	int max_entries;
-	static DebugWindow* instance;
 	CRITICAL_SECTION cs;
 	HMENU menu;
 	list<sstring> includes;

@@ -98,7 +98,7 @@ BEGIN
             VALUE "FileDescription", "KernelEx Core\0"
             VALUE "FileVersion", _RCVERSION_ "\0"
             VALUE "InternalName", "KernelEx\0"
-            VALUE "LegalCopyright", "Copyright © 2009, Xeno86\0"
+            VALUE "LegalCopyright", "Copyright © 2009-2010, Xeno86\0"
             VALUE "OriginalFilename", "KernelEx.dll\0"
             VALUE "ProductName", "KernelEx\0"
             VALUE "ProductVersion", VERSION_STR "\0"
@@ -151,6 +151,8 @@ IDR_LOGMENU MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
+        MENUITEM "Enabled",                     IDM_ENABLE, CHECKED
+        MENUITEM SEPARATOR
         MENUITEM "Save to file",                IDM_TOFILE
         MENUITEM "Clear",                       IDM_CLEAR
         MENUITEM "Filter",                      IDM_FILTER

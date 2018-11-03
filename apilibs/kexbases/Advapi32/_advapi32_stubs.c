@@ -44,3 +44,10 @@ UNIMPL_FUNC(ConvertSecurityDescriptorToStringSecurityDescriptorA, 5);
 UNIMPL_FUNC(ConvertSecurityDescriptorToStringSecurityDescriptorW, 5);
 
 UNIMPL_FUNC(QueryServiceStatusEx, 5);
+
+UNIMPL_FUNC(NotifyBootConfigStatus, 1);
+UNIMPL_FUNC(QueryWindows31FilesMigration,2);
+UNIMPL_FUNC(SynchronizeWindows31FilesAndWindowsNTRegistry,4);
+
+UNIMPL_FUNC(EnumServicesStatusExA, 10);
+UNIMPL_FUNC(EnumServicesStatusExW, 10);

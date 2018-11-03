@@ -1,3 +1,85 @@
+KernelEx v4.5 Beta 1 by Xeno86
+2010-01-18
+
+disable named/rcdata resource types mirroring
+
+changed obfuscator for non-negative PIDs
+
+fix crash when a process is created with '.exe' renamed to '.dll'
+
+added GDI anti-leaking code which forces NT destroying rules on font and bitmap objects.
+
+implemented extended TLS (Thread Local Storage), extends limit of 80 to ~1100 slots
+
+added Thunking Unicode Layer - set of user32 APIs
+which provides consistent Unicode window procedures conversion,
+allowing correct message conversion and mixture of window subclassing with NT-like rules.
+
+revamped non-shared api library loading process
+
+added jemalloc memory allocator, replacing standard Windows heap for applications
+
+fix: LoadShfolderProc could crash if shfolder.dll was unloaded by the application
+
+added USERENV library from Wine project
+
+changed module configuration settings storage - single module can now have different configurations under different processes (better accuracy, overriding is supported, recursive inheritance is supported, speed gains)
+
+change: Allow api library to be loaded even if some overridden modules aren't found (skips module tables)
+
+shell folder fix - display CSIDL_COMMON_* folders in start menu
+
+added support for environment variables in AppSettings database
+
+added kexCOM - implementing IShellLinkW and IExtractIconW interfaces for CLSID_ShellLink which are missing from Windows 98 shell
+
+Compatibility tab changes:
+* redesigned, added baloon tips
+* added option to disable configuration inheritance to child processes
+* added option to override module configuration with process'es configuration (debug only)
+* fixed COM implementation
+
+changes into the installer: 
+* enforce reboot after install/uninstall before subsequent installation, 
+* copy kernel32.bak to temporary file during uninstall before reboot
+* forbid direct downgrades
+
+API changes:
+
+fix GlobalLock and GlobalUnlock to work properly with HeapAlloc pointers
+make CreateFile ignore unsupported FILE_SHARE_DELETE flag
+make GetDiskFreeSpace, GetDiskFreeSpaceEx not fail on certain file paths
+implemented USERENV.GetUserProfileDirectory, GetAllUsersProfileDirectory, GetProfilesDirectory
+added various winspool unicode (unicows) apis and stubs
+added EnumServicesStatusEx stubs
+fix CreateDIBSection to behave consistently with NT
+fix GetTempFileName to behave consistently with NT
+make ExtCreatePen not fail on PS_USERSTYLE pen style
+replaced MSLU GetObjectW (bug: MSLU always returns full object size regardless of buffer size passed) with custom implementation
+replaced MSLU RegEnumValueW with custom implementation
+added support for REG_EXPAND_SZ and REG_MULTI_SZ in RegQueryValueExW
+fixed RegQueryValueExW not handling return values properly
+fix: win9x doesn't allow MB_ERR_INVALID_CHARS parameter to be set for UTF-7 or UTF-8 codepages in MultiByteToWideChar and WideCharToMultiByte calls
+fix: RegisterWaitForSingleObject should test object state once and return immediatelly when dwMiliseconds is zero
+implemented GDI32.GetCharABCWidthsI, ADVAPI32.RtlGenRandom, KERNEL32.GetModuleHandleEx
+fixed uxtheme return addresses
+implemented theme metric functions
+fix WTSGetActiveConsoleSessionId should return 0 = local session instead 0xffffffff = no session
+implemented kernel32.DelayLoadFailureHook, QueueUserWorkItem, RegisterWaitForSingleObject, RegisterWaitForSingleObjectEx, UnregisterWait, UnregisterWaitEx, IsWow64Process, ProcessIdToSessionId, WTSGetActiveConsoleSessionId, IsWow64Process
+removed shlwapi.StrCmpLogicalW (which is available with IE6-updated shlwapi)
+implemented advapi32.DeleteAce
+added stubs for advapi32.NotifyBootConfigStatus, QueryWindows31FilesMigration, SynchronizeWindows31FilesAndWindowsNTRegistry
+changed advapi32.CreateWellKnownSid
+change: logfont* is optional in gdi32.EnumFontFamiliesEx on NT but not on 9x
+added stubs for kernel32.HeapSetInformation, GetProcessIoCounters, RtlCaptureStackBackTrace
+support events signalling in ReadFile & WriteFile overlapped apis
+fixed system bug in user32.GetNextDlgTabItem - system crashes trying to get next control in dialog to tab when there is only one control on dialog
+fixed GetDefaultPrinterW
+replaced SHGetFolderLocation Wine implementation with custom implementation
+fix: custom SHGetFolderLocation shouldn't be enabled for shell32 >= 5.0 
+
+---------------------------------------
+
 KernelEx v4.0 Final 2 by Xeno86
 2009-08-20
 

@@ -28,8 +28,7 @@
 #include <windows.h>
 #include <malloc.h>
 
-#include "gdi9x.h"
-#include "k32ord.h"
+#include "GdiObjects.h"
 
 #ifdef _MSC_VER
 #ifdef __cplusplus
@@ -41,11 +40,6 @@ __declspec(selectany) int _fltused=1;
 #ifndef ETO_PDY
 #define ETO_PDY 0x2000
 #endif
-
-static DWORD g_GdiBase;
-#define REBASEGDI(x) ( g_GdiBase + (DWORD)(x) ) 
-
-
 
 /* MAKE_EXPORT GetFontUnicodeRanges_new=GetFontUnicodeRanges */
 DWORD WINAPI GetFontUnicodeRanges_new(
@@ -91,29 +85,6 @@ int WINAPI GetRandomRgn_NT(
 		OffsetRgn(hrgn,pt.x,pt.y);
 	}
 	return result;
-}
-
-PDCOBJ GetDCObj( HDC hDC )
-{	
-	PDCOBJ retobj;
-	PLHENTRY entry;
-	if (!hDC) return NULL;
-	if (!g_GdiBase) g_GdiBase = MapSL( LoadLibrary16("gdi") << 16 );
-	entry = (PLHENTRY)REBASEGDI(LOWORD(hDC));
-	if ( !entry->wBlock || entry->bFlags == LHE_FREEHANDLE ) return NULL;
-	if ( entry->bFlags & LHE_DISCARDED )
-	{
-		if ( entry->wBlock & 3 ) return NULL; //32-bit handles have to divide by 4
-		DWORD* highDC = (DWORD*)REBASEGDI( 0x10000 + entry->wBlock );
-		if ( IsBadReadPtr(highDC,sizeof(DWORD)) ) return NULL; //oops dead handle
-		retobj = (PDCOBJ)REBASEGDI(*highDC);
-		if ( IsBadReadPtr(retobj,sizeof(DCOBJ)) ) return NULL; //oops?!
-	}
-	else
-		retobj = (PDCOBJ)REBASEGDI(entry->wBlock);
-	WORD checktype = (retobj->wType & GDI_OBJTYPE_MASK);
-	if ( checktype != GDI_OBJTYPE_DC && checktype != GDI_OBJTYPE_DC_NO ) return NULL;
-	return retobj;
 }
 
 void floattofrac( float f, int* m, int* d)

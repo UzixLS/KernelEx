@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2010, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -29,21 +29,20 @@
 #include "loadstub.h"
 #include "setup.h"
 #include "wininit.h"
+#include "version.h"
 #include "resource.h"
 
 #define CODE_SEG ".text"
 #define DATA_SEG ".data"
+#define INIT_SEG "_INIT"
 
 
-Setup::Setup(const char* backup_file)
+Setup::Setup(char* _backup_file) : backup_file(strupr(_backup_file))
 {
-	this->backup_file = backup_file;
-	for (string::iterator it = this->backup_file.begin() ; it != this->backup_file.end() ; it++)
-		*it = toupper(*it);
-
 	h_kernel32 = GetModuleHandle("KERNEL32");
 	
 	detect_old_version();
+	detect_downgrade();
 
 	pemem.OpenMemory(h_kernel32);
 	if (!pemem.HasTarget())
@@ -88,6 +87,28 @@ bool Setup::detect_old_version()
 	if (strcmp(buf, "4") < 0)
 		ShowError(IDS_OLDKEX);
 	return true;
+}
+
+void Setup::detect_downgrade()
+{
+	typedef unsigned long (*kexGetKEXVersion_t)();
+	kexGetKEXVersion_t kexGetKEXVersion_pfn;
+	HMODULE h_kernelex;
+	unsigned long version;
+	
+	h_kernelex = LoadLibrary("KERNELEX.DLL");
+
+	//no KernelEx installed, continue
+	if (!h_kernelex)
+		return;
+
+	kexGetKEXVersion_pfn = (kexGetKEXVersion_t) GetProcAddress(h_kernelex, "kexGetKEXVersion");
+	version = kexGetKEXVersion_pfn();
+	FreeLibrary(h_kernelex);
+
+	//trying to downgrade - forbid
+	if (version > VERSION_CODE)
+		ShowError(IDS_DOWNGRADE);
 }
 
 int Setup::find_pattern(DWORD offset, int size, const short* pattern, 
@@ -213,6 +234,62 @@ void Setup::disable_resource_check()
 	set_pattern(found_loc, after, length);
 }
 
+//no named/rcdata resource types mirroring
+void Setup::disable_named_and_rcdata_resources_mirroring()
+{
+	static const short pattern[] = {
+		0x66,0x8B,0x40,0x0E,0x66,0x89,0x45,0xDA,0x8B,0x45,  -1,0x66,0x8B,0x48,
+		0x0C,0x66,0x89,0x4D,0xD8,0x66,0x8B,0x45,0xE0,0x8B,0x4D,0xD4,0x66,0x89,
+		0x01,0x83,0x45,0xD4,0x02,0x66,0x8B,0x45,0xDA,0x66,0x03,0x45,0xD8,0x66,
+		0x89,0x45,0x8C,0x8B,0x4D,0xD4,0x66,0x89,0x01,0x83,0x45,0xD4,0x02
+	};
+	static const short after[] = {
+		0x66,0x8B,0x48,0x0E,0x66,0x03,0x48,0x0C,0x66,0x89,0x4D,0x8C,0x8B,0x45,
+		0xA4,0x83,0x38,0x0A,0x74,0x40,0x83,0x38,0x00,0x79,0x04,0x3B,0xC0,0xEB,
+		0x37,0x66,0x8B,0x45,0xE0,0x8B,0x4D,0xD4,0x66,0x89,0x01,0x83,0xC1,0x02,
+		0x66,0x8B,0x45,0x8C,0x66,0x89,0x01,0x83,0xC1,0x02,0x89,0x4D,0xD4
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size, pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "disable_named_and_rcdata_resources_mirroring");
+		else ShowError(IDS_MULPAT, "disable_named_and_rcdata_resources_mirroring");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "disable_named_and_rcdata_resources_mirroring",
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	set_pattern(found_loc, after, length);
+}
+
+//change obfuscator to non-negative IDs
+void Setup::positive_pids_patch()
+{
+	static const short pattern[] = {
+		0xB9,0x01,0x00,0xFF,0xFF,-1,0x23,0xD1,0x33,0xD1
+	};
+	static const short after[] = {
+		0xB9,0x01,0x00,0xFF,0x4F,-1,0x23,0xD1,0x2B,0xD1
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(INIT_SEG);
+	int size = pefile.GetSectionSize(INIT_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size, pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "positive_pids_patch");
+		else ShowError(IDS_MULPAT, "positive_pids_patch");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "positive_pids_patch",
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	set_pattern(found_loc, after, length);
+}
+
 void Setup::mod_imte_alloc()
 {
 	//VA BFF8745C, RVA 1745C, file 15A5C, sec E45C
@@ -220,7 +297,7 @@ void Setup::mod_imte_alloc()
 		0x66,0xff,0x05,-1,-1,-1,0xbf,0x6a,0x3c,0xe8,
 	};
 	static const short after[] = {
-		0x66,0xff,0x05,-1,-1,-1,0xbf,0x6a,0x44,0xe8,
+		0x66,0xff,0x05,-1,-1,-1,0xbf,0x6a,0x40,0xe8,
 	};
 
 	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
@@ -234,6 +311,30 @@ void Setup::mod_imte_alloc()
 		else ShowError(IDS_MULPAT, "mod_imte_alloc");
 	}
 	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "mod_imte_alloc",
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	set_pattern(found_loc, after, length);
+}
+
+void Setup::mod_mr_alloc()
+{
+	static const short pattern[] = {
+		0x75,0xF6,0x8D,0x04,-1,0x1C,0x00,0x00,0x00,0x50
+	};
+	static const short after[] = {
+		0x75,0xF6,0x8D,0x04,-1,0x24,0x00,0x00,0x00,0x50
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size, pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "mod_mr_alloc");
+		else ShowError(IDS_MULPAT, "mod_mr_alloc");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "mod_mr_alloc",
 			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
 	set_pattern(found_loc, after, length);
 }
@@ -318,6 +419,52 @@ void Setup::find_IsKnownDLL()
 	_IsKnownDLL = decode_call(IsKnownDLL_call, 5);
 }
 
+void Setup::find_FLoadTreeNotify1()
+{
+	static const short pattern[] = {
+		0x56,0xA1,-1,-1,-1,-1,0x6A,0x01,0x8B,0x08,0xFF,0xB1,0x98,0x00,0x00,
+		0x00,0xE8,-2,-2,-2,-2,0x83,0xF8,0x01,0x1B,0xF6,0xF7,0xDE
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size,pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "FLoadTreeNotify1");
+		else ShowError(IDS_MULPAT, "FLoadTreeNotify1");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "FLoadTreeNotify1", 
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	FLoadTreeNotify_call1 = found_loc + 16;
+	_FLoadTreeNotify = decode_call(FLoadTreeNotify_call1, 5);
+}
+
+void Setup::find_FLoadTreeNotify2()
+{
+	static const short pattern[] = {
+		0x6A,0x00,0x57,0xE8,-1,-1,-1,-1,0x6A,0x00,0x56,0xE8,-2,-2,-2,-2,
+		0x85,0xC0,0x74,0x12,0x56,0xE8,-1,-1,-1,-1,0x68,0x5A,0x04,0x00,0x00,
+		0x33,0xF6,0xE8,-1,-1,-1,-1
+	};
+
+	DWORD offset = (DWORD) pefile.GetSectionByName(CODE_SEG);
+	int size = pefile.GetSectionSize(CODE_SEG);
+	int length = sizeof(pattern) / sizeof(short);
+	DWORD found_loc;
+	int found = find_pattern(offset, size,pattern, length, &found_loc);
+	if (found != 1)
+	{
+		if (!found) ShowError(IDS_NOPAT, "FLoadTreeNotify2");
+		else ShowError(IDS_MULPAT, "FLoadTreeNotify2");
+	}
+	DBGPRINTF(("%s: pattern found @ 0x%08x\n", "FLoadTreeNotify2", 
+			pefile.PointerToRva((void*) found_loc) + pefile.GetImageBase()));
+	FLoadTreeNotify_call2 = found_loc + 11;
+}
+
 void Setup::kill_process(const char* name)
 {
 	PROCESSENTRY32 pe32;
@@ -394,7 +541,7 @@ bool Setup::is_fixupc(DWORD addr)
 	return false;
 }
 
-string Setup::get_temp_file_name()
+sstring Setup::get_temp_file_name()
 {
 	char tmpdir[MAX_PATH];
 	char target[MAX_PATH];
@@ -417,6 +564,7 @@ void Setup::ShowError(UINT id, ...)
 	else
 		_vsnprintf(out, sizeof(out), format, vargs);
 	va_end(vargs);
+	DBGPRINTF(("%s\n", out));
 	MessageBox(NULL, out, "KernelEx Setup", MB_OK | MB_ICONERROR);
 	exit(id);
 }
@@ -428,28 +576,38 @@ void Setup::install()
 	if (version >= 0)
 	{
 		if (version == KEX_STUB_VER)
+		{
+			DBGPRINTF(("No need to upgrade\n"));
 			return;
+		}
 		else
+		{
 			upgrade = true;
+		}
 	}
 
 	char kernel32path[MAX_PATH];
 	GetModuleFileName(h_kernel32, kernel32path, sizeof(kernel32path));
 	
-	pefile.OpenFile(upgrade ? backup_file.c_str() : kernel32path, 0x10000);
+	pefile.OpenFile(upgrade ? backup_file : kernel32path, 0x10000);
 	if (!pefile.HasTarget())
 	{
 		if (upgrade)
-			ShowError(IDS_FAILOPENBACKUP, backup_file.c_str(), kernel32path);
+			ShowError(IDS_FAILOPENBACKUP, backup_file, kernel32path);
 		else
 			ShowError(IDS_FAILOPEN, kernel32path);
 	}
 
 	find_ExportFromX();
 	find_IsKnownDLL();
+	find_FLoadTreeNotify1();
+	find_FLoadTreeNotify2();
 	disable_platform_check();
 	disable_resource_check();
+	disable_named_and_rcdata_resources_mirroring();
+	positive_pids_patch();
 	mod_imte_alloc();
+	mod_mr_alloc();
 	mod_pdb_alloc();
 
 	KernelEx_codeseg* cseg;
@@ -478,6 +636,7 @@ void Setup::install()
 	dseg->jtab[JTAB_EFN_DYN] = _ExportFromName + pefile.GetImageBase();
 	dseg->jtab[JTAB_EFN_STA] = _ExportFromName + pefile.GetImageBase();
 	dseg->jtab[JTAB_KNO_DLL] = _IsKnownDLL + pefile.GetImageBase();
+	dseg->jtab[JTAB_FLD_TRN] = _FLoadTreeNotify + pefile.GetImageBase();
 
 	//exportfromx patch
 	DWORD code = (DWORD) pefile.GetSectionByName(CODE_SEG);
@@ -521,19 +680,27 @@ void Setup::install()
 
 	//isknowndll patch
 	set_call_ref(IsKnownDLL_call, (DWORD) &cseg->jmp_stub[JTAB_KNO_DLL]);
-	DBGPRINTF(("KNO_DLL: address %08x\n", pefile.PointerToRva((void*) a) 
+	DBGPRINTF(("KNO_DLL: address %08x\n", pefile.PointerToRva((void*) IsKnownDLL_call) 
+			+ pefile.GetImageBase()));
+
+	//FLoadTreeNotify patch
+	set_call_ref(FLoadTreeNotify_call1, (DWORD) &cseg->jmp_stub[JTAB_FLD_TRN]);
+	DBGPRINTF(("FLD_TRN: address %08x\n", pefile.PointerToRva((void*) FLoadTreeNotify_call1)
+			+ pefile.GetImageBase()));
+	set_call_ref(FLoadTreeNotify_call2, (DWORD) &cseg->jmp_stub[JTAB_FLD_TRN]);
+	DBGPRINTF(("FLD_TRN: address %08x\n", pefile.PointerToRva((void*) FLoadTreeNotify_call2)
 			+ pefile.GetImageBase()));
 
 	// backup original file
 	if (!upgrade)
 	{
-		if (!CopyFile(kernel32path, backup_file.c_str(), FALSE))
-			ShowError(IDS_FAILBAK, backup_file.c_str());
+		if (!CopyFile(kernel32path, backup_file, FALSE))
+			ShowError(IDS_FAILBAK, backup_file);
 	}
 
 	// save patched file
-	string tmp_file = get_temp_file_name();
-	pefile.SaveFile(tmp_file.c_str());
+	sstring tmp_file = get_temp_file_name();
+	pefile.SaveFile(tmp_file);
 
 	if (is_winme)
 	{
@@ -561,10 +728,12 @@ void Setup::install()
 
 int main(int argc, char** argv)
 {
+	DBGPRINTF(("KernelEx setup program running\n"));
 	if (argc != 2)
 		return 1;
 
 	Setup setup(argv[1]);
 	setup.install();
+	DBGPRINTF(("Setup finished\n"));
 	return 0;
 }

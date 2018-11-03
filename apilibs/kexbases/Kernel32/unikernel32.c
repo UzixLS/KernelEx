@@ -302,7 +302,7 @@ BOOL WINAPI GetDiskFreeSpaceExW_new(LPCWSTR lpDirectoryNameW, PULARGE_INTEGER lp
 {
 	file_GetCP();
 	file_ALLOC_WtoA(lpDirectoryName);
-	return GetDiskFreeSpaceExA(lpDirectoryNameA, lpFreeBytesAvailableToCaller, lpTotalNumberOfBytes, lpTotalNumberOfFreeBytes);
+	return GetDiskFreeSpaceExA_fix(lpDirectoryNameA, lpFreeBytesAvailableToCaller, lpTotalNumberOfBytes, lpTotalNumberOfFreeBytes);
 }
 
 //MAKE_EXPORT GetDiskFreeSpaceW_new=GetDiskFreeSpaceW
@@ -310,7 +310,7 @@ BOOL WINAPI GetDiskFreeSpaceW_new(LPCWSTR lpRootPathNameW, LPDWORD lpSectorsPerC
 {
 	file_GetCP();
 	file_ALLOC_WtoA(lpRootPathName);
-	return GetDiskFreeSpaceA(lpRootPathNameA, lpSectorsPerCluster, lpBytesPerSector, lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+	return GetDiskFreeSpaceA_fix(lpRootPathNameA, lpSectorsPerCluster, lpBytesPerSector, lpNumberOfFreeClusters, lpTotalNumberOfClusters);
 }
 
 //MAKE_EXPORT GetEnvironmentStringsW_new=GetEnvironmentStringsW
@@ -510,7 +510,7 @@ UINT WINAPI GetTempFileNameW_new(LPCWSTR lpPathNameW, LPCWSTR lpPrefixStringW, U
 	file_GetCP();
 	file_ALLOC_WtoA(lpPathName);
 	file_ALLOC_WtoA(lpPrefixString);
-	ret = GetTempFileNameA(lpPathNameA, lpPrefixStringA, uUnique, lpTempFileNameA);
+	ret = GetTempFileNameA_fix(lpPathNameA, lpPrefixStringA, uUnique, lpTempFileNameA);
 	if (ret)
 	{
 		file_AtoW(lpTempFileName, MAX_PATH);
@@ -854,7 +854,7 @@ LPWSTR WINAPI lstrcpynW_new(LPWSTR dst, LPCWSTR src, INT n)
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
+		return NULL;
 	}
-    return ret;
+	return ret;
 }

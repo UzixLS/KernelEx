@@ -10,6 +10,7 @@ EXPORTS
     VxDCall6 @6 NONAME
     VxDCall7 @7 NONAME
     VxDCall8 @8 NONAME
+    _GetpWin16Lock @93 NONAME
     _EnterSysLevel @97 NONAME
     _LeaveSysLevel @98 NONAME
     MakeCriticalSectionGlobal

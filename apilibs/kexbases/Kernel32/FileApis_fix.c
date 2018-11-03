@@ -1,6 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008-2009, Xeno86
+ *  Copyright (C) 2008-2009, Xeno86, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -38,6 +38,8 @@ HANDLE WINAPI CreateFileA_fix(LPCSTR lpFileName, DWORD dwDesiredAccess,
 		if (oldaccess & FILE_EXECUTE)
 			dwDesiredAccess |= GENERIC_EXECUTE;
 	}
+	//FILE_SHARE_DELETE is not supported
+	dwShareMode &= ~FILE_SHARE_DELETE;
 	// hTemplate has to be NULL on 9x
 	hTemplateFile = NULL;
 	// special case: overlapped I/O
@@ -69,17 +71,22 @@ BOOL WINAPI ReadFile_fix(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRe
 	if (lpOverlapped && GetLastError() == ERROR_INVALID_PARAMETER)
 	{
 		LONG high = lpOverlapped->OffsetHigh;
-		DWORD nr;
 		SetLastError(lasterr);
 		if ((SetFilePointer(hFile, lpOverlapped->Offset, &high, FILE_BEGIN)
-				== (DWORD)-1 && GetLastError() != NO_ERROR) ||
-				(ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, &nr, 0) && !nr))
-		{
-			SetLastError(ERROR_HANDLE_EOF);
-			return FALSE;
-		}
-		*lpNumberOfBytesRead = nr;
-		return TRUE;
+				== INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR))
+				return FALSE;
+		ResetEvent(lpOverlapped->hEvent);
+		lpOverlapped->Internal = STATUS_PENDING;
+		lpOverlapped->InternalHigh = 0;
+		BOOL result = 
+			ReadFile(hFile, lpBuffer, nNumberOfBytesToRead, &lpOverlapped->InternalHigh, 0);
+		lasterr = GetLastError();
+		lpOverlapped->Internal = STATUS_WAIT_0;
+		SetEvent(lpOverlapped->hEvent);
+		SetLastError(lasterr);
+		if (lpNumberOfBytesRead)
+			*lpNumberOfBytesRead = lpOverlapped->InternalHigh;
+		return result;
 	}
 	return FALSE;
 }
@@ -99,9 +106,79 @@ BOOL WINAPI WriteFile_fix(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesTo
 		LONG high = lpOverlapped->OffsetHigh;
 		SetLastError(lasterr);
 		if ((SetFilePointer(hFile, lpOverlapped->Offset, &high, FILE_BEGIN)
-				== (DWORD)-1 && GetLastError() != NO_ERROR))
+				== INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR))
 			return FALSE;
-		return WriteFile(hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, 0);
+		ResetEvent(lpOverlapped->hEvent);
+		lpOverlapped->Internal = STATUS_PENDING;
+		lpOverlapped->InternalHigh = 0;
+		BOOL result = 
+			WriteFile(hFile, lpBuffer, nNumberOfBytesToWrite, &lpOverlapped->InternalHigh, 0);
+		lasterr = GetLastError();
+		lpOverlapped->Internal = STATUS_WAIT_0;
+		SetEvent(lpOverlapped->hEvent);
+		SetLastError(lasterr);
+		if (lpNumberOfBytesWritten)
+			*lpNumberOfBytesWritten = lpOverlapped->InternalHigh;
+		return result;
 	}
 	return FALSE;
+}
+
+/* MAKE_EXPORT GetTempFileNameA_fix=GetTempFileNameA */
+UINT WINAPI GetTempFileNameA_fix(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPTSTR lpTempFileName)
+{
+	static int g_tempprefix = 0;
+
+	if (!lpPathName) 
+		lpPathName = "\\";
+	if (!lpPrefixString)
+	{
+		char temppref[2];
+		g_tempprefix++;
+		g_tempprefix %= 5;
+		temppref[0] = '0' + g_tempprefix;
+		temppref[1] = '\0';
+		lpPrefixString = temppref;
+	}
+	return GetTempFileNameA(lpPathName,lpPrefixString,uUnique,lpTempFileName);
+}
+
+/* MAKE_EXPORT GetDiskFreeSpaceA_fix=GetDiskFreeSpaceA */
+BOOL WINAPI GetDiskFreeSpaceA_fix(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, 
+								  LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
+								  LPDWORD lpTotalNumberOfClusters)
+{
+	char newRootPath[4] = { "X:\\" };
+	if (lstrlenA(lpRootPathName) == 2 && lpRootPathName[1] == ':') //GetDiskFreeSpace fails on paths like C:
+	{
+		newRootPath[0] = lpRootPathName[0];
+		lpRootPathName = newRootPath;
+	}
+	BOOL ret = GetDiskFreeSpaceA(lpRootPathName,lpSectorsPerCluster,lpBytesPerSector,lpNumberOfFreeClusters,lpTotalNumberOfClusters);
+	if (!ret) //more suprisingly, it may fail on paths with two extensions (e.g. c:\game.exe.lnk)
+	{
+		char shortPath[MAX_PATH];
+		if (GetShortPathName(lpRootPathName,shortPath,MAX_PATH))
+		{
+			//GetDiskFreeSpace will still fail on short path name, so we check drive root, having path validated
+			newRootPath[0] = shortPath[0];
+			ret = GetDiskFreeSpaceA(newRootPath,lpSectorsPerCluster,lpBytesPerSector,lpNumberOfFreeClusters,lpTotalNumberOfClusters);
+		}
+	}
+	return ret;
+}
+
+/* MAKE_EXPORT GetDiskFreeSpaceExA_fix=GetDiskFreeSpaceExA */
+BOOL WINAPI GetDiskFreeSpaceExA_fix(LPCSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailable, 
+									PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes)
+{
+	//GetDiskFreeSpaceEx does not fail on paths like C: but still fails on on paths with two extensions
+	BOOL ret = GetDiskFreeSpaceExA(lpDirectoryName,lpFreeBytesAvailable,lpTotalNumberOfBytes,lpTotalNumberOfFreeBytes);
+	if (!ret)
+	{
+		char shortPath[MAX_PATH];
+		if (GetShortPathName(lpDirectoryName,shortPath,MAX_PATH))
+			ret = GetDiskFreeSpaceExA(shortPath,lpFreeBytesAvailable,lpTotalNumberOfBytes,lpTotalNumberOfFreeBytes);
+	}
+	return ret;
 }

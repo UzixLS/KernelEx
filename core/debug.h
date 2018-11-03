@@ -47,6 +47,4 @@
 void dbgvprintf(const char* format, void* _argp);
 void dbgprintf(const char* format, ...);
 
-#include "apilog.h"
-
 #endif

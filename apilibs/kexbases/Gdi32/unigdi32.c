@@ -1,6 +1,7 @@
 /*
  *  KernelEx
  *  Copyright (C) 2009, Xeno86
+ *  Copyright (C) 2009, Tihiy
  *
  *  This file is part of KernelEx source code.
  *
@@ -63,14 +64,14 @@ static int CALLBACK EnumFontFamExConv(const LOGFONTA *plfA,
 			fontW->elfLogFont.lfFaceName, LF_FACESIZE);
 	fontW->elfLogFont.lfFaceName[LF_FACESIZE - 1] = 0;
 	MultiByteToWideChar(CP_ACP, 0, (LPCSTR) fontA->elfFullName, -1,
-            fontW->elfFullName, LF_FULLFACESIZE);
-    fontW->elfFullName[LF_FULLFACESIZE - 1] = 0;
-    MultiByteToWideChar(CP_ACP, 0, (LPCSTR) fontA->elfStyle, -1,
-            fontW->elfStyle, LF_FACESIZE);
-    fontW->elfStyle[LF_FACESIZE - 1] = 0;
-    MultiByteToWideChar(CP_ACP, 0, (LPCSTR) fontA->elfScript, -1,
-            fontW->elfScript, LF_FACESIZE);
-    fontW->elfScript[LF_FACESIZE - 1] = 0;
+			fontW->elfFullName, LF_FULLFACESIZE);
+	fontW->elfFullName[LF_FULLFACESIZE - 1] = 0;
+	MultiByteToWideChar(CP_ACP, 0, (LPCSTR) fontA->elfStyle, -1,
+			fontW->elfStyle, LF_FACESIZE);
+	fontW->elfStyle[LF_FACESIZE - 1] = 0;
+	MultiByteToWideChar(CP_ACP, 0, (LPCSTR) fontA->elfScript, -1,
+			fontW->elfScript, LF_FACESIZE);
+	fontW->elfScript[LF_FACESIZE - 1] = 0;
 
 	tmW->ntmTm.tmHeight = tmA->ntmTm.tmHeight;
 	tmW->ntmTm.tmAscent = tmA->ntmTm.tmAscent;
@@ -115,16 +116,43 @@ static int CALLBACK EnumFontFamExConv(const LOGFONTA *plfA,
 	return pef->EnumProcW((LOGFONTW*) &elfeW, (TEXTMETRICW*) &ntmeW, FontType, pef->lParam);
 }
 
+/*  Surprise surprise!
+ *  logfont* is optional in EnumFontFamiliesEx on NT
+ *  and means - all fonts, all charsets
+ */
+
+/* MAKE_EXPORT EnumFontFamiliesExA_new=EnumFontFamiliesExA */
+int WINAPI EnumFontFamiliesExA_new(HDC hdc, LPLOGFONTA pLogfontA, 
+		FONTENUMPROCA pEnumFontFamExProc, LPARAM lParam, DWORD dwFlags)
+{
+	LOGFONTA logfont;
+	if (!pLogfontA) 
+	{
+		memset(&logfont, 0, sizeof(logfont));
+		logfont.lfCharSet = DEFAULT_CHARSET;
+		pLogfontA = &logfont;
+	}
+	return EnumFontFamiliesExA(hdc, pLogfontA, pEnumFontFamExProc, lParam, dwFlags);
+}
+
 /* MAKE_EXPORT EnumFontFamiliesExW_new=EnumFontFamiliesExW */
 int WINAPI EnumFontFamiliesExW_new(HDC hdc, LPLOGFONTW pLogfontW, 
 		FONTENUMPROCW pEnumFontFamExProc, LPARAM lParam, DWORD dwFlags)
 {
 	EnumFamilies_t ef;
 	LOGFONTA logfont;
-	memcpy(&logfont, pLogfontW, sizeof(LOGFONTA) - LF_FACESIZE);
-	WideCharToMultiByte(CP_ACP, 0, pLogfontW->lfFaceName, -1, logfont.lfFaceName, 
-			LF_FACESIZE, NULL, NULL);
-	logfont.lfFaceName[LF_FACESIZE - 1] = '\0';
+	if (pLogfontW)
+	{		
+		memcpy(&logfont, pLogfontW, sizeof(LOGFONTA) - LF_FACESIZE);
+		WideCharToMultiByte(CP_ACP, 0, pLogfontW->lfFaceName, -1, logfont.lfFaceName, 
+				LF_FACESIZE, NULL, NULL);
+		logfont.lfFaceName[LF_FACESIZE - 1] = '\0';
+	}
+	else
+	{
+		memset(&logfont, 0, sizeof(logfont));
+		logfont.lfCharSet = DEFAULT_CHARSET;
+	}
 	ef.EnumProcW = pEnumFontFamExProc;
 	ef.lParam = lParam;
 	return EnumFontFamiliesExA(hdc, &logfont, EnumFontFamExConv, (LPARAM) &ef, dwFlags);
@@ -164,4 +192,36 @@ BOOL WINAPI RemoveFontResourceW_new(LPCWSTR strW)
 	file_GetCP();
 	file_ALLOC_WtoA(str);
 	return RemoveFontResourceA(strA);
+}
+
+/* MAKE_EXPORT ExtCreatePen_fix=ExtCreatePen */
+HPEN WINAPI ExtCreatePen_fix(
+  DWORD dwPenStyle,      // pen style
+  DWORD dwWidth,         // pen width
+  CONST LOGBRUSH *lplb,  // brush attributes
+  DWORD dwStyleCount,    // length of custom style array
+  CONST DWORD *lpStyle   // custom style array
+)
+{
+	dwPenStyle &= ~PS_USERSTYLE;
+	return ExtCreatePen(dwPenStyle,dwWidth,lplb,dwStyleCount,lpStyle);
+}
+
+/* MAKE_EXPORT GetObjectW_new=GetObjectW */
+int WINAPI GetObjectW_new(
+  HGDIOBJ hgdiobj,  // handle to graphics object
+  int cbBuffer,     // size of buffer for object information
+  LPVOID lpvObject  // buffer for object information
+)
+{
+	int type = GetObjectType_fix(hgdiobj);
+	if (type != OBJ_FONT) return GetObjectA(hgdiobj,cbBuffer,lpvObject);
+	if (!lpvObject) return sizeof(LOGFONTW);
+	LOGFONTA fontA = {0};
+	LOGFONTW fontW = {0};
+	if (!GetObjectA(hgdiobj,sizeof(LOGFONTA),&fontA)) return 0; //err not font
+	memcpy(&fontW,&fontA,FIELD_OFFSET(LOGFONTA,lfFaceName));
+	MultiByteToWideChar(CP_ACP,0,fontA.lfFaceName,-1,fontW.lfFaceName,LF_FACESIZE);
+	memcpy(lpvObject,&fontW,cbBuffer);
+	return cbBuffer;
 }

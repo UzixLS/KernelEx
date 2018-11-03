@@ -31,6 +31,7 @@
 #include <exception>
 #include <algorithm>
 #include <cctype>
+#include <sys/stat.h>
 using namespace std;
 #include "prep.h"
 
@@ -463,39 +464,50 @@ void dump_all()
 	write_ordinal_exports(cout);
 }
 
-void replace_if_changed(const string& out, const string& in)
+void replace(const string& out, const string& in)
 {
-	fstream f;
-	stringstream buf;
-	string in1;
-	string in2;
+	ifstream fin;
+	ofstream fout;
 
-	f.open(out.c_str(), fstream::in);
-	if (!f)
+	fin.open(in.c_str(), ios::in);
+	if (!fin)
 		throw Exception("Failed to open file");
-	buf << f.rdbuf();
-	in1 = buf.str();
-	f.close();
 
-	f.open(in.c_str(), fstream::in);
-	if (!f)
+	fout.open(out.c_str(), ios::out | ios::trunc);
+	if (!fout)
 		throw Exception("Failed to open file");
-	buf.clear();
-	buf.str("");
-	buf << f.rdbuf();
-	in2 = buf.str();
-	f.close();
+	fout << fin.rdbuf();
 
-	if (in1.compare(in2))
-	{
-		f.open(out.c_str(), ios::out | ios::trunc);
-		if (!f)
-			throw Exception("Failed to open file");
-		f << in2;
-		f.close();
-	}
+	fout.close();
+	fin.close();
 
 	remove(in.c_str());
+}
+
+bool is_uptodate_dir(const string& path)
+{
+	string file;
+	FileFinder ff;
+	struct _stat st;
+	time_t mintime;
+
+	ff.search_for(path + "_*_apilist.c");
+	file = ff.get_next_file();
+	if (file.empty())
+		throw Exception("Couldn't find output def file");
+
+	_stat((path + file).c_str(), &st);
+	mintime = st.st_mtime;
+	
+	ff.search_for(path + "*.c");
+	while (!(file = ff.get_next_file()).empty())
+	{
+		_stat((path + file).c_str(), &st);
+		if (st.st_mtime > mintime)
+			return false;
+	}
+
+	return true;
 }
 
 void work()
@@ -527,6 +539,11 @@ void work()
 		path += '\\';
 
 		cout << "Processing directory: '" << path << '\'' << endl;
+		if (is_uptodate_dir(path))
+		{
+			cout << "Directory is up to date" << endl;
+			continue;
+		}
 		
 		ff.search_for(path + "*.c");
 
@@ -534,9 +551,6 @@ void work()
 		while (!(file = ff.get_next_file()).empty())
 		{
 			FileDeclParser* parser;
-
-			//if (file.find("_apilist.") != string::npos)
-			//	continue;
 
 			file = path + file;
 
@@ -612,7 +626,7 @@ void work()
 		}
 
 		out_file.close();
-		replace_if_changed(file, file + ".tmp");
+		replace(file, file + ".tmp");
 
 		//write output decls
 		ff.search_for(path + "_*_apilist.h");
@@ -665,7 +679,7 @@ void work()
 		}
 
 		out_file.close();
-		replace_if_changed(file, file + ".tmp");
+		replace(file, file + ".tmp");
 	}
 
 }

@@ -45,41 +45,58 @@ class log_stub
 {
 public:
 	log_stub(const char* source, const char* target, const char* name, 
-			unsigned long proc, unsigned long log_fun) 
-			: call_orig(proc, true), jmp_logfun(log_fun), 
-			tas_store((unsigned long) ThreadAddrStack::push_ret_addr, true),
-			tas_restore((unsigned long) ThreadAddrStack::pop_ret_addr, true),
-			tas_depth((unsigned long) ThreadAddrStack::get_level, true)
-	{
-		c_push2 = c_push3 = c_push4 = 0x68;
-		v_source = source;
-		v_target = target;
-		v_name = name;
-		c_pusheax1 = c_pusheax2 = c_pusheax3 = c_pusheax4 = 0x50;
-		c_popeax4 = 0x58;
-		c_pushecx = 0x51;
-		c_popecx = 0x59;
-	}
+			unsigned long proc);
 
 private:
-	unsigned char c_popeax4;  //caller ret
-	unsigned char c_pushecx;
-	unsigned char c_pusheax4; //caller ret
-	redir_stub tas_store;
-	unsigned char c_popecx;
+	struct log_data
+	{
+		const char* source;
+		const char* target;
+		const char* api_name;
+	};
+
+	static void __stdcall pre_log(log_data* lgd);
+	static void __stdcall post_log(log_data* lgd, DWORD retval);
+
+/*
+	pushad
+	push  lgd
+	call  pre_log@4
+	popad
+
+	add   esp, 4
+	call  orig
+	sub   esp, 4
+
+	pushad
+	push  eax
+	push  lgd
+	call  post_log@8
+	popad
+	ret
+*/
+
+	BYTE c_pushad1;
+	BYTE c_push1;
+	log_data* v_lgd1;
+	redir_stub call_prelog;
+	BYTE c_popad1;
+
+	WORD c_add_esp;
+	BYTE c_byte_4;
 	redir_stub call_orig;
-	unsigned char c_pusheax1; //orig ret
-	redir_stub tas_depth;
-	unsigned char c_pusheax3;  //call stack depth
-	unsigned char c_push2;    //api name
-	const char* v_name;
-	unsigned char c_push3;    //target module
-	const char* v_target;
-	unsigned char c_push4;    //calling module
-	const char* v_source;
-	redir_stub tas_restore;
-	unsigned char c_pusheax2; //caller return address
-	redir_stub jmp_logfun;    //jump to log_fun
+	WORD c_sub_esp;
+	BYTE c_byte_4_1;
+	
+	BYTE c_pushad2;
+	BYTE c_push_eax;
+	BYTE c_push2;
+	log_data* v_lgd2;
+	redir_stub call_postlog;
+	BYTE c_popad2;
+	BYTE c_ret;
+
+	log_data lgd;
 };
 
 #pragma pack(pop)

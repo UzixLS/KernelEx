@@ -27,6 +27,8 @@
 #include "internals.h"
 #include "SettingsDB.h"
 #include "debug.h"
+#undef MAKE_PS_TAG
+#include "ProcessStorage.h"
 
 unsigned long kexGetKEXVersion()
 {
@@ -73,24 +75,60 @@ BOOL kexAreExtensionsEnabled()
 }
 
 void kexGetModuleSettings(const char* module, 
-                          char* conf_name, BYTE* ldr_flags)
+                          char* conf_name, DWORD* mod_flags)
 {
 	appsetting as = SettingsDB::instance.get_appsetting(module);
 	if (!as.conf)
+	{
 		conf_name[0] = '\0';
+	}
 	else
+	{
 		strncpy(conf_name, as.conf->get_name(), 256);
-	*ldr_flags = as.flags;
-	conf_name[255] = '\0';
+		conf_name[255] = '\0';
+	}
+
+	DWORD flags = 0;
+	if (as.flags & LDR_KEX_DISABLE) flags |= KRF_KEX_DISABLE;
+	if (as.flags & LDR_OVERRIDE_PROC_MOD) flags |= KRF_OVERRIDE_PROC_MOD;
+	if (as.flags & LDR_LOG_APIS) flags |= KRF_LOG_APIS;
+	if (as.flags & LDR_NO_INHERIT) flags |= KRF_NO_INHERIT;
+	if (as.flags & LDR_VALID_FLAG) flags |= KRF_VALID_FLAG;
+	*mod_flags = flags;
 }
 
 void kexSetModuleSettings(const char* module,
-                          const char* conf_name, BYTE ldr_flags)
+                          const char* conf_name, DWORD mod_flags)
 {
-	SettingsDB::instance.write_single(module, conf_name, ldr_flags);
+	BYTE flags = 0;
+	if (mod_flags & KRF_KEX_DISABLE) flags |= LDR_KEX_DISABLE;
+	if (mod_flags & KRF_OVERRIDE_PROC_MOD) flags |= LDR_OVERRIDE_PROC_MOD;
+	if (mod_flags & KRF_LOG_APIS) flags |= LDR_LOG_APIS;
+	if (mod_flags & KRF_NO_INHERIT) flags |= LDR_NO_INHERIT;
+	SettingsDB::instance.write_single(module, conf_name, flags);
 }
 
 void kexFlushAppSettings(void)
 {
 	SettingsDB::instance.flush_all();
+}
+
+int kexPsAllocIndex(void)
+{
+	return ProcessStorage::allocate();
+}
+
+void* kexPsGetValue(int index)
+{
+	return ProcessStorage::get_instance()->get(index);
+}
+
+int kexPsSetValue(int index, void* value)
+{
+	return ProcessStorage::get_instance()->set(index, value);
+}
+
+void* kexGetK32Lock()
+{
+	return krnl32lock;
 }

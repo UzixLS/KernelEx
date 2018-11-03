@@ -1,6 +1,8 @@
 /*
  *  KernelEx
+ *
  *  Copyright (C) 2008, Tihiy
+ *
  *  This file is part of KernelEx source code.
  *
  *  KernelEx is free software; you can redistribute it and/or modify
@@ -33,13 +35,26 @@ BOOL WINAPI UpdateLayeredWindow_new(
   DWORD dwFlags          // options
 )
 {
-	//pretty dumb stub for Firefox
-	if ( hdcSrc && psize && pptSrc )
+	BOOL ret = FALSE;
+	if ( (GetWindowLong(hwnd,GWL_EXSTYLE) & WS_EX_LAYERED) && hdcSrc && pptSrc )
 	{
+		RECT rc;
+		GetWindowRect(hwnd,&rc);
+		if (pptDst)
+		{
+			OffsetRect(&rc,-rc.left,-rc.top);
+			OffsetRect(&rc,pptDst->x,pptDst->y);
+		}
+		if (psize)
+		{
+			rc.right = rc.left + psize->cx;
+			rc.bottom = rc.top + psize->cy;
+		}
+		MoveWindow(hwnd,rc.left,rc.top,rc.right-rc.left,rc.bottom-rc.top,FALSE);
 		HDC hdc = GetDC( hwnd );
-		BitBlt( hdc, 0, 0, psize->cx, psize->cy, hdcSrc, pptSrc->x, pptSrc->y, SRCCOPY );
-		ReleaseDC( hwnd, hdc );
+		OffsetRect(&rc,-rc.left,-rc.top);
+		ret = BitBlt(hdc,0,0,rc.right-rc.left,rc.bottom-rc.top,hdcSrc,pptSrc->x,pptSrc->y,SRCCOPY);
+		ReleaseDC(hwnd,hdc);
 	}
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
+	return ret;	
 }

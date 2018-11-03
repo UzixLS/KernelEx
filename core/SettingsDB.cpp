@@ -66,6 +66,7 @@ void SettingsDB::parse_configs()
 	HKEY key;
 	DWORD index = 0;
 	char path[MAX_PATH];
+	char epath[MAX_PATH];
 	DWORD path_len;
 	char name[256];
 	DWORD name_len;
@@ -98,13 +99,17 @@ void SettingsDB::parse_configs()
 		if (!as.conf)
 			continue;
 		
-		strupr(path);
-		if (strchr(path, '*') || strchr(path, '?'))
+		int ret = ExpandEnvironmentStrings(path, epath, MAX_PATH);
+		if (ret > MAX_PATH || ret == 0)
+			continue;
+
+		strupr(epath);
+		if (strchr(epath, '*') || strchr(epath, '?'))
 			pdb = &db_wild;
 		else
 			pdb = &db;
 			
-		pdb->insert(pair<sstring, appsetting>(path, as));
+		pdb->insert(pair<sstring, appsetting>(epath, as));
 	}
 	RegCloseKey(key);
 }

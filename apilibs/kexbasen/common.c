@@ -54,6 +54,5 @@ char* file_fixWprefix(char* in)
 void fatal_error(const char* msg)
 {
 	MessageBox(NULL, msg, "KernelEx error", MB_OK | MB_ICONERROR);
-#pragma message("place DBGBREAK here!!!!")
 	ExitProcess(1);
 }

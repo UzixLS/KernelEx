@@ -1,7 +1,6 @@
 /*
  *  KernelEx
- *  Copyright (C) 2008, Xeno86
- *  Copyright (C) 2008, Tihiy
+ *  Copyright (C) 2009, Xeno86
  *
  *  This file is part of KernelEx source code.
  *
@@ -22,29 +21,11 @@
 
 #include <windows.h>
 
-__declspec(naked)
-/* MAKE_EXPORT CallWindowProcA_fix=CallWindowProcA */
-LRESULT WINAPI CallWindowProcA_fix(WNDPROC lpPrevWndFunc, HWND hWnd, 
-		UINT Msg, WPARAM wParam, LPARAM lParam)
+/* MAKE_EXPORT IsWow64Process_new=IsWow64Process */
+BOOL WINAPI IsWow64Process_new(HANDLE hProcess, PBOOL Wow64Process)
 {
-	static const char unicows_str[] = "unicows.dll";
-	static const char callwindowproca_str[] = "CallWindowProcA";
-	
-	/* We shouldn't write it in C because some weird programs depend 
-	 * on CallWindowProc calling function directly!
-	 */
-__asm {
-	mov eax, [esp+4] ;lpPrevWndFunc
-	and eax, 0x7FFFFFF0
-	cmp eax, 0x7FFFFFF0 
-	je UNI
-	jmp dword ptr [CallWindowProcA]
-UNI:
-	push offset unicows_str
-	call dword ptr [GetModuleHandleA]
-	push offset callwindowproca_str
-	push eax
-	call dword ptr [GetProcAddress]	
-	jmp eax
-	}
+	if (!Wow64Process) 
+		return FALSE;
+	*Wow64Process = FALSE;
+	return TRUE;
 }

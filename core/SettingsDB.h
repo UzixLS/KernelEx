@@ -22,22 +22,12 @@
 #ifndef __SETTINGSDB_H
 #define __SETTINGSDB_H
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
 #include "sstring.hpp"
 #include <map>
+#include "resolver.h"
 #include "apiconf.h"
 
 using namespace std;
-
-struct appsetting
-{
-	appsetting() : conf(NULL), flags(0) {}
-	ApiConfiguration* conf;
-	unsigned long flags;
-};
 
 class SettingsDB
 {

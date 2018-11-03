@@ -37,7 +37,6 @@ FWDPROC RegDeleteKeyW_fwd;
 FWDPROC RegDeleteValueW_fwd;
 FWDPROC RegEnumKeyExW_fwd;
 FWDPROC RegEnumKeyW_fwd;
-FWDPROC RegEnumValueW_fwd;
 FWDPROC RegLoadKeyW_fwd;
 FWDPROC RegOpenKeyExW_fwd;
 FWDPROC RegOpenKeyW_fwd;

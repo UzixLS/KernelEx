@@ -20,12 +20,13 @@
  */
 
 #include "common.h"
-#include "kexcoresdk.h"
 #include "_gdi32_apilist.h"
+
+BOOL InitGDIObjects(void);
 
 BOOL init_gdi32()
 {
-	return TRUE;
+	return InitGDIObjects();
 }
 
 /*
@@ -40,14 +41,23 @@ static const apilib_named_api gdi32_named_apis[] =
 	DECL_API("AddFontResourceExA", AddFontResourceExA_new),
 	DECL_API("AddFontResourceExW", AddFontResourceExW_new),
 	DECL_API("AddFontResourceW", AddFontResourceW_new),
+	DECL_API("CreateDIBSection", CreateDIBSection_fix),
+	DECL_API("DeleteDC", DeleteDC_fix),
+	DECL_API("DeleteObject", DeleteObject_fix),
+	DECL_API("EnumFontFamiliesExA", EnumFontFamiliesExA_new),
 	DECL_API("EnumFontFamiliesExW", EnumFontFamiliesExW_new),
 	DECL_API("EnumFontFamiliesW", EnumFontFamiliesW_new),
+	DECL_API("ExtCreatePen", ExtCreatePen_fix),
 	DECL_API("ExtTextOutA", ExtTextOutA_new),
 	DECL_API("ExtTextOutW", ExtTextOutW_new),
 	DECL_API("GetCharWidth32A", GetCharWidthA),
 	DECL_API("GetCharWidth32W", GetCharWidthW),
+	DECL_API("GetDCBrushColor", GetDCBrushColor_stub),
+	DECL_API("GetDCPenColor", GetDCPenColor_stub),
 	DECL_API("GetFontUnicodeRanges", GetFontUnicodeRanges_new),
 	DECL_API("GetGlyphOutlineA", GetGlyphOutlineA_fix),
+	DECL_API("GetObjectType", GetObjectType_fix),
+	DECL_API("GetObjectW", GetObjectW_new),
 	DECL_API("GetRandomRgn", GetRandomRgn_NT),
 	DECL_API("GetTextMetricsA", GetTextMetricsA_NT),
 	DECL_API("GetWorldTransform", GetWorldTransform_NT),
@@ -58,6 +68,7 @@ static const apilib_named_api gdi32_named_apis[] =
 	DECL_API("RemoveFontResourceExA", RemoveFontResourceExA_new),
 	DECL_API("RemoveFontResourceExW", RemoveFontResourceExW_new),
 	DECL_API("RemoveFontResourceW", RemoveFontResourceW_new),
+	DECL_API("SelectObject", SelectObject_fix),
 	DECL_API("SetDCBrushColor", SetDCBrushColor_stub),
 	DECL_API("SetDCPenColor", SetDCPenColor_stub),
 	DECL_API("SetGraphicsMode", SetGraphicsMode_NT),

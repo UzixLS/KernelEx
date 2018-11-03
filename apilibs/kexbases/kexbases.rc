@@ -74,7 +74,7 @@ BEGIN
             VALUE "FileDescription", "KernelEx Base Shared Api Library\0"
             VALUE "FileVersion", _RCVERSION_ "\0"
             VALUE "InternalName", "kexbases\0"
-            VALUE "LegalCopyright", "Copyright © 2009, Xeno86\0"
+            VALUE "LegalCopyright", "Copyright © 2009-2010, Xeno86\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "kexbases.dll\0"
             VALUE "PrivateBuild", "\0"

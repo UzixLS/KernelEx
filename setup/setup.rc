@@ -37,6 +37,7 @@ BEGIN
     IDS_ERRCHECK            "ERROR: Checksum error"
     IDS_FAILOPENBACKUP      "ERROR: Failed to open backup file %s.\nPossible causes: previous version not uninstalled correctly or file has been deleted.\nRestore %s manually from install media."
     IDS_WINVER              "Incompatible Windows version"
+    IDS_DOWNGRADE           "Can't downgrade. Please uninstall currently installed version of KernelEx before continuing."
 END
 
 #endif    // Neutral resources

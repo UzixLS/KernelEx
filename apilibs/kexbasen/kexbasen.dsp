@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /machine:I386 /nodefaultlib /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv /DELAYLOAD:shlwapi.dll
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /machine:I386 /nodefaultlib /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "KernelEx Base NonShared - Win32 Debug"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /pdbtype:sept /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv /DELAYLOAD:shlwapi.dll
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shlwapi.lib shell32.lib rpcrt4.lib usp10.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib delayimp.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /OPT:NOWIN98 /DELAYLOAD:shell32.dll /DELAYLOAD:rpcrt4.dll /DELAYLOAD:usp10.dll /DELAYLOAD:comdlg32.dll /DELAYLOAD:winspool.drv
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -102,6 +102,22 @@ SOURCE=.\kernel32\_kernel32_apilist.c
 # Begin Source File
 
 SOURCE=.\kernel32\_kernel32_apilist.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\kernel32\allocator.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\kernel32\DelayLoadFailureHook.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\kernel32\ThreadPool.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\kernel32\TlsExt.c
 # End Source File
 # Begin Source File
 
@@ -193,11 +209,7 @@ SOURCE=.\shell32\_shell32_apilist.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\shell32\auxshlguid.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\shell32\pidl.h
+SOURCE=.\shell32\folderfix.h
 # End Source File
 # Begin Source File
 
@@ -206,6 +218,10 @@ SOURCE=.\shell32\SHGetFolderLocation.c
 # Begin Source File
 
 SOURCE=.\shell32\SHGetFolderPath.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\shell32\SHGetSpecialFolder_fix.c
 # End Source File
 # Begin Source File
 
@@ -241,23 +257,31 @@ SOURCE=.\winspool\_winspool_apilist.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\winspool\_winspool_stubs.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\winspool\DefaultPrinter.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\winspool\uniwinspool.c
+# End Source File
 # End Group
-# Begin Group "shlwapi"
+# Begin Group "shfolder"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\shlwapi\_shlwapi_apilist.c
+SOURCE=.\shfolder\_shfolder_apilist.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\shlwapi\_shlwapi_apilist.h
+SOURCE=.\shfolder\_shfolder_apilist.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\shlwapi\string.c
+SOURCE=.\shfolder\shfolder.c
 # End Source File
 # End Group
 # Begin Source File
@@ -266,11 +290,93 @@ SOURCE=.\common.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dirlist
+
+!IF  "$(CFG)" == "KernelEx Base NonShared - Win32 Release"
+
+# Begin Custom Build
+WkspDir=.
+ProjDir=.
+InputPath=.\dirlist
+
+"&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
+	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	goto quit 
+	:error 
+	echo Error - compile PREP (Release) project first 
+	echo 1 | choice /C:1 /N >NUL 
+	:quit 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "KernelEx Base NonShared - Win32 Debug"
+
+# Begin Custom Build
+WkspDir=.
+ProjDir=.
+InputPath=.\dirlist
+
+"&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
+	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	goto quit 
+	:error 
+	echo Error - compile PREP (Release) project first 
+	echo 1 | choice /C:1 /N >NUL 
+	:quit 
+	
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\kexbasen.def
+
+!IF  "$(CFG)" == "KernelEx Base NonShared - Win32 Release"
+
+# Begin Custom Build
+OutDir=.\Release
+WkspDir=.
+InputPath=.\kexbasen.def
+
+"$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "KernelEx Base NonShared - Win32 Debug"
+
+# Begin Custom Build
+OutDir=.\Debug
+WkspDir=.
+InputPath=.\kexbasen.def
+
+"$(OutDir)\k32ord.lib" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	cl /nologo /c /TC /DK32ORD_IMPLIB /Fo$(OutDir)\k32ord.obj "$(WkspDir)\common\k32ord.h" 
+	link /DLL /NOENTRY /NOLOGO /IGNORE:4070 /MACHINE:IX86 /DEF:"$(WkspDir)\common\k32ord.def" /OUT:$(OutDir)\k32ord.dll /IMPLIB:$(OutDir)\k32ord.lib $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.exp 
+	del $(OutDir)\k32ord.obj 
+	del $(OutDir)\k32ord.dll 
+	
+# End Custom Build
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\main.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\shlord.c
 # End Source File
 # Begin Source File
 
@@ -283,6 +389,19 @@ SOURCE=.\unifwd.c
 # Begin Source File
 
 SOURCE=.\common.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\k32ord.def
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\common\k32ord.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\shlord.h
 # End Source File
 # Begin Source File
 

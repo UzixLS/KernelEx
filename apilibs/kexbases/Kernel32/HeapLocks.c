@@ -49,3 +49,25 @@ BOOL WINAPI HeapUnlock_new(
 	LeaveCriticalSection((CRITICAL_SECTION*)((DWORD)hHeap+0x50));
 	return TRUE;
 }
+
+#define ISPOINTER(h)         (((ULONG_PTR)(h)&2)==0)
+
+/* MAKE_EXPORT GlobalLock_fix=GlobalLock */
+LPVOID WINAPI GlobalLock_fix(
+    HGLOBAL hMem 	// address of the global memory object 
+)
+{
+	if (ISPOINTER(hMem))
+		return IsBadReadPtr(hMem, 1) ? NULL : hMem;
+	return GlobalLock(hMem);
+}
+
+/* MAKE_EXPORT GlobalUnlock_fix=GlobalUnlock */
+BOOL WINAPI GlobalUnlock_fix(
+    HGLOBAL hMem 	// handle to the global memory object 
+)
+{
+	if (ISPOINTER(hMem)) 
+		return TRUE;
+	return GlobalUnlock(hMem);
+}

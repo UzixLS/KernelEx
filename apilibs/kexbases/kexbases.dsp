@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib version.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /pdbtype:sept /ignore:4092 /OPT:NOWIN98
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib version.lib ../../common/KernelEx.lib ../../kexcrt/kexcrt.lib libc.lib /nologo /dll /map /debug /machine:I386 /nodefaultlib /ignore:4092 /OPT:NOWIN98
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -133,6 +133,10 @@ SOURCE=.\Kernel32\GetFileSizeEx.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Kernel32\GetModuleHandleEx.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Kernel32\GlobalMemoryStatusEx.c
 # End Source File
 # Begin Source File
@@ -146,6 +150,10 @@ SOURCE=.\Kernel32\InitializeCriticalSectionAndSpinCount.c
 # Begin Source File
 
 SOURCE=.\Kernel32\IsProcessorFeaturePresent.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kernel32\IsWow64Process.c
 # End Source File
 # Begin Source File
 
@@ -205,11 +213,11 @@ SOURCE=.\Kernel32\OpenThread.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Kernel32\SetFilePointerEx.c
+SOURCE=.\Kernel32\RemoteDesktop.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Kernel32\ThreadPool.c
+SOURCE=.\Kernel32\SetFilePointerEx.c
 # End Source File
 # Begin Source File
 
@@ -257,10 +265,6 @@ SOURCE=.\User32\_user32_stubs.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\User32\CallWindowProcA_fix.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\User32\DisableProcessWindowsGhosting.c
 # End Source File
 # Begin Source File
@@ -278,6 +282,14 @@ SOURCE=.\User32\GetAncestor.c
 # Begin Source File
 
 SOURCE=.\User32\GetMouseMovePointsEx.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\GetNextDlgTabItem_fix.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\hwnd9x.h
 # End Source File
 # Begin Source File
 
@@ -301,7 +313,31 @@ SOURCE=.\User32\SendMessage_fix.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\User32\UberUSER.c
+SOURCE=.\User32\thuni_conv.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_layer.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_layer.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_macro.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_proc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_thunk.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\User32\thuni_thunk.h
 # End Source File
 # Begin Source File
 
@@ -333,7 +369,11 @@ SOURCE=.\Gdi32\FontResourceExA.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\Gdi32\gdi9x.h
+SOURCE=.\Gdi32\GdiObjects.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Gdi32\GdiObjects.h
 # End Source File
 # Begin Source File
 
@@ -374,6 +414,10 @@ SOURCE=.\Advapi32\RegDisablePredefinedCache.c
 # Begin Source File
 
 SOURCE=.\Advapi32\RegOpenCurrentUser.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Advapi32\RtlGenRandom.c
 # End Source File
 # Begin Source File
 
@@ -447,6 +491,49 @@ SOURCE=.\shell32\IsUserAnAdmin.c
 # Begin Source File
 
 SOURCE=.\common.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\dirlist
+
+!IF  "$(CFG)" == "KernelEx Base Shared - Win32 Release"
+
+# Begin Custom Build
+WkspDir=.
+ProjDir=.
+InputPath=.\dirlist
+
+"&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
+	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	goto quit 
+	:error 
+	echo Error - compile PREP (Release) project first 
+	echo 1 | choice /C:1 /N >NUL 
+	:quit 
+	
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "KernelEx Base Shared - Win32 Debug"
+
+# Begin Custom Build
+WkspDir=.
+ProjDir=.
+InputPath=.\dirlist
+
+"&" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	if not exist $(WkspDir)\util\prep\Release\prep.exe goto error 
+	$(WkspDir)\util\prep\Release\prep.exe "$(ProjDir)" 
+	goto quit 
+	:error 
+	echo Error - compile PREP (Release) project first 
+	echo 1 | choice /C:1 /N >NUL 
+	:quit 
+	
+# End Custom Build
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 

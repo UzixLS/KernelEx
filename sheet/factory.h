@@ -22,21 +22,26 @@
 #ifndef _FACTORY_H
 #define _FACTORY_H
 
-class Factory : public IClassFactory
+class CFactory : public IClassFactory
 {
-	ULONG m_RefCount;
-
 public:
-	Factory();
+	// Constructor
+	CFactory();
 
-	// IUnknown
-	STDMETHODIMP QueryInterface(REFIID riid,LPVOID *ppv);
+	// Destructor
+	~CFactory();
+
+	// Interface IUnknown
+	STDMETHODIMP QueryInterface(const IID& iid, void** ppv);
 	STDMETHODIMP_(ULONG) AddRef();
 	STDMETHODIMP_(ULONG) Release();
 
-	// IClassFactory
-	STDMETHODIMP CreateInstance(IUnknown *pUnkOuter,REFIID riid, LPVOID *ppv);
+	// Interface IClassFactory
+	STDMETHODIMP CreateInstance(IUnknown* pUnkOuter, const IID& iid, void** ppv);
 	STDMETHODIMP LockServer(BOOL bLock);
+
+private:
+	long m_cRef;
 };
 
 #endif // _FACTORY_H

@@ -33,9 +33,9 @@ using namespace std;
 class KexLinkage  
 {
 	typedef void (*kexGetModuleSettings_t)(const char* module, 
-			char* conf_name, BYTE* ldr_flags);
+			char* conf_name, DWORD* mod_flags);
 	typedef void (*kexSetModuleSettings_t)(const char* module, 
-			const char* conf_name, BYTE ldr_flags);
+			const char* conf_name, DWORD mod_flags);
 	typedef unsigned long (*kexGetKEXVersion_t)(void);
 	typedef int (*kexIsDebugCore_t)(void);
 

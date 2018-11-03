@@ -26,7 +26,7 @@
 #ifndef __WININIT_H
 #define __WININIT_H
 
-#include <string>
+#include "sstring.hpp"
 #include <queue>
 
 using namespace std;
@@ -41,8 +41,9 @@ class WININIT
 	 */
 	struct _2files
 	{
-		string dest;
-		string src;
+		_2files(const sstring& d, const sstring& s) : dest(d), src(s) {}
+		sstring dest;
+		sstring src;
 	};
 
 	/** Stack holding wininit.ini entries. */
@@ -72,8 +73,8 @@ public:
 		if (!que.empty()) DBGPRINTF(("\nRemoving temporary files ...\n"));
 		while (!que.empty())
 		{
-			DeleteFile(que.front().src.c_str());
-			DBGPRINTF(("... %s\n", que.front().src.c_str()));
+			DeleteFile(que.front().src);
+			DBGPRINTF(("... %s\n", que.front().src));
 			que.pop();
 		}
 	}
@@ -90,11 +91,9 @@ public:
 	 * @param dest Destination file name (or 'NUL' for delete).
 	 * @param src Source file name.
 	 */
-	void add(const string& dest, const string& src)
+	void add(const sstring& dest, const sstring& src)
 	{
-		_2files t;
-		t.dest = dest;
-		t.src = src;
+		_2files t(dest, src);
 		que.push(t);
 	}
 
@@ -118,12 +117,12 @@ public:
 			char short_dest[MAX_PATH];
 			char short_src[MAX_PATH];
 
-			if (!GetShortPathName(que.front().dest.c_str(), short_dest, sizeof(short_dest)))
+			if (!GetShortPathName(que.front().dest, short_dest, sizeof(short_dest)))
 				//if fail, assume destination doesn't exit
 				//fixme: may not be short path name or be invalid path name
-				strcpy(short_dest, que.front().dest.c_str());
-			if (!GetShortPathName(que.front().src.c_str(), short_src, sizeof(short_src)))
-				strcpy(short_src, que.front().src.c_str());
+				strcpy(short_dest, que.front().dest);
+			if (!GetShortPathName(que.front().src, short_src, sizeof(short_src)))
+				strcpy(short_src, que.front().src);
 			
 			strcpy(line, short_dest);
 			strcat(line, "=");
@@ -133,7 +132,8 @@ public:
 
 			if (buf_len + line_len + 2 <= sizeof(buf))
 			{
-				DBGPRINTF(("... %s => %s\n", que.front().src.c_str(), que.front().dest.c_str()));
+				DBGPRINTF(("... %s => %s\n", (const char*) que.front().src, 
+						(const char*) que.front().dest));
 				memcpy(&buf[buf_len], line, line_len);
 				buf_len += line_len;
 			}

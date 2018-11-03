@@ -43,6 +43,7 @@
 extern "C" {
 #endif
 
+MAKE_HEADER(void __stdcall _GetpWin16Lock(CRITICAL_SECTION** cs))
 MAKE_HEADER(void __stdcall _EnterSysLevel(CRITICAL_SECTION* cs))
 MAKE_HEADER(void __stdcall _LeaveSysLevel(CRITICAL_SECTION* cs))
 

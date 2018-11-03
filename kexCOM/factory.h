@@ -19,18 +19,31 @@
  *
  */
 
-#ifndef __STORAGE_H
-#define __STORAGE_H
+#ifndef __FACTORY_H
+#define __FACTORY_H
 
-class storage
+#include <objbase.h>
+
+class CFactory : public IClassFactory
 {
 public:
-	int size;
-	void* data[1]; //dummy table
-	
-	static const int storage_size;
-	static storage* get_storage(bool alloc);
-	static void return_storage();
+	// Constructor
+	CFactory(IClassFactory* prevCF);
+	// Destructor
+	~CFactory();
+
+	// IUnknown
+	STDMETHODIMP QueryInterface(const IID& iid, void** ppv);
+	STDMETHODIMP_(ULONG) AddRef();
+	STDMETHODIMP_(ULONG) Release();
+
+	// Interface IClassFactory
+	STDMETHODIMP CreateInstance(IUnknown* pUnknownOuter, const IID& iid, void** ppv);
+	STDMETHODIMP LockServer(BOOL bLock);
+
+private:
+	long m_cRef;
+	IClassFactory* m_prevCF;
 };
 
 #endif

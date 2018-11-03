@@ -45,7 +45,7 @@ char* file_fixWprefix(char* in);
 #define UNIMPL_FUNC(name,params) \
 	__asm__( ".text\n" \
 			 ".globl _" #name "_stub@0\n" \
-			 "_" #name "_new@0:\n\t" \
+			 "_" #name "_stub@0:\n\t" \
 			 "xor %eax, %eax\n\t" \
 			 "movb $" #params ", %cl\n\t" \
 			 "jmp _CommonUnimpStub@0\n\t" \
@@ -67,7 +67,7 @@ char* file_fixWprefix(char* in);
 	const WCHAR* p; \
 	int c; \
 	for (p = str##W ; *p ; p++); \
-	c = (int) p - (int) str##W; \
+	c = p - str##W + 1; \
 	c *= acp_mcs; \
 	str##A = (char*) alloca(c); \
 	WtoA(str, c)
@@ -100,7 +100,7 @@ char* file_fixWprefix(char* in);
 		const WCHAR* p; \
 		int c; \
 		for (p = str##W ; *p ; p++); \
-		c = (int) p - (int) str##W; \
+		c = p - str##W + 1; \
 		c *= acp_mcs; \
 		str##A = (char*) alloca(c); \
 		file_WtoA(str, c); \

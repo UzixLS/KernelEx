@@ -3,6 +3,7 @@
  * Copyright 1999, 2000 Juergen Schmied <juergen.schmied@debitel.net>
  * Copyright 2003 CodeWeavers Inc. (Ulrich Czekalla)
  * Copyright 2007 Xeno86
+ * Copyright 2009 Tihiy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -122,7 +123,6 @@ OpenThreadToken_new( HANDLE ThreadHandle, DWORD DesiredAccess,
 {
     FIXME("OpenThreadToken(0x%08x,0x08lx,0x%08x,%p): stub\n",
         ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
-    if (OpenAsSelf) return FALSE; //shlwapi hack
 	*(int*)TokenHandle = 0xcafe;
 	return TRUE;
 }
@@ -454,7 +454,7 @@ CopySid_new( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid 
 		(nDestinationSidLength < GetLengthSid_new(pSourceSid)))
 	  return FALSE;
 
-	if (nDestinationSidLength < (((SID*)pSourceSid)->SubAuthorityCount*4+8))
+	if (nDestinationSidLength < (((SID*)pSourceSid)->SubAuthorityCount*4u+8))
 	  return FALSE;
 
 	memmove(pDestinationSid, pSourceSid, ((SID*)pSourceSid)->SubAuthorityCount*4+8);
@@ -549,8 +549,11 @@ InitializeSid_new (
 	int i;
 	SID* pisid=(SID*)pSid;
 
-	if (nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
-	  return FALSE;
+	if (!pSid || nSubAuthorityCount >= SID_MAX_SUB_AUTHORITIES)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	pisid->Revision = SID_REVISION;
 	pisid->SubAuthorityCount = nSubAuthorityCount;
@@ -897,17 +900,18 @@ SetSecurityDescriptorDacl_new (
 	}
 
 	if (!daclpresent)
-	{       lpsd->Control &= ~SE_DACL_PRESENT;
-			return TRUE;
+	{
+		lpsd->Control &= ~SE_DACL_PRESENT;
+		return TRUE;
 	}
 
 	lpsd->Control |= SE_DACL_PRESENT;
 	lpsd->Dacl = dacl;
 
 	if (dacldefaulted)
-			lpsd->Control |= SE_DACL_DEFAULTED;
+		lpsd->Control |= SE_DACL_DEFAULTED;
 	else
-			lpsd->Control &= ~SE_DACL_DEFAULTED;
+		lpsd->Control &= ~SE_DACL_DEFAULTED;
 
 	return TRUE;
 }
@@ -994,9 +998,87 @@ MakeSelfRelativeSD_new(
         IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
         IN OUT LPDWORD lpdwBufferLength)
 {
-	FIXME("MakeSelfRelativeSD(%p,%p,%p(%lu))\n", pAbsoluteSecurityDescriptor,
-		pSelfRelativeSecurityDescriptor, lpdwBufferLength,*lpdwBufferLength);
-	return TRUE;
+    DWORD offsetRel;
+    ULONG length;
+    SECURITY_DESCRIPTOR* pAbs = (SECURITY_DESCRIPTOR*)pAbsoluteSecurityDescriptor;
+    SECURITY_DESCRIPTOR_RELATIVE* pRel = (SECURITY_DESCRIPTOR_RELATIVE*)pSelfRelativeSecurityDescriptor;
+
+    TRACE(" %p %p %p(%d)\n", pAbs, pRel, lpdwBufferLength,
+        lpdwBufferLength ? *lpdwBufferLength: -1);
+
+    if (!lpdwBufferLength || !pAbs || !pRel)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    length = GetSecurityDescriptorLength_new(pAbs);
+    if (*lpdwBufferLength < length)
+    {
+        *lpdwBufferLength = length;
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    if (pAbs->Control & SE_SELF_RELATIVE)
+    {
+        memcpy(pRel, pAbs, length);
+        return TRUE;
+    }
+
+    pRel->Revision = pAbs->Revision;
+    pRel->Sbz1 = pAbs->Sbz1;
+    pRel->Control = pAbs->Control | SE_SELF_RELATIVE;
+
+    offsetRel = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    if (pAbs->Owner)
+    {
+        pRel->Owner = offsetRel;
+        length = GetLengthSid_new(pAbs->Owner);
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Owner, length);
+        offsetRel += length;
+    }
+    else
+    {
+        pRel->Owner = 0;
+    }
+
+    if (pAbs->Group)
+    {
+        pRel->Group = offsetRel;
+        length = GetLengthSid_new(pAbs->Group);
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Group, length);
+        offsetRel += length;
+    }
+    else
+    {
+        pRel->Group = 0;
+    }
+
+    if (pAbs->Sacl)
+    {
+        pRel->Sacl = offsetRel;
+        length = pAbs->Sacl->AclSize;
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Sacl, length);
+        offsetRel += length;
+    }
+    else
+    {
+        pRel->Sacl = 0;
+    }
+
+    if (pAbs->Dacl)
+    {
+        pRel->Dacl = offsetRel;
+        length = pAbs->Dacl->AclSize;
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Dacl, length);
+    }
+    else
+    {
+        pRel->Dacl = 0;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1013,10 +1095,10 @@ BOOL WINAPI GetSecurityDescriptorControl_new ( PSECURITY_DESCRIPTOR  pSecurityDe
     *lpdwRevision = lpsd->Revision;
 
     if (*lpdwRevision != SECURITY_DESCRIPTOR_REVISION)
-	{
-		SetLastError(ERROR_UNKNOWN_REVISION);
-		return FALSE;
-	}
+    {
+        SetLastError(ERROR_UNKNOWN_REVISION);
+        return FALSE;
+    }
 
     *pControl = lpsd->Control;
 
@@ -1053,8 +1135,8 @@ BOOL WINAPI InitializeAcl_new(PACL acl, DWORD size, DWORD rev)
 	}
 
 	memset(acl,'\0',sizeof(ACL));
-	acl->AclRevision        = rev;
-	acl->AclSize            = size;
+	acl->AclRevision        = (UCHAR)rev;
+	acl->AclSize            = (USHORT)size;
 	acl->AceCount           = 0;
 	return TRUE;
 }
@@ -1274,11 +1356,11 @@ LookupAccountSidW_new(
               name_use);
 
         if (accountSize) *accountSize = lstrlenW(ac)+1;
-        if (account && (*accountSize > lstrlenW(ac)))
+        if (account && (*accountSize > (DWORD)lstrlenW(ac)))
             lstrcpyW(account, ac);
 
         if (domainSize) *domainSize = lstrlenW(dm)+1;
-        if (domain && (*domainSize > lstrlenW(dm)))
+        if (domain && (*domainSize > (DWORD)lstrlenW(dm)))
             lstrcpyW(domain,dm);
 
         if (name_use) *name_use = SidTypeUser;
@@ -1318,37 +1400,6 @@ SetFileSecurityW_new( LPCWSTR lpFileName,
   return TRUE;
 }
 
-#if 0 /* unneeded ?? */
-/******************************************************************************
- * QueryWindows31FilesMigration [ADVAPI32.@]
- *
- * PARAMS
- *   x1 []
- */
-BOOL WINAPI
-QueryWindows31FilesMigration( DWORD x1 )
-{
-        FIXME("(%ld):stub\n",x1);
-        return TRUE;
-}
-
-/******************************************************************************
- * SynchronizeWindows31FilesAndWindowsNTRegistry [ADVAPI32.@]
- *
- * PARAMS
- *   x1 []
- *   x2 []
- *   x3 []
- *   x4 []
- */
-BOOL WINAPI
-SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
-                                               DWORD x4 )
-{
-        FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
-        return TRUE;
-}
-#endif
 
 #if 0 /* LSA disabled */
 /******************************************************************************
@@ -1468,19 +1519,6 @@ LsaClose(IN LSA_HANDLE ObjectHandle)
         return 0xc0000000;
 }
 #endif
-/******************************************************************************
- * NotifyBootConfigStatus [ADVAPI32.@]
- *
- * PARAMS
- *   x1 []
- */
-/* MAKE_EXPORT NotifyBootConfigStatus_new=NotifyBootConfigStatus */
-BOOL WINAPI
-NotifyBootConfigStatus_new( BOOL x1 )
-{
-	FIXME("NotifyBootConfigStatus(0x%08x):stub\n",x1);
-	return TRUE;
-}
 
 /******************************************************************************
  * RevertToSelf [ADVAPI32.@]
@@ -1578,9 +1616,59 @@ BOOL WINAPI AddAccessAllowedAce_new(
 /* MAKE_EXPORT GetAce_new=GetAce */
 BOOL WINAPI GetAce_new(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
-	FIXME("GetAce(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
+	PACE_HEADER ace;
+
+	TRACE("(%p,%d,%p)\n",pAcl,dwAceIndex,pAce);
+
+	if (!pAcl || !pAce || dwAceIndex >= pAcl->AceCount)
+	{		
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	ace = (PACE_HEADER)(pAcl + 1);
+	for (;dwAceIndex;dwAceIndex--)
+		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+
+	*pAce = ace;
+
 	return TRUE;
 }
+
+/******************************************************************************
+ * DeleteAce [ADVAPI32.@]
+ */
+/* MAKE_EXPORT DeleteAce_new=DeleteAce */
+BOOL WINAPI DeleteAce_new(PACL pAcl, DWORD dwAceIndex)
+{
+	PACE_HEADER pAce;
+
+	if (!GetAce_new(pAcl,dwAceIndex,(LPVOID*)&pAce)) return FALSE;
+
+	PACE_HEADER pcAce;
+	DWORD len = 0;
+
+	/* skip over the ACE we are deleting */
+	pcAce = (PACE_HEADER)(((BYTE*)pAce)+pAce->AceSize);
+	dwAceIndex++;
+
+	/* calculate the length of the rest */
+	for (; dwAceIndex < pAcl->AceCount; dwAceIndex++)
+	{
+		len += pcAce->AceSize;
+		pcAce = (PACE_HEADER)(((BYTE*)pcAce) + pcAce->AceSize);
+	}
+
+	/* slide them all backwards */
+	memmove(pAce, ((BYTE*)pAce)+pAce->AceSize, len);
+	pAcl->AceCount--;
+
+	TRACE("pAcl=%p dwAceIndex=%d status=0x%08x\n", pAcl, dwAceIndex, status);
+
+	return TRUE;
+}
+
+
 
 /*************************************************************************
  * CreateRestrictedToken [ADVAPI32.@]
@@ -1608,6 +1696,8 @@ BOOL WINAPI CreateRestrictedToken_new(
 /* MAKE_EXPORT CreateWellKnownSid_new=CreateWellKnownSid */
 BOOL WINAPI CreateWellKnownSid_new( DWORD WellKnownSidType, PSID DomainSid, PSID pSid, DWORD* cbSid)
 {
-	FIXME("CreateWellKnownSid(%ld,%p,%p,%p,%p),stub!\n",WellKnownSidType,DomainSid,pSid,cbSid);
-	return TRUE;
+	FIXME("CreateWellKnownSid(%ld,%p,%p,%p,%p),mostly stub!\n",WellKnownSidType,DomainSid,pSid,cbSid);
+	//BUGBUG what to do with cbSid? out sid size there?
+    SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
+	return InitializeSid_new(pSid, &localSidAuthority, 1);
 }

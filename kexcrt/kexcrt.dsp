@@ -58,7 +58,15 @@ SOURCE=.\_vsnprintf.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\abort.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\msvc\argcargv.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\assert.c
 # End Source File
 # Begin Source File
 
@@ -170,6 +178,14 @@ SOURCE=.\memmove.c
 # End Source File
 # Begin Source File
 
+SOURCE=".\memory-cpp.cpp"
+# End Source File
+# Begin Source File
+
+SOURCE=.\memory.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\memrchr.c
 # End Source File
 # Begin Source File
@@ -179,6 +195,14 @@ SOURCE=.\memset.c
 # Begin Source File
 
 SOURCE=.\memswap.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\printf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\msvc\purecall.c
 # End Source File
 # Begin Source File
 
@@ -319,6 +343,10 @@ SOURCE=.\vsscanf.c
 # Begin Source File
 
 SOURCE=.\msvc\wincrt0.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\write.c
 # End Source File
 # End Group
 # Begin Group "Header Files"

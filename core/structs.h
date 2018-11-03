@@ -58,6 +58,21 @@ typedef struct _HANDLE_TABLE {
     HANDLE_TABLE_ENTRY array[1];    // An array (number is given by cEntries)
 } HANDLE_TABLE, *PHANDLE_TABLE;
 
+// List node
+typedef struct _NODE
+{
+	struct _NODE*  next;
+	struct _NODE*  prev;
+	PVOID          data;
+} NODE, *PNODE;
+
+// List
+typedef struct _LIST {
+	PNODE          firstNode;
+	PNODE          lastNode;
+	PNODE          currentNode;
+} LIST, *PLIST;
+
 struct _PDB98;
 
 // MODREF
@@ -145,16 +160,15 @@ typedef struct _PDB98 {                 // Size = 0xC4 (from Kernel32)
     PHANDLE_TABLE pHandleTable;         // 44 Pointer to Handle Table
     struct _PDB98* ParentPDB;           // 48 Pointer to parent process (PDB)
     PMODREF MODREFList;                 // 4C Pointer to list of modules
-    DWORD   ThreadList;                 // 50 Pointer to list of threads
+    PLIST   ThreadList;                 // 50 Pointer to list of threads
     DWORD   DebuggeeCB;                 // 54 Debuggee context block
     DWORD   LocalHeapFreeHead;          // 58 Free list for process default heap
     DWORD   InitialRing0ID;             // 5C Meaning unknown
     CRITICAL_SECTION CriticalSection;   // 60 For synchronizing threads
-    DWORD   Unknown4[3];                // 78
-    DWORD   pConsole;                   // 84 Output console
-    DWORD   tlsInUseBits1;              // 88 Status of TLS indexes  0 - 31
-    DWORD   tlsInUseBits2;              // 8C Status of TLS indexes 32 - 63
-    DWORD   ProcessDWORD;               // 90 Undocumented API GetProcessDword, meaning unknown
+    DWORD   Unknown4[2];                // 78
+    DWORD   pConsole;                   // 80 Output console
+    DWORD   tlsInUseBits[3];            // 84 Status of TLS indexes
+    DWORD   ProcessDWORD;               // 90 Undocumented API GetProcessDword - user data
     struct _PDB98* ProcessGroup;        // 94 Master process PDB (in debugging)
     PMODREF pExeMODREF;                 // 98 Points to exe's module structure
     DWORD   TopExcFilter;               // 9C SetUnhandledExceptionFilter
@@ -171,60 +185,6 @@ typedef struct _PDB98 {                 // Size = 0xC4 (from Kernel32)
     DWORD   Unknown6;                   // C0
 } PDB98, *PPDB98;
 
-// Process Database
-typedef struct _PDBME {                 // Size = 0xC4 (from Kernel32)
-    BYTE    Type;                       // 00 Kernel object type = K32OBJ_PROCESS (6)
-    BYTE    Unknown_A;                  // 01 (align ?)
-    WORD    cReference;                 // 02 Number of references to process
-    DWORD   Unknown_B;                  // 04 Pointer to ???
-    DWORD   Unknown1;                   // 08 (zero)
-    DWORD   pEvent;                     // 0C Event for process waiting
-    DWORD   TerminationStatus;          // 10 GetExitCodeProcess
-    DWORD   Unknown2;                   // 14 May be used for private purposes
-    DWORD   DefaultHeap;                // 18 GetProcessHeap
-    DWORD   MemoryContext;              // 1C Pointer to process context
-    DWORD   Flags;                      // 20 Flags
-    DWORD   pPSP;                       // 24 Linear address of DOS PSP
-    WORD    PSPSelector;                // 28 Selector to DOS PSP
-    WORD    MTEIndex;                   // 2A Index into global module table
-    WORD    cThreads;                   // 2C Threads.ItemCount
-    WORD    cNotTermThreads;            // 2E Threads.ItemCount
-    WORD    Unknown3;                   // 30 (zero)
-    WORD    cRing0Threads;              // 32 Normally Threads.ItemCount (except kernel32)
-    HANDLE  HeapHandle;                 // 34 Kernel32 shared heap
-    DWORD   w16TDB;                     // 38 Win16 task database selector
-    DWORD   MemMappedFiles;             // 3C List of memory mapped files
-    PEDB    pEDB;                       // 40 Pointer to Environment Database
-    PHANDLE_TABLE pHandleTable;         // 44 Pointer to Handle Table
-    struct _PDBME* ParentPDB;            // 48 Pointer to parent process (PDB)
-    PMODREF MODREFList;                 // 4C Pointer to list of modules
-    DWORD   ThreadList;                 // 50 Pointer to list of threads
-    DWORD   DebuggeeCB;                 // 54 Debuggee context block
-    DWORD   LocalHeapFreeHead;          // 58 Free list for process default heap
-    DWORD   InitialRing0ID;             // 5C Meaning unknown
-    CRITICAL_SECTION CriticalSection;   // 60 For synchronizing threads
-    DWORD   Unknown4[2];                // 78
-    DWORD   pConsole;                   // 80 Output console
-    DWORD   tlsInUseBits1;              // 84 Status of TLS indexes  0 - 31
-    DWORD   tlsInUseBits2;              // 88 Status of TLS indexes 32 - 63
-    DWORD   ProcessDWORD;               // 8C Undocumented API GetProcessDword, meaning unknown
-    DWORD   Unknown_C;                  // 90 Unknown
-    struct _PDBME* ProcessGroup;         // 94 Master process PDB (in debugging)
-    PMODREF pExeMODREF;                 // 98 Points to exe's module structure
-    DWORD   TopExcFilter;               // 9C SetUnhandledExceptionFilter
-    DWORD   PriorityClass;              // A0 PriorityClass (8 = NORMAL)
-    DWORD   HeapList;                   // A4 List of heaps
-    DWORD   HeapHandleList;             // A8 List of moveable memory blocks
-    DWORD   HeapPointer;                // AC Pointer to one moveable memory block, meaning unknown
-    DWORD   pConsoleProvider;           // B0 Console for DOS apps
-    WORD    EnvironSelector;            // B4 Environment database selector
-    WORD    ErrorMode;                  // B6 SetErrorMode
-    DWORD   pEventLoadFinished;         // B8 Signaled when the process has finished loading
-    WORD    UTState;                    // BC Universal thunking, meaning unknown
-    WORD    Unknown5;                   // BE (zero)
-    DWORD   Unknown6;                   // C0
-} PDBME, *PPDBME;
-
 // Thread Information Block (FS:[0x18])
 typedef struct _TIB98 {        // Size = 0x38
     PSEH    pvExcept;          // 00 Head of exception record list
@@ -240,8 +200,8 @@ typedef struct _TIB98 {        // Size = 0x38
     DWORD   DebugContext;      // 20 Pointer to debug context structure
     DWORD   pCurrentPriority;  // 24 Pointer to DWORD containing current priority level
     DWORD   pvQueue;           // 28 Message Queue selector
-    PVOID   *pvTLSArray;       // 2C Thread Local Storage (TLS) array
-    PVOID   *pProcess;         // 30 Pointer to owning process database (PDB)
+    DWORD   *pvTLSArray;       // 2C Pointer to TDB.TlsSlots
+    PDB98   *pProcess;         // 30 Pointer to owning process database (PDB)
     DWORD   Unknown;           // 34 Pointer to ???
 } TIB98, *PTIB98;
 
@@ -262,8 +222,13 @@ typedef struct _TDB98 {        // Size = 0x228 (from Kernel32)
     DWORD   cHandles;          // 50 Handle count
     DWORD   Ring0Thread;       // 54 R0 thread control block (TCB)
     TDBX98  *pTDBX;            // 58 R0 thread database extension (TDBX)
-    DWORD   un1[109];          // 5C
+    DWORD   un1[3];            // 5C
+	DWORD   LastError;         // 68 GetLastError code value
+    DWORD   un2[9];            // 6C
+    LPVOID  TlsSlots[80];      // 90 Thread Local Storage
+	DWORD   un3[16];           // 1D0
     DWORD   APISuspendCount;   // 210 Count of SuspendThread's minus ResumeThread's
+	DWORD   un4[5];            // 214
 } TDB98, *PTDB98;
 
 typedef struct _TDBME {        // Size = 0x228 (from Kernel32)
@@ -280,10 +245,15 @@ typedef struct _TDBME {        // Size = 0x228 (from Kernel32)
     DWORD   cHandles;          // 50 Handle count
     DWORD   Ring0Thread;       // 54 R0 thread control block (TCB)
     DWORD   Unknown3;          // 58 Selector for ???
-    DWORD   un1[11];           // 5C
-    TDBX98  *pTDBX;            // 88
-    DWORD   un2[97];           // 8C
+    DWORD   un1[8];            // 5C
+	DWORD   LastError;         // 7C GetLastError code value
+	DWORD   un2[2];            // 80
+    TDBX98  *pTDBX;            // 88 R0 thread database extension (TDBX)
+    DWORD   Unknown4;          // 8C
+    DWORD   TlsSlots[80];      // 90 Thread Local Storage
+	DWORD   un3[16];           // 1D0
     DWORD   APISuspendCount;   // 210 Count of SuspendThread's minus ResumeThread's
+	DWORD   un4[5];            // 214
 } TDBME, *PTDBME;
 
 // Thread database extension
